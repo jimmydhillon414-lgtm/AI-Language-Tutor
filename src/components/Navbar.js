@@ -1,83 +1,113 @@
+// src/components/Navbar.js
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-export default function Navbar({ user, activeTab, setActiveTab, onSignOut }) {
+export default function Navbar({ user, activeTab, setActiveTab, onSignOut, onOpenLogin, onOpenSignup }) {
   return (
-    <View style={styles.navContainer}>
-      <View style={styles.navLinks}>
-        <TouchableOpacity onPress={() => setActiveTab('Home')}>
-          <Text style={[styles.navText, activeTab === 'Home' && styles.activeText]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('AI Tutor')}>
-          <Text style={[styles.navText, activeTab === 'AI Tutor' && styles.activeText]}>AI Tutor</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('Grammar History')}>
-          <Text style={[styles.navText, activeTab === 'Grammar History' && styles.activeText]}>Grammar History</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('Profile Settings')}>
-          <Text style={[styles.navText, activeTab === 'Profile Settings' && styles.activeText]}>Profile Settings</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={styles.navbar}>
+      <TouchableOpacity onPress={() => setActiveTab('Home')} style={styles.navLeft}>
+        <Text style={styles.logoText}>SIRIN LABS</Text>
+      </TouchableOpacity>
 
-      <View style={styles.authContainer}>
+      <View style={styles.navRight}>
+        <TouchableOpacity 
+          style={styles.shopNowBtn}
+          onPress={() => setActiveTab('AI Tutor')}
+        >
+          <Text style={styles.shopNowText}>SHOP NOW</Text>
+        </TouchableOpacity>
+
         {user ? (
-          <TouchableOpacity style={styles.authButton} onPress={onSignOut}>
-            <Text style={styles.authButtonText}>Sign Out</Text>
-          </TouchableOpacity>
+          <View style={styles.userProfileBadge}>
+            <Text style={styles.userEmailText}>{user.email} ▾</Text>
+          </View>
         ) : (
-          <>
-            <TouchableOpacity style={styles.authButton} onPress={() => setActiveTab('Login')}>
-              <Text style={styles.authButtonText}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.authButton, styles.signupBtn]} onPress={() => setActiveTab('Signup')}>
-              <Text style={styles.authButtonText}>Sign Up</Text>
-            </TouchableOpacity>
-          </>
+          <TouchableOpacity style={styles.btnLogin} onPress={onOpenLogin}>
+            <Text style={styles.btnLoginText}>Login</Text>
+          </TouchableOpacity>
         )}
+
+        <TouchableOpacity style={styles.btnUpgrade} onPress={() => setActiveTab('Profile Settings')}>
+          <Text style={styles.btnUpgradeText}>Upgrade to Pro</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  navContainer: {
-    height: 60,
-    backgroundColor: '#0F172A',
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 18,
+    backgroundColor: 'rgba(7, 13, 16, 0.95)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(219, 176, 140, 0.15)',
+  },
+  navLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
   },
-  navLinks: {
+  logoText: {
+    color: '#FFCB9A',
+    fontWeight: 'bold',
+    fontSize: 20,
+    letterSpacing: 2,
+  },
+  navRight: {
     flexDirection: 'row',
-    gap: 20,
+    alignItems: 'center',
+    gap: 15,
   },
-  navText: {
-    color: '#94A3B8',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  activeText: {
-    color: '#38BDF8',
-    fontWeight: '700',
-  },
-  authContainer: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  authButton: {
-    paddingVertical: 8,
+  shopNowBtn: {
+    borderWidth: 1,
+    borderColor: 'rgba(219, 176, 140, 0.4)',
     paddingHorizontal: 16,
-    backgroundColor: '#1E293B',
+    paddingVertical: 7,
+    borderRadius: 6,
+    backgroundColor: 'rgba(219, 176, 140, 0.05)',
+  },
+  shopNowText: {
+    color: '#FFCB9A',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  userProfileBadge: {
+    backgroundColor: 'rgba(17, 30, 27, 0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(219, 176, 140, 0.25)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
+  userEmailText: {
+    color: '#D1E8E2',
+    fontSize: 13,
+  },
+  btnLogin: {
+    borderWidth: 1,
+    borderColor: '#116466',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
     borderRadius: 6,
   },
-  signupBtn: {
-    backgroundColor: '#3B82F6',
+  btnLoginText: {
+    color: '#D1E8E2',
+    fontSize: 13,
   },
-  authButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+  btnUpgrade: {
+    backgroundColor: 'linear-gradient(135deg, #FFCB9A 0%, #D9B08C 100%)',
+    backgroundColor: '#D9B08C',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  btnUpgradeText: {
+    color: '#070D10',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
 });
