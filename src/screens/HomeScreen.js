@@ -5,7 +5,41 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.backgroundImage}>
-      {/* Exact Tech Sphere & Glow Background Elements */}
+      {/* Top Navbar */}
+      <View style={styles.navbar}>
+        <View style={styles.navLeft}>
+          <Text style={styles.logoText}>SIRIN LABS</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.navLink}>
+            <Text style={styles.navLinkTextActive}>Home</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('TutorChat')} style={styles.navLink}>
+            <Text style={styles.navLinkText}>AI Tutor</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('History')} style={styles.navLink}>
+            <Text style={styles.navLinkText}>Grammar History</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.navLink}>
+            <Text style={styles.navLinkText}>Profile Settings</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.navRight}>
+          <TouchableOpacity 
+            style={styles.btnLogin}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.btnLoginText}>Login</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.btnSignup}
+            onPress={() => navigation.navigate('Signup')}
+          >
+            <Text style={styles.btnSignupText}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Glow & Sphere Background Elements */}
       <View style={styles.glowOrb1} />
       <View style={styles.glowOrb2} />
       <View style={styles.centerSphereContainer}>
@@ -14,112 +48,99 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Multilingual Floating Words */}
-      <View style={styles.floatingWordsContainer} pointerEvents="none">
-        <Text style={[styles.floatWord, { top: '10%', left: '8%', transform: [{ rotate: '-12deg' }] }]}>Hello</Text>
-        <Text style={[styles.floatWord, { top: '22%', right: '10%', transform: [{ rotate: '15deg' }] }]}>सत ਸ੍ਰੀ ਅਕਾਲ</Text>
-        <Text style={[styles.floatWord, { top: '40%', left: '5%', transform: [{ rotate: '8deg' }] }]}>Bonjour</Text>
-        <Text style={[styles.floatWord, { top: '60%', right: '12%', transform: [{ rotate: '-8deg' }] }]}>Hola</Text>
-        <Text style={[styles.floatWord, { top: '78%', left: '12%', transform: [{ rotate: '18deg' }] }]}>Guten Tag</Text>
-        <Text style={[styles.floatWord, { top: '88%', right: '10%', transform: [{ rotate: '-5deg' }] }]}>Ciao</Text>
-      </View>
-
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         
-        {/* Welcome Dashboard Header */}
+        {/* Welcome Section */}
         <View style={styles.heroWelcome}>
-          <h1>Welcome to AI Grammar Tutor</h1>
-          <p style={{color: '#D1E8E2', fontSize: '15px', marginBottom: '15px'}}>Experience real-time AI conversations, instant smart grammar corrections, and immersive voice tuition.</p>
+          <Text style={styles.welcomeTitle}>Welcome Back, Creatorstack9@gmail.com!</Text>
           <TouchableOpacity 
             style={styles.resumeBtn}
             onPress={() => navigation.navigate('TutorChat')}
             activeOpacity={0.8}
           >
-            <Text style={styles.resumeBtnText}>Resume My Last Lesson / Free Trial</Text>
+            <Text style={styles.resumeBtnText}>Resume My Last Lesson</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Dashboard Grid: Stats & Features matching image layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '25px', marginBottom: '25px' }}>
+        {/* Dashboard Grid: Stats & Features */}
+        <View style={styles.dashboardGrid}>
           
-          {/* Left Stats Column */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
-            <div className="glass-card stat-box" style={styles.glassCard}>
-              <h4 style={{fontSize: '12px', color: '#a0aec0', marginBottom: '10px'}}>Lessons Completed</h4>
-              <div style={{fontSize: '18px', color: '#fff', fontWeight: 'bold'}}>35/50</div>
-              <div style={{width: '100%', background: 'rgba(255, 255, 255, 0.1)', height: '6px', borderRadius: '3px', marginTop: '10px', overflow: 'hidden'}}>
-                <div style={{width: '70%', background: '#FFCB9A', height: '100%'}}></div>
-              </div>
-            </div>
-            
-            <div className="glass-card stat-box" style={styles.glassCard}>
-              <h4 style={{fontSize: '12px', color: '#a0aec0', marginBottom: '10px'}}>Current Streak</h4>
-              <div style={{fontSize: '18px', color: '#fff', fontWeight: 'bold'}}>🔥 7 Days</div>
-            </div>
+          {/* Left Stats Row */}
+          <View style={styles.statsRow}>
+            <View style={styles.glassCard}>
+              <Text style={styles.statLabel}>Lessons Completed</Text>
+              <Text style={styles.statValue}>35/50</Text>
+              <View style={styles.progressBarContainer}>
+                <View style={styles.progressFill} />
+              </View>
+            </View>
 
-            <div className="glass-card stat-box" style={styles.glassCard}>
-              <h4 style={{fontSize: '12px', color: '#a0aec0', marginBottom: '10px'}}>Accuracy Score</h4>
-              <div style={{fontSize: '18px', color: '#fff', fontWeight: 'bold'}}>92%</div>
-            </div>
-          </div>
+            <View style={styles.glassCard}>
+              <Text style={styles.statLabel}>Current Streak</Text>
+              <Text style={styles.statValue}>🔥 7 Days</Text>
+            </View>
 
-          {/* Right Features Subgrid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
-            <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('TutorChat')} activeOpacity={0.8}>
-              <h5 style={{color: '#FFCB9A', fontSize: '14px', marginBottom: '6px'}}>✏️ 24/7 AI Grammar Tutor</h5>
-              <p style={{fontSize: '11px', color: '#a0aec0', margin: 0}}>Instant feedback on your writing.</p>
+            <View style={styles.glassCard}>
+              <Text style={styles.statLabel}>Accuracy Score</Text>
+              <Text style={styles.statValue}>92%</Text>
+            </View>
+          </View>
+
+          {/* Right Features Grid */}
+          <View style={styles.featuresSubgrid}>
+            <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('TutorChat')}>
+              <Text style={styles.featureTitle}>✏️ 24/7 AI Grammar Tutor</Text>
+              <Text style={styles.featureDesc}>Instant feedback on your writing.</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('Profile')} activeOpacity={0.8}>
-              <h5 style={{color: '#FFCB9A', fontSize: '14px', marginBottom: '6px'}}>🧠 Vocabulary Builder</h5>
-              <p style={{fontSize: '11px', color: '#a0aec0', margin: 0}}>Expand your word bank.</p>
+            <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('Profile')}>
+              <Text style={styles.featureTitle}>🧠 Vocabulary Builder</Text>
+              <Text style={styles.featureDesc}>Expand your word bank.</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('History')} activeOpacity={0.8}>
-              <h5 style={{color: '#FFCB9A', fontSize: '14px', marginBottom: '6px'}}>📈 Writing History</h5>
-              <p style={{fontSize: '11px', color: '#a0aec0', margin: 0}}>Track your progress over time.</p>
+            <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('History')}>
+              <Text style={styles.featureTitle}>📈 Writing History & Analysis</Text>
+              <Text style={styles.featureDesc}>Track your progress over time.</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('TutorChat')} activeOpacity={0.8}>
-              <h5 style={{color: '#FFCB9A', fontSize: '14px', marginBottom: '6px'}}>🌍 Contextual Examples</h5>
-              <p style={{fontSize: '11px', color: '#a0aec0', margin: 0}}>Learn grammar in real context.</p>
+            <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('TutorChat')}>
+              <Text style={styles.featureTitle}>🌍 Contextual Examples</Text>
+              <Text style={styles.featureDesc}>Learn in real context.</Text>
             </TouchableOpacity>
-          </div>
+          </View>
 
-        </div>
+        </View>
 
-        {/* Bottom Section: Activity Feed & Quick Start */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '25px', marginBottom: '30px' }}>
-          
-          <div style={styles.glassCard}>
-            <h3 style={{fontSize: '15px', color: '#FFCB9A', marginBottom: '15px', fontWeight: '500'}}>Recent Activity Feed</h3>
-            <div style={styles.activityItem}>
-              <span>1. The sare your team is essied to grammar exercises.</span>
-              <span style={{color: '#718096'}}>1 days ago</span>
-            </div>
-            <div style={styles.activityItem}>
-              <span>2. You use the tsit grammer exercises.</span>
-              <span style={{color: '#718096'}}>1 days ago</span>
-            </div>
-            <div style={styles.activityItem}>
-              <span>3. Fhe wihy sransories don't head et .utoor exerclo this.</span>
-              <span style={{color: '#718096'}}>1 days ago</span>
-            </div>
-          </div>
+        {/* Bottom Section */}
+        <View style={styles.bottomGrid}>
+          <View style={styles.glassCard}>
+            <Text style={styles.sectionHeading}>Recent Activity Feed</Text>
+            <View style={styles.activityItem}>
+              <Text style={styles.activityText}>1. The sare your team is essied to grammar exercises.</Text>
+              <Text style={styles.activityTime}>1 days ago</Text>
+            </View>
+            <View style={styles.activityItem}>
+              <Text style={styles.activityText}>2. You use the tsit grammer exercises.</Text>
+              <Text style={styles.activityTime}>1 days ago</Text>
+            </View>
+            <View style={styles.activityItem}>
+              <Text style={styles.activityText}>3. Fhe wihy sransories don't head et .utoor exerclo this.</Text>
+              <Text style={styles.activityTime}>1 days ago</Text>
+            </View>
+          </View>
 
-          <div style={styles.glassCard}>
-            <h3 style={{fontSize: '15px', color: '#FFCB9A', marginBottom: '15px', fontWeight: '500'}}>Quick Start Tutor</h3>
-            <div style={{fontSize: '13px', color: '#cbd5e0', marginTop: '10px'}}>
-              Start a quick grammar check instantly with your Pro trial or session workspace.
-            </div>
-          </div>
+          <View style={styles.glassCard}>
+            <Text style={styles.sectionHeading}>Quick Start Tutor</Text>
+            <Text style={styles.quickStartText}>Start a quick grammar check.</Text>
+          </View>
+        </View>
 
-        </div>
-
-        {/* Footer info matching image style */}
+        {/* Footer */}
         <View style={styles.footerInfo}>
-          <Text style={{fontSize: '12px', color: '#718096'}}>App version: info</Text>
-          <Text style={{fontSize: '12px', color: '#718096'}}>Upgrade to Pro</Text>
+          <Text style={styles.footerText}>App version: info</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+            <Text style={styles.footerTextActive}>Upgrade to Pro</Text>
+          </TouchableOpacity>
         </View>
 
       </ScrollView>
@@ -130,39 +151,97 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    backgroundColor: '#0F1A18',
-    position: 'relative',
-    overflow: 'hidden',
+    backgroundColor: '#121a17',
+  },
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    backgroundColor: 'rgba(18, 26, 23, 0.9)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(219, 176, 140, 0.15)',
+  },
+  navLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 25,
+  },
+  logoText: {
+    color: '#FFCB9A',
+    fontWeight: 'bold',
+    fontSize: 18,
+    letterSpacing: 2,
+    marginRight: 10,
+  },
+  navLink: {
+    paddingVertical: 5,
+  },
+  navLinkText: {
+    color: '#D1E8E2',
+    fontSize: 14,
+  },
+  navLinkTextActive: {
+    color: '#FFCB9A',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  navRight: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  btnLogin: {
+    borderWidth: 1,
+    borderColor: '#116466',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  btnLoginText: {
+    color: '#D1E8E2',
+    fontSize: 14,
+  },
+  btnSignup: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  btnSignupText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   glowOrb1: {
     position: 'absolute',
     top: -100,
     left: -100,
-    width: 500,
-    height: 500,
-    borderRadius: 250,
-    backgroundColor: 'rgba(18, 102, 102, 0.18)',
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    backgroundColor: 'rgba(18, 102, 102, 0.15)',
   },
   glowOrb2: {
     position: 'absolute',
-    bottom: -150,
+    bottom: -100,
     right: -100,
-    width: 600,
-    height: 600,
-    borderRadius: 300,
-    backgroundColor: 'rgba(217, 176, 140, 0.08)',
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    backgroundColor: 'rgba(217, 176, 140, 0.05)',
   },
   centerSphereContainer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 0,
-    opacity: 0.35,
+    opacity: 0.3,
   },
   sphereOuterRing: {
-    width: 450,
-    height: 450,
-    borderRadius: 225,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
     borderWidth: 2,
     borderColor: '#116466',
     justifyContent: 'center',
@@ -170,31 +249,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(17, 100, 102, 0.05)',
   },
   sphereInnerCore: {
-    width: 320,
-    height: 320,
-    borderRadius: 160,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
     backgroundColor: '#0A2E2C',
     borderWidth: 1.5,
     borderColor: '#D9B08C',
-  },
-  floatingWordsContainer: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-    zIndex: 1,
-  },
-  floatWord: {
-    position: 'absolute',
-    fontSize: 40,
-    fontWeight: '900',
-    color: 'rgba(181, 238, 236, 0.1)',
-    letterSpacing: 2,
   },
   container: {
     flex: 1,
     zIndex: 2,
   },
   content: {
-    padding: 24,
+    padding: 30,
     maxWidth: 1200,
     alignSelf: 'center',
     width: '100%',
@@ -202,10 +269,16 @@ const styles = StyleSheet.create({
   heroWelcome: {
     marginBottom: 30,
   },
+  welcomeTitle: {
+    fontSize: 32,
+    color: '#FFCB9A',
+    marginBottom: 15,
+    fontWeight: '400',
+  },
   resumeBtn: {
-    backgroundColor: 'rgba(217, 176, 140, 0.2)',
+    backgroundColor: 'rgba(219, 176, 140, 0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(217, 176, 140, 0.4)',
+    borderColor: 'rgba(219, 176, 140, 0.4)',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
@@ -213,39 +286,122 @@ const styles = StyleSheet.create({
   },
   resumeBtnText: {
     color: '#FFCB9A',
-    fontWeight: '600',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  dashboardGrid: {
+    flexDirection: 'row',
+    gap: 20,
+    marginBottom: 20,
+  },
+  statsRow: {
+    flex: 1.2,
+    flexDirection: 'row',
+    gap: 12,
+  },
+  featuresSubgrid: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
   },
   glassCard: {
-    backgroundColor: 'rgba(17, 30, 27, 0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(219, 176, 140, 0.15)',
-    borderRadius: 14,
-    padding: 20,
-  },
-  featureItem: {
+    flex: 1,
+    minWidth: 140,
     backgroundColor: 'rgba(17, 30, 27, 0.6)',
     borderWidth: 1,
     borderColor: 'rgba(219, 176, 140, 0.15)',
     borderRadius: 12,
     padding: 16,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#a0aec0',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  progressBarContainer: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.1),',
+    height: 6,
+    borderRadius: 3,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    width: '70%',
+    backgroundColor: '#FFCB9A',
+    height: '100%',
+  },
+  featureItem: {
+    width: '48%',
+    backgroundColor: 'rgba(17, 30, 27, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(219, 176, 140, 0.15)',
+    borderRadius: 12,
+    padding: 14,
     justifyContent: 'center',
+  },
+  featureTitle: {
+    color: '#FFCB9A',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  featureDesc: {
+    fontSize: 11,
+    color: '#a0aec0',
+  },
+  bottomGrid: {
+    flexDirection: 'row',
+    gap: 20,
+    marginBottom: 30,
+  },
+  sectionHeading: {
+    fontSize: 14,
+    color: '#FFCB9A',
+    marginBottom: 12,
+    fontWeight: '600',
   },
   activityItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    fontSize: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  activityText: {
+    fontSize: 11,
     color: '#cbd5e0',
+  },
+  activityTime: {
+    fontSize: 10,
+    color: '#718096',
+  },
+  quickStartText: {
+    fontSize: 12,
+    color: '#cbd5e0',
+    marginTop: 5,
   },
   footerInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 10,
     paddingHorizontal: 5,
-  }
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#718096',
+  },
+  footerTextActive: {
+    fontSize: 12,
+    color: '#FFCB9A',
+    fontWeight: '600',
+  },
 });
