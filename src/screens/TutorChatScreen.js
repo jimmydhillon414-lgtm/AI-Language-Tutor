@@ -127,13 +127,12 @@ export default function TutorChatScreen({ navigation }) {
   };
 
   async function getAiResponse(promptText) {
-    const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY ;
+    const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
     
     if (!apiKey) {
       throw new Error('Gemini API key is missing.');
     }
 
-    // Using official GoogleGenAI SDK to properly handle AQ. tokens and avoid 404 errors
     const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
 
     const response = await ai.models.generateContent({
@@ -313,6 +312,18 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
       resizeMode="cover"
     >
       <View style={styles.overlay}>
+        
+        {/* Top Header Bar containing the Help Button on the right */}
+        <View style={styles.topHeaderBar}>
+          <Text style={styles.topHeaderTitle}>AI Language Tutor</Text>
+          <TouchableOpacity 
+            style={styles.helpButton} 
+            onPress={() => alert('Help & Support: Type your queries or use voice input to practice conversation with your AI tutor.')}
+          >
+            <Text style={styles.helpButtonText}>❓ Help</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.chatArea}>
           <FlatList
             ref={flatListRef}
@@ -372,6 +383,35 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(10, 15, 14, 0.72)',
     flexDirection: 'column',
     width: '100%',
+  },
+  topHeaderBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    backgroundColor: 'rgba(17, 23, 21, 0.85)',
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#0A3B3D',
+  },
+  topHeaderTitle: {
+    color: '#E8B486',
+    fontSize: 18,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  helpButton: {
+    backgroundColor: 'rgba(23, 33, 30, 0.9)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#0A3B3D',
+  },
+  helpButtonText: {
+    color: '#E1F2EC',
+    fontSize: 15,
+    fontWeight: '600',
   },
   chatArea: {
     flex: 1,
