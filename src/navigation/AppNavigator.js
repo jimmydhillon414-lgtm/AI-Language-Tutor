@@ -2,15 +2,14 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Navbar from '../components/Navbar';
 import LoginScreen from '../screens/LoginScreen';
-import SignupScreen from '../screens/SignupScreen'; // Similar to Login with theme
-// Import other tabs like HomeScreen, AiTutorScreen, etc.
+// Agar Signup screen alag file me hai toh import kar le, warna niche inline ya placeholder use kar sakte hain
 
 export default function AppNavigator() {
   const [user, setUser] = useState(null); // null means not logged in
   const [activeTab, setActiveTab] = useState('Home');
 
   const handleLogin = async (email, password) => {
-    // Supabase auth login logic here
+    // Yahan apna login logic daal
     setUser({ email });
     setActiveTab('AI Tutor');
   };
@@ -22,15 +21,20 @@ export default function AppNavigator() {
 
   const renderContent = () => {
     if (!user) {
-      if (activeTab === 'Login') return <LoginScreen onLogin={handleLogin} onSwitchToSignup={() => setActiveTab('Signup')} />;
-      if (activeTab === 'Signup') return <SignupScreen onSwitchToLogin={() => setActiveTab('Login')} />;
+      if (activeTab === 'Login' || activeTab === 'Signup') {
+        return <LoginScreen onLogin={handleLogin} onSwitchToSignup={() => setActiveTab('Signup')} />;
+      }
     }
 
     switch (activeTab) {
-      case 'AI Tutor': return </* AiTutorComponent */ />;
-      case 'Grammar History': return </* GrammarHistoryComponent */ />;
-      case 'Profile Settings': return </* ProfileSettingsComponent */ />;
-      default: return </* HomeComponent */ />;
+      case 'AI Tutor': 
+        return <View style={styles.placeholderView} />; // Y apna <AiTutorScreen /> daal de
+      case 'Grammar History': 
+        return <View style={styles.placeholderView} />; // Y apna <GrammarHistoryScreen /> daal de
+      case 'Profile Settings': 
+        return <View style={styles.placeholderView} />; // Y apna <ProfileSettingsScreen /> daal de
+      default: 
+        return <View style={styles.placeholderView} />; // Y apna <HomeScreen /> daal de
     }
   };
 
@@ -56,5 +60,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  placeholderView: {
+    flex: 1,
+    backgroundColor: '#05070B',
   },
 });
