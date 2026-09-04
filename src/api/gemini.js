@@ -1,9 +1,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Replace 'YOUR_GEMINI_API_KEY_HERE' with your actual API key inside quotes
+// Environment variable se secure key load ho rahi hai
 const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 
-const genAI = new GoogleGenerativeAI(API_KEY);
+const genAI = new GoogleGenerativeAI(apiKey);
 
 export const getTutorResponse = async (userMessage, targetLanguage = 'English', level = 'Beginner') => {
   try {
