@@ -1,34 +1,34 @@
+// src/navigation/AppNavigator.js
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Navbar from '../components/Navbar';
 import LoginScreen from '../screens/LoginScreen';
 import AuthScreen from '../screens/AuthScreen';
 
-// Exact filenames from your screens folder
 import HomeScreen from '../screens/HomeScreen';
 import TutorChatScreen from '../screens/TutorChatScreen';
 import GrammarHistoryScreen from '../screens/GrammarHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 export default function AppNavigator() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState({ email: 'Creatorstack9@gmail.com' });
   const [activeTab, setActiveTab] = useState('Home');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
 
   const handleLogin = async (email, password) => {
-    setUser({ email });
+    setUser({ email: email || 'Creatorstack9@gmail.com' });
     setShowAuthModal(false);
-    setActiveTab('AI Tutor');
   };
 
   const handleSignOut = () => {
     setUser(null);
-    setActiveTab('Home');
+    setShowAuthModal(true);
+    setAuthMode('login');
   };
 
   const renderContent = () => {
-    if (showAuthModal) {
+    if (showAuthModal || !user) {
       if (authMode === 'signup') {
         return (
           <AuthScreen 
@@ -47,7 +47,7 @@ export default function AppNavigator() {
 
     switch (activeTab) {
       case 'Home':
-        return <HomeScreen setActiveTab={setActiveTab} setShowAuthModal={setShowAuthModal} setAuthMode={setAuthMode} />;
+        return <HomeScreen setActiveTab={setActiveTab} />;
       case 'AI Tutor':
         return <TutorChatScreen />;
       case 'Grammar History':
@@ -55,7 +55,7 @@ export default function AppNavigator() {
       case 'Profile Settings':
         return <ProfileScreen />;
       default:
-        return <HomeScreen setActiveTab={setActiveTab} setShowAuthModal={setShowAuthModal} setAuthMode={setAuthMode} />;
+        return <HomeScreen setActiveTab={setActiveTab} />;
     }
   };
 
@@ -64,10 +64,7 @@ export default function AppNavigator() {
       <Navbar 
         user={user} 
         activeTab={activeTab} 
-        setActiveTab={(tab) => {
-          setShowAuthModal(false);
-          setActiveTab(tab);
-        }} 
+        setActiveTab={setActiveTab} 
         onSignOut={handleSignOut}
         onOpenLogin={() => {
           setAuthMode('login');
@@ -88,7 +85,7 @@ export default function AppNavigator() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#05070B',
+    backgroundColor: '#070D10',
   },
   content: {
     flex: 1,
