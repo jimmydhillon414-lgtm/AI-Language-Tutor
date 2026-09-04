@@ -4,21 +4,22 @@ import Navbar from '../components/Navbar';
 import LoginScreen from '../screens/LoginScreen';
 import AuthScreen from '../screens/AuthScreen';
 
+// Exact screens
 import HomeScreen from '../screens/HomeScreen';
 import TutorChatScreen from '../screens/TutorChatScreen';
 import GrammarHistoryScreen from '../screens/GrammarHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 export default function AppNavigator() {
-  const [user, setUser] = useState(null); // Default logged out so Login & Sign Up show
+  const [user, setUser] = useState(null); // Initially null, so Home opens first
   const [activeTab, setActiveTab] = useState('Home');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
 
-  const handleLogin = async (email, password) => {
+  const handleLogin = (email) => {
     setUser({ email: email || 'Creatorstack9@gmail.com' });
     setShowAuthModal(false);
-    setActiveTab('AI Tutor');
+    setActiveTab('Home'); // Once logged in, go to user's personal home
   };
 
   const handleSignOut = () => {
@@ -27,6 +28,7 @@ export default function AppNavigator() {
   };
 
   const renderContent = () => {
+    // If login/signup modal is triggered
     if (showAuthModal) {
       if (authMode === 'signup') {
         return (
@@ -44,27 +46,18 @@ export default function AppNavigator() {
       );
     }
 
+    // Render based on active tab
     switch (activeTab) {
       case 'Home':
-        return <HomeScreen setActiveTab={(tab) => {
-          if (tab === 'AI Tutor' && !user) {
-            setAuthMode('login');
-            setShowAuthModal(true);
-          } else {
-            setActiveTab(tab);
-          }
-        }} />;
+        return <HomeScreen setActiveTab={setActiveTab} user={user} />;
       case 'AI Tutor':
-        if (!user) return <LoginScreen onLogin={handleLogin} onSwitchToSignup={() => setAuthMode('signup')} />;
         return <TutorChatScreen />;
       case 'Grammar History':
-        if (!user) return <LoginScreen onLogin={handleLogin} onSwitchToSignup={() => setAuthMode('signup')} />;
         return <GrammarHistoryScreen />;
       case 'Profile Settings':
-        if (!user) return <LoginScreen onLogin={handleLogin} onSwitchToSignup={() => setAuthMode('signup')} />;
-        return <ProfileScreen />;
+        return <ProfileScreen user={user} onSignOut={handleSignOut} />;
       default:
-        return <HomeScreen setActiveTab={setActiveTab} />;
+        return <HomeScreen setActiveTab={setActiveTab} user={user} />;
     }
   };
 
@@ -73,16 +66,7 @@ export default function AppNavigator() {
       <Navbar 
         user={user} 
         activeTab={activeTab} 
-        setActiveTab={(tab) => {
-          if ((tab === 'AI Tutor' || tab === 'Grammar History' || tab === 'Profile Settings') && !user) {
-            setAuthMode('login');
-            setShowAuthModal(true);
-          } else {
-            setShowAuthModal(false);
-            setActiveTab(tab);
-          }
-        }} 
-        onSignOut={handleSignOut}
+        setActiveTab={setActiveTab} 
         onOpenLogin={() => {
           setAuthMode('login');
           setShowAuthModal(true);
