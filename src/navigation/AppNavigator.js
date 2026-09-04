@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Navbar from '../components/Navbar';
 import LoginScreen from '../screens/LoginScreen';
-import SignupScreen from '../screens/SignupScreen'; // Make sure signup screen is imported if needed
+import AuthScreen from '../screens/AuthScreen';
 
 // Exact filenames from your screens folder
 import HomeScreen from '../screens/HomeScreen';
@@ -13,7 +13,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 export default function AppNavigator() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('Home');
-  const [showAuthModal, setShowAuthModal] = useState(false); // Controls login view trigger
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
 
   const handleLogin = async (email, password) => {
@@ -28,23 +28,21 @@ export default function AppNavigator() {
   };
 
   const renderContent = () => {
-    // Agar user ne login button dabaya hai tabhi login/signup screen dikhegi, warna default Home page dikhega
     if (showAuthModal) {
-      if (authMode === 'login') {
+      if (authMode === 'signup') {
         return (
-          <LoginScreen 
-            onLogin={handleLogin} 
-            onSwitchToSignup={() => setAuthMode('signup')} 
-          />
-        );
-      } else {
-        return (
-          <SignupScreen 
-            onSignup={handleLogin} 
+          <AuthScreen 
+            onAuthSuccess={handleLogin} 
             onSwitchToLogin={() => setAuthMode('login')} 
           />
         );
       }
+      return (
+        <LoginScreen 
+          onLogin={handleLogin} 
+          onSwitchToSignup={() => setAuthMode('signup')} 
+        />
+      );
     }
 
     switch (activeTab) {
@@ -67,7 +65,7 @@ export default function AppNavigator() {
         user={user} 
         activeTab={activeTab} 
         setActiveTab={(tab) => {
-          setShowAuthModal(false); // Navbar tab dabane par auth screen band ho jayegi
+          setShowAuthModal(false);
           setActiveTab(tab);
         }} 
         onSignOut={handleSignOut}
