@@ -1,83 +1,60 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import Navbar from '../components/Navbar';
+import LoginScreen from '../screens/LoginScreen';
+import SignupScreen from '../screens/SignupScreen'; // Similar to Login with theme
+// Import other tabs like HomeScreen, AiTutorScreen, etc.
 
-export default function Navbar({ user, activeTab, setActiveTab, onSignOut }) {
+export default function AppNavigator() {
+  const [user, setUser] = useState(null); // null means not logged in
+  const [activeTab, setActiveTab] = useState('Home');
+
+  const handleLogin = async (email, password) => {
+    // Supabase auth login logic here
+    setUser({ email });
+    setActiveTab('AI Tutor');
+  };
+
+  const handleSignOut = () => {
+    setUser(null);
+    setActiveTab('Home');
+  };
+
+  const renderContent = () => {
+    if (!user) {
+      if (activeTab === 'Login') return <LoginScreen onLogin={handleLogin} onSwitchToSignup={() => setActiveTab('Signup')} />;
+      if (activeTab === 'Signup') return <SignupScreen onSwitchToLogin={() => setActiveTab('Login')} />;
+    }
+
+    switch (activeTab) {
+      case 'AI Tutor': return </* AiTutorComponent */ />;
+      case 'Grammar History': return </* GrammarHistoryComponent */ />;
+      case 'Profile Settings': return </* ProfileSettingsComponent */ />;
+      default: return </* HomeComponent */ />;
+    }
+  };
+
   return (
-    <View style={styles.navContainer}>
-      <View style={styles.navLinks}>
-        <TouchableOpacity onPress={() => setActiveTab('Home')}>
-          <Text style={[styles.navText, activeTab === 'Home' && styles.activeText]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('AI Tutor')}>
-          <Text style={[styles.navText, activeTab === 'AI Tutor' && styles.activeText]}>AI Tutor</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('Grammar History')}>
-          <Text style={[styles.navText, activeTab === 'Grammar History' && styles.activeText]}>Grammar History</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('Profile Settings')}>
-          <Text style={[styles.navText, activeTab === 'Profile Settings' && styles.activeText]}>Profile Settings</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.authContainer}>
-        {user ? (
-          <TouchableOpacity style={styles.authButton} onPress={onSignOut}>
-            <Text style={styles.authButtonText}>Sign Out</Text>
-          </TouchableOpacity>
-        ) : (
-          <>
-            <TouchableOpacity style={styles.authButton} onPress={() => setActiveTab('Login')}>
-              <Text style={styles.authButtonText}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.authButton, styles.signupBtn]} onPress={() => setActiveTab('Signup')}>
-              <Text style={styles.authButtonText}>Sign Up</Text>
-            </TouchableOpacity>
-          </>
-        )}
+    <View style={styles.container}>
+      <Navbar 
+        user={user} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        onSignOut={handleSignOut} 
+      />
+      <View style={styles.content}>
+        {renderContent()}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  navContainer: {
-    height: 60,
-    backgroundColor: '#0F172A',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+  container: {
+    flex: 1,
+    backgroundColor: '#05070B',
   },
-  navLinks: {
-    flexDirection: 'row',
-    gap: 20,
-  },
-  navText: {
-    color: '#94A3B8',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  activeText: {
-    color: '#38BDF8',
-    fontWeight: '700',
-  },
-  authContainer: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  authButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#1E293B',
-    borderRadius: 6,
-  },
-  signupBtn: {
-    backgroundColor: '#3B82F6',
-  },
-  authButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+  content: {
+    flex: 1,
   },
 });
