@@ -1,93 +1,209 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import { supabase } from '../api/supabase';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+  ImageBackground,
+} from 'react-native';
 
-export default function AuthScreen() {
+export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  async function handleAuth() {
-    setStatusMessage('');
+  const handleSignup = () => {
     if (!email || !password) {
-      setStatusMessage('Please enter email and password.');
+      alert('Please fill in all fields');
       return;
     }
-
-    setLoading(true);
-    try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) setStatusMessage(error.message);
-        else setStatusMessage('Account created! Logging in...');
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) setStatusMessage(error.message);
-      }
-    } catch (err) {
-      setStatusMessage(err.message || 'Authentication failed');
-    } finally {
-      setLoading(false);
+    if (password !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
     }
-  }
+    onAuthSuccess(email);
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{isSignUp ? 'Create Account' : 'Welcome Back'}</Text>
-      
-      {statusMessage ? <Text style={styles.statusText}>{statusMessage}</Text> : null}
+    <ImageBackground 
+      source={{ uri: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop' }} 
+      style={styles.container}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <View style={styles.card}>
+          <Text style={styles.title}>Create Account</Text>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email Address</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              placeholderTextColor="#8FA39D"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+            />
+          </View>
 
-      <Text style={styles.label}>Email Address</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="name@example.com"
-        placeholderTextColor="#64748b"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your password"
-        placeholderTextColor="#64748b"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Create a password"
+                placeholderTextColor="#8FA39D"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity 
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeBtn}
+              >
+                <Text style={styles.eyeText}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleAuth} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>{isSignUp ? 'Sign Up' : 'Log In'}</Text>
-        )}
-      </TouchableOpacity>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Confirm Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm your password"
+              placeholderTextColor="#8FA39D"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!showPassword}
+            />
+          </View>
 
-      <TouchableOpacity 
-        onPress={() => { setIsSignUp(!isSignUp); setStatusMessage(''); }} 
-        style={styles.switchBtn}
-      >
-        <Text style={styles.switchText}>
-          {isSignUp ? 'Already have an account? Log In' : "Don't have an account? Sign Up"}
-        </Text>
-      </TouchableOpacity>
-    </View>
+          <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
+            <Text style={styles.signupButtonText}>Sign Up</Text>
+          </TouchableOpacity>
+
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={onSwitchToLogin}>
+              <Text style={styles.loginLink}>Login</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0b0f19', justifyContent: 'center', padding: 24 },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#fff', marginBottom: 24, textAlign: 'center' },
-  label: { color: '#94a3b8', fontSize: 14, marginBottom: 6 },
-  statusText: { color: '#818cf8', backgroundColor: '#1e1b4b', padding: 12, borderRadius: 8, marginBottom: 16, textAlign: 'center' },
-  input: { backgroundColor: '#1e293b', color: '#fff', padding: 14, borderRadius: 8, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  button: { backgroundColor: '#6366f1', padding: 16, borderRadius: 8, marginTop: 8, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  switchBtn: { marginTop: 20, alignment: 'center' },
-  switchText: { color: '#818cf8', textAlign: 'center', fontSize: 14 },
+  container: { 
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    ...(Platform.OS === 'web' ? {
+      height: 'calc(100vh - 56px)',
+      maxHeight: 'calc(100vh - 56px)',
+    } : {}),
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 15, 14, 0.78)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  card: {
+    backgroundColor: 'rgba(17, 23, 21, 0.92)',
+    borderWidth: 1.5,
+    borderColor: '#0A3B3D',
+    borderRadius: 24,
+    padding: 32,
+    width: '100%',
+    maxWidth: 450,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+  },
+  title: {
+    color: '#FFCB9A',
+    fontSize: 26,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 24,
+    letterSpacing: 1,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    color: '#E8B486',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  input: {
+    backgroundColor: 'rgba(23, 33, 30, 0.9)',
+    color: '#E1F2EC',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#0A3B3D',
+    fontSize: 16,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(23, 33, 30, 0.9)',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#0A3B3D',
+  },
+  passwordInput: {
+    flex: 1,
+    color: '#E1F2EC',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    fontSize: 16,
+  },
+  eyeBtn: {
+    paddingHorizontal: 14,
+  },
+  eyeText: {
+    fontSize: 18,
+  },
+  signupButton: {
+    backgroundColor: '#C29B72',
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 18,
+    shadowColor: '#C29B72',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  signupButtonText: {
+    color: '#111715',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerText: {
+    color: '#8FA39D',
+    fontSize: 14,
+  },
+  loginLink: {
+    color: '#FFCB9A',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
 });
