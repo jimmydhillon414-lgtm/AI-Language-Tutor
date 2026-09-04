@@ -2,23 +2,21 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Navbar from '../components/Navbar';
 import LoginScreen from '../screens/LoginScreen';
-import SignupScreen from '../screens/SignupScreen';
 
-// Tere purane original screens yahan import ho rahe hain (agar folder ka naam alag ho toh path check kar lena)
+// Exact filenames from your screens folder
 import HomeScreen from '../screens/HomeScreen';
-import AiTutorScreen from '../screens/AiTutorScreen';
+import TutorChatScreen from '../screens/TutorChatScreen';
 import GrammarHistoryScreen from '../screens/GrammarHistoryScreen';
-import ProfileSettingsScreen from '../screens/ProfileSettingsScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 export default function AppNavigator() {
-  const [user, setUser] = useState(null); // null means not logged in
+  const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('Home');
-  const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  const [authMode, setAuthMode] = useState('login');
 
   const handleLogin = async (email, password) => {
-    // Yahan tera login successful hone ke baad user set hota hai
     setUser({ email });
-    setActiveTab('AI Tutor'); // Login ke baad seedha AI Tutor page khulega
+    setActiveTab('AI Tutor');
   };
 
   const handleSignOut = () => {
@@ -27,24 +25,19 @@ export default function AppNavigator() {
   };
 
   const renderContent = () => {
-    // Agar user logged-in nahi hai, toh Login ya Signup page dikhega
     if (!user) {
-      if (authMode === 'signup') {
-        return <SignupScreen onSwitchToLogin={() => setAuthMode('login')} />;
-      }
       return <LoginScreen onLogin={handleLogin} onSwitchToSignup={() => setAuthMode('signup')} />;
     }
 
-    // Jab user logged-in hai, toh Navbar ke tabs ke hisaab se original screens khulenge
     switch (activeTab) {
       case 'Home':
         return <HomeScreen />;
       case 'AI Tutor':
-        return <AiTutorScreen />;
+        return <TutorChatScreen />;
       case 'Grammar History':
         return <GrammarHistoryScreen />;
       case 'Profile Settings':
-        return <ProfileSettingsScreen />;
+        return <ProfileScreen />;
       default:
         return <HomeScreen />;
     }
