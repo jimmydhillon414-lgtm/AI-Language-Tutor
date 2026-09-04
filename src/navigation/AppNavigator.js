@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Navbar from '../components/Navbar';
 import LoginScreen from '../screens/LoginScreen';
+import SignupScreen from '../screens/SignupScreen'; // Make sure signup screen is imported if needed
 
 // Exact filenames from your screens folder
 import HomeScreen from '../screens/HomeScreen';
@@ -12,10 +13,12 @@ import ProfileScreen from '../screens/ProfileScreen';
 export default function AppNavigator() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('Home');
+  const [showAuthModal, setShowAuthModal] = useState(false); // Controls login view trigger
   const [authMode, setAuthMode] = useState('login');
 
   const handleLogin = async (email, password) => {
     setUser({ email });
+    setShowAuthModal(false);
     setActiveTab('AI Tutor');
   };
 
@@ -25,13 +28,28 @@ export default function AppNavigator() {
   };
 
   const renderContent = () => {
-    if (!user) {
-      return <LoginScreen onLogin={handleLogin} onSwitchToSignup={() => setAuthMode('signup')} />;
+    // Agar user ne login button dabaya hai tabhi login/signup screen dikhegi, warna default Home page dikhega
+    if (showAuthModal) {
+      if (authMode === 'login') {
+        return (
+          <LoginScreen 
+            onLogin={handleLogin} 
+            onSwitchToSignup={() => setAuthMode('signup')} 
+          />
+        );
+      } else {
+        return (
+          <SignupScreen 
+            onSignup={handleLogin} 
+            onSwitchToLogin={() => setAuthMode('login')} 
+          />
+        );
+      }
     }
 
     switch (activeTab) {
       case 'Home':
-        return <HomeScreen />;
+        return <HomeScreen setActiveTab={setActiveTab} setShowAuthModal={setShowAuthModal} setAuthMode={setAuthMode} />;
       case 'AI Tutor':
         return <TutorChatScreen />;
       case 'Grammar History':
@@ -39,7 +57,7 @@ export default function AppNavigator() {
       case 'Profile Settings':
         return <ProfileScreen />;
       default:
-        return <HomeScreen />;
+        return <HomeScreen setActiveTab={setActiveTab} setShowAuthModal={setShowAuthModal} setAuthMode={setAuthMode} />;
     }
   };
 
@@ -48,8 +66,19 @@ export default function AppNavigator() {
       <Navbar 
         user={user} 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        onSignOut={handleSignOut} 
+        setActiveTab={(tab) => {
+          setShowAuthModal(false); // Navbar tab dabane par auth screen band ho jayegi
+          setActiveTab(tab);
+        }} 
+        onSignOut={handleSignOut}
+        onOpenLogin={() => {
+          setAuthMode('login');
+          setShowAuthModal(true);
+        }}
+        onOpenSignup={() => {
+          setAuthMode('signup');
+          setShowAuthModal(true);
+        }}
       />
       <View style={styles.content}>
         {renderContent()}
