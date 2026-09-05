@@ -173,8 +173,11 @@ export default function TutorChatScreen({ navigation }) {
         message: userText,
       });
 
-      const prompt = `You are an expert English language tutor. The user is asking: "${userText}".
-Answer their question directly and helpfully as a tutor. Also check if their English has any mistakes.
+      const targetLang = userProfile?.target_language || 'English';
+      const proficiency = userProfile?.proficiency_level || 'Beginner';
+
+      const prompt = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level student. The user says: "${userText}".
+Answer their question directly and helpfully. Check if their text has any mistakes based on ${targetLang}.
 
 You MUST reply ONLY with a valid JSON object in this exact format (no markdown code blocks, just raw JSON text):
 {
@@ -429,12 +432,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
-  // --- Updated compact bubble styling below ---
   bubble: {
     padding: 14, 
     borderRadius: 16, 
     marginBottom: 12, 
-    maxWidth: '70%', // Box width controlled nicely
+    maxWidth: '70%', 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.4,
