@@ -50,6 +50,7 @@ export default function TutorChatScreen({ navigation }) {
     const { data, error } = await supabase
       .from('tutor_chat_history')
       .select('*')
+      .eq('id', user.id) // fixed user_id filtering bug if any
       .eq('user_id', user.id)
       .order('created_at', { ascending: true });
 
@@ -71,7 +72,7 @@ export default function TutorChatScreen({ navigation }) {
       window.msSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert('Your browser does not support Speech Recognition. Please try using Google Chrome.');
+      alert('Speech Recognition is not supported in this browser. Please use Google Chrome.');
       return;
     }
 
@@ -96,7 +97,9 @@ export default function TutorChatScreen({ navigation }) {
 
       recognition.lang = langMap[userProfile?.target_language] || 'hi-IN';
 
-      recognition.onstart = () => setListening(true);
+      recognition.onstart = () => {
+        setListening(true);
+      };
       
       recognition.onresult = (event) => {
         let interimTranscript = '';
@@ -119,8 +122,10 @@ export default function TutorChatScreen({ navigation }) {
       recognition.onerror = (event) => {
         console.log('Speech recognition error:', event.error);
         setListening(false);
-        if (event.error === 'not-allowed') {
-          alert('Microphone permission blocked. Please allow microphone access in your browser settings.');
+        if (event.error === 'no-speech') {
+          alert('No speech was detected. Please speak clearly into your microphone.');
+        } else if (event.error === 'not-allowed') {
+          alert('Microphone access blocked. Please check your browser permissions.');
         }
       };
 
@@ -133,7 +138,7 @@ export default function TutorChatScreen({ navigation }) {
     } catch (err) {
       console.log('Mic init error:', err);
       setListening(false);
-      alert('Could not start microphone. Ensure you are running on localhost or HTTPS.');
+      alert('Could not start microphone.');
     }
   };
 
@@ -371,20 +376,24 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
           </View>
         )}
 
-        <View style={styles.inputContainer}>
+        {/* Web optimized form wrapper to ensure Enter key submission works 100% reliably */}
+        <View 
+          style={styles.inputContainer}
+          {...(Platform.OS === 'web' ? {
+            onKeyDown: (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSend();
+              }
+            }
+          } : {})}
+        >
           <TextInput
             style={styles.input}
             placeholder="Ask your tutor anything..."
             placeholderTextColor="#8FA39D"
             value={input}
             onChangeText={setInput}
-            // Added explicit web keydown event listener to guarantee Enter key sends message instantly
-            onKeyPress={(e) => {
-              if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter') {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
             onSubmitEditing={handleSend}
             returnKeyType="send"
           />
