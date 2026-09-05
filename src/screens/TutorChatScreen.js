@@ -85,7 +85,7 @@ export default function TutorChatScreen({ navigation }) {
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false; // Changed to false to prevent erratic clearing loops on web
+      recognition.continuous = false;
       recognition.interimResults = true;
 
       const langMap = {
@@ -166,7 +166,7 @@ export default function TutorChatScreen({ navigation }) {
   }
 
   async function handleSend() {
-    if (!input.trim() || !userId) return;
+    if (!input || !input.trim() || !userId) return;
 
     if (listening && recognitionRef.current) {
       try {
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   micButtonActive: { backgroundColor: '#0A3B3D', borderColor: '#8C6E52' },
   micText: { fontSize: 20 }, 
   sendButton: { 
-    backgroundColor: 'C29B72', 
+    backgroundColor: '#C29B72', // Fix applied here (# added back)
     justifyContent: 'center', 
     alignItems: 'center',
     paddingHorizontal: 22, 
