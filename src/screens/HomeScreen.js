@@ -33,7 +33,7 @@ export default function HomeScreen({ navigation }) {
               style={styles.navButton} 
               onPress={() => alert('Login modal/screen coming soon')}
             >
-              <Text style={styles.navButtonText}></Text>
+              <Text style={styles.navButtonText}>hiiii</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.navButton, styles.signUpButton]} 
