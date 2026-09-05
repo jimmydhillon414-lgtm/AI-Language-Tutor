@@ -22,38 +22,38 @@ export default function AppNavigator() {
     setActiveTab('AI Tutor'); // Default open tab after login
   };
 
-  const handleSignOut = () => {
-    setUser(null);
-  };
+  // const handleSignOut = () => {
+  //   setUser(null);
+  // };
 
-  const renderContent = () => {
-    // If login or signup screen is active
-    if (showAuthModal) {
-      if (authMode === 'signup') {
-        return (
-          <AuthScreen 
-            onAuthSuccess={handleLoginSuccess} 
-            onSwitchToLogin={() => setAuthMode('login')} 
-          />
-        );
-      }
-      return (
-        <LoginScreen 
-          onLogin={handleLoginSuccess} 
-          onSwitchToSignup={() => setAuthMode('signup')} 
-        />
-      );
-    }
+  // const renderContent = () => {
+  //   // If login or signup screen is active
+  //   if (showAuthModal) {
+  //     if (authMode === 'signup') {
+  //       return (
+  //         <AuthScreen 
+  //           onAuthSuccess={handleLoginSuccess} 
+  //           onSwitchToLogin={() => setAuthMode('login')} 
+  //         />
+  //       );
+  //     }
+  //     return (
+  //       <LoginScreen 
+  //         onLogin={handleLoginSuccess} 
+  //         onSwitchToSignup={() => setAuthMode('signup')} 
+  //       />
+  //     );
+  //   }
 
-    // If user is NOT logged in, always show HomeScreen
-    if (!user) {
-      return (
-        <HomeScreen 
-          onOpenLogin={() => { setAuthMode('login'); setShowAuthModal(true); }} 
-          onOpenSignup={() => { setAuthMode('signup'); setShowAuthModal(true); }} 
-        />
-      );
-    }
+  //   // If user is NOT logged in, always show HomeScreen
+  //   if (!user) {
+  //     return (
+  //       <HomeScreen 
+  //         onOpenLogin={() => { setAuthMode('login'); setShowAuthModal(true); }} 
+  //         onOpenSignup={() => { setAuthMode('signup'); setShowAuthModal(true); }} 
+  //       />
+  //     );
+  //   }
 
     // If user IS logged in, show respective tabs
     switch (activeTab) {
