@@ -23,7 +23,7 @@ export default function HomeScreen({ navigation }) {
       style={styles.container}
       resizeMode="cover"
     >
-      <View style={styles.overlay}>
+      //<View style={styles.overlay}>
         
         {/* Single Consolidated Header */}
         // <View style={styles.topHeaderBar}>
