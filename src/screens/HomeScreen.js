@@ -25,26 +25,26 @@ export default function HomeScreen({ navigation }) {
     >
       <View style={styles.overlay}>
         
-        // {/* Single Consolidated Header */}
-        // <View style={styles.topHeaderBar}>
-        //   <Text style={styles.topHeaderTitle}>SIRIN LABS</Text>
-        //   <View style={styles.headerRight}>
-        //     <TouchableOpacity 
-        //       style={styles.navButton} 
-        //       onPress={() => alert('Login modal/screen coming soon')}
-        //     >
-        //       <Text style={styles.navButtonText}>Login</Text>
-        //     </TouchableOpacity>
-        //     <TouchableOpacity 
-        //       style={[styles.navButton, styles.signUpButton]} 
-        //       onPress={() => alert('Sign Up modal/screen coming soon')}
-        //     >
-        //       <Text style={[styles.navButtonText, styles.signUpText]}>Sign Up</Text>
-        //     </TouchableOpacity>
-        //   </View>
-        // </View>
+        {/* Single Consolidated Header */}
+        <View style={styles.topHeaderBar}>
+          <Text style={styles.topHeaderTitle}></Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => alert('Login modal/screen coming soon')}
+            >
+              <Text style={styles.navButtonText}></Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.navButton, styles.signUpButton]} 
+              onPress={() => alert('Sign Up modal/screen coming soon')}
+            >
+              <Text style={[styles.navButtonText, styles.signUpText]}></Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-       // <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           
           {/* Hero Section */}
           <View style={styles.heroSection}>
