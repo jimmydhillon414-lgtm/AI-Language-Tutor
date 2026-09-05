@@ -22,30 +22,11 @@ export default function HomeScreen({ navigation }) {
       source={{ uri: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop' }} 
       style={styles.container}
       resizeMode="cover"
-    // >
-      //<View style={styles.overlay}>
-        
-        {/* Single Consolidated Header */}
-        // <View style={styles.topHeaderBar}>
-        //   <Text style={styles.topHeaderTitle}></Text>
-        //   <View style={styles.headerRight}>
-        //     <TouchableOpacity 
-        //       style={styles.navButton} 
-        //       onPress={() => alert('Login modal/screen coming soon')}
-        //     >
-        //       <Text style={styles.navButtonText}>hiiii</Text>
-        //     </TouchableOpacity>
-        //     <TouchableOpacity 
-        //       style={[styles.navButton, styles.signUpButton]} 
-        //       onPress={() => alert('Sign Up modal/screen coming soon')}
-        //     >
-        //       <Text style={[styles.navButtonText, styles.signUpText]}></Text>
-        //     </TouchableOpacity>
-        //   </View>
-        // </View>
-
+     >
+      <View style={styles.overlay}>
+         
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-          
+         
           {/* Hero Section */}
           <View style={styles.heroSection}>
             <Text style={styles.heroBadge}>✨ AI-Powered Language Mastery</Text>
@@ -113,49 +94,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(10, 15, 14, 0.85)',
     flexDirection: 'column',
     width: '100%',
-  },
-  topHeaderBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    backgroundColor: 'rgba(17, 23, 21, 0.95)',
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#0A3B3D',
-    width: '100%',
-  },
-  topHeaderTitle: {
-    color: '#E8B486',
-    fontSize: 20,
-    fontWeight: 'bold',
-    letterSpacing: 1.5,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  navButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 10,
-    marginLeft: 10,
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D',
-    backgroundColor: 'rgba(23, 33, 30, 0.9)',
-  },
-  navButtonText: {
-    color: '#E1F2EC',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  signUpButton: {
-    backgroundColor: '#C29B72',
-    borderColor: '#C29B72',
-  },
-  signUpText: {
-    color: '#111715',
-    fontWeight: 'bold',
   },
   scrollContainer: {
     padding: 24,
