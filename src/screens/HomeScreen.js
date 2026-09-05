@@ -9,14 +9,12 @@ import {
   ActivityIndicator,
   Platform,
   ImageBackground,
-  ScrollView,
 } from 'react-native';
 import * as Speech from 'expo-speech';
 import { supabase } from '../api/supabase';
 import { GoogleGenAI } from '@google/genai';
 
 export default function TutorChatScreen({ navigation }) {
-  const [currentView, setCurrentView] = useState('home'); // 'home' or 'chat'
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -85,13 +83,16 @@ export default function TutorChatScreen({ navigation }) {
       recognition.continuous = true;
       recognition.interimResults = true;
 
+      // International Audience Language Map (Top 5 Languages)
       const langMap = {
-        English: 'en-IN',
-        Punjabi: 'pa-IN',
-        Hindi: 'hi-IN',
+        English: 'en-US',
+        Spanish: 'es-ES',
+        French: 'fr-FR',
+        German: 'de-DE',
+        Mandarin: 'zh-CN',
       };
 
-      recognition.lang = langMap[userProfile?.target_language] || 'hi-IN';
+      recognition.lang = langMap[userProfile?.target_language] || 'en-US';
 
       recognition.onstart = () => setListening(true);
       recognition.onresult = (event) => {
@@ -121,8 +122,17 @@ export default function TutorChatScreen({ navigation }) {
     }
     Speech.stop();
     setSpeakingId(messageId);
+    
+    const speechLangMap = {
+      English: 'en-US',
+      Spanish: 'es-ES',
+      French: 'fr-FR',
+      German: 'de-DE',
+      Mandarin: 'zh-CN',
+    };
+
     Speech.speak(text, {
-      language: 'en-US',
+      language: speechLangMap[userProfile?.target_language] || 'en-US',
       onDone: () => setSpeakingId(null),
       onError: () => setSpeakingId(null),
     });
@@ -130,14 +140,18 @@ export default function TutorChatScreen({ navigation }) {
 
   async function getAiResponse(promptText) {
     const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+    
     if (!apiKey) {
       throw new Error('Gemini API key is missing.');
     }
+
     const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
+
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',
       contents: promptText,
     });
+
     return response.text.trim();
   }
 
@@ -171,8 +185,11 @@ export default function TutorChatScreen({ navigation }) {
         message: userText,
       });
 
-      const prompt = `You are an expert English and multilingual AI language tutor. The user is asking: "${userText}".
-Answer their question directly and helpfully as a tutor. Also check if their sentence has any grammatical mistakes.
+      const targetLang = userProfile?.target_language || 'English';
+      const proficiency = userProfile?.proficiency_level || 'Beginner';
+
+      const prompt = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level international student. The user says: "${userText}".
+Answer their question directly and helpfully in ${targetLang} (with English support if needed for explanation). Check if their text has any grammatical mistakes.
 
 You MUST reply ONLY with a valid JSON object in this exact format (no markdown code blocks, just raw JSON text):
 {
@@ -274,7 +291,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
     return (
       <View style={[styles.bubble, styles.aiBubble]}>
         <View style={styles.aiHeader}>
-          <Text style={styles.senderLabel}>AI Tutor</Text>
+          <Text style={styles.senderLabel}>AI Tutor ({userProfile?.target_language || 'English'})</Text>
           <TouchableOpacity 
             onPress={() => speakText(textToSpeak, item.id)} 
             style={styles.speakerBtn}
@@ -287,7 +304,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
 
         {parsedData.hasCorrection && (
           <View style={styles.correctionContainer}>
-            <Text style={styles.correctionTitle}>💡 Grammar / Translation Tip</Text>
+            <Text style={styles.correctionTitle}>💡 Grammar Correction Tip</Text>
             <Text style={styles.correctionOriginal}>❌ {parsedData.originalText || item.message}</Text>
             {parsedData.correctedText ? (
               <Text style={styles.correctionFixed}>✅ {parsedData.correctedText}</Text>
@@ -303,160 +320,6 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
     );
   };
 
-  // --- RENDER HOME DASHBOARD VIEW (Matching precise dark layout requested) ---
-  if (currentView === 'home') {
-    return (
-      <ImageBackground 
-        source={{ uri: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop' }} 
-        style={styles.container}
-        resizeMode="cover"
-      >
-        <View style={styles.overlay}>
-          {/* Top Navbar */}
-          <View style={styles.topHeaderBar}>
-            <Text style={styles.topHeaderTitle}>SIRIN LABS</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <TouchableOpacity 
-                style={styles.navAuthBtn} 
-                onPress={() => alert('Login Screen')}
-              >
-                <Text style={styles.navAuthText}>Login</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.navSignUpBtn} 
-                onPress={() => alert('Sign Up Screen')}
-              >
-                <Text style={styles.navSignUpText}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <ScrollView contentContainerStyle={styles.homeScrollContent}>
-            {/* Welcome Banner */}
-            <Text style={styles.welcomeHeading}>Welcome Back, Creatorstack9@gmail.com!</Text>
-            
-            <TouchableOpacity 
-              style={styles.resumeButton}
-              onPress={() => setCurrentView('chat')}
-            >
-              <Text style={styles.resumeButtonText}>Resume My Last Lesson</Text>
-            </TouchableOpacity>
-
-            {/* Progress & Feature Cards Row */}
-            <View style={styles.homeCardsGrid}>
-              <View style={styles.dashboardCard}>
-                <Text style={styles.cardLabel}>Lessons Completed</Text>
-                <Text style={styles.cardValueLarge}>35/50</Text>
-                <View style={styles.progressBarBg}>
-                  <View style={[styles.progressBarFill, { width: '70%' }]} />
-                </View>
-              </View>
-
-              <View style={styles.dashboardCard}>
-                <Text style={styles.cardLabel}>Current Streak</Text>
-                <Text style={styles.cardValueLarge}>🔥 7 Days</Text>
-              </View>
-
-              <View style={styles.dashboardCard}>
-                <Text style={styles.cardLabel}>Accuracy Score</Text>
-                <Text style={styles.cardValueLarge}>92%</Text>
-              </View>
-
-              <TouchableOpacity style={styles.featureMiniCard} onPress={() => setCurrentView('chat')}>
-                <Text style={styles.featureCardTitle}>✏️ 24/7 AI Grammar Tutor</Text>
-                <Text style={styles.featureCardDesc}>Instant feedback on your writing.</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.featureMiniCard} onPress={() => setCurrentView('chat')}>
-                <Text style={styles.featureCardTitle}>📖 Vocabulary Builder</Text>
-                <Text style={styles.featureCardDesc}>Expand your word bank.</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.featureMiniCard} onPress={() => setCurrentView('chat')}>
-                <Text style={styles.featureCardTitle}>📊 Writing History & Analysis</Text>
-                <Text style={styles.featureCardDesc}>Track your progress over time.</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.featureMiniCard} onPress={() => setCurrentView('chat')}>
-                <Text style={styles.featureCardTitle}>🌍 Contextual Examples</Text>
-                <Text style={styles.featureCardDesc}>Learn in real context.</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Bottom Section: Recent Activity & Quick Start */}
-            <View style={styles.bottomSectionRow}>
-              <View style={styles.recentActivityBox}>
-                <Text style={styles.sectionHeaderTitle}>Recent Activity Feed</Text>
-                <Text style={styles.activityItemText}>1. The sare your team is essied to grammar exercises. <Text style={styles.activityTime}>1 days ago</Text></Text>
-                <Text style={styles.activityItemText}>2. You use the tsit grammer exercises. <Text style={styles.activityTime}>1 days ago</Text></Text>
-                <Text style={styles.activityItemText}>3. Fhe wihy sransories don't head et .utoor exerclo this. <Text style={styles.activityTime}>1 days ago</Text></Text>
-              </View>
-
-              <TouchableOpacity 
-                style={styles.quickStartBox}
-                onPress={() => setCurrentView('chat')}
-              >
-                <Text style={styles.sectionHeaderTitle}>Quick Start Tutor</Text>
-                <Text style={styles.quickStartDesc}>Start a quick grammar check instantly with AI.</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Recommended Plans / Language Subscriptions Section (Strictly Language Tutor Focused) */}
-            <View style={styles.plansSectionContainer}>
-              <Text style={styles.plansMainTitle}>Recommended Language Learning Plans</Text>
-              <Text style={styles.plansSubTitle}>Choose tailored AI tutor subscriptions based on your preferred target language.</Text>
-
-              <View style={styles.plansGrid}>
-                <View style={styles.planCard}>
-                  <Text style={styles.planBadge}>Most Popular</Text>
-                  <Text style={styles.planLangName}>🇬🇧 English Master Pro</Text>
-                  <Text style={styles.planPrice}>₹499 <Text style={styles.planDuration}>/ month</Text></Text>
-                  <Text style={styles.planFeatureText}>• 24/7 AI Grammar & Speech Correction</Text>
-                  <Text style={styles.planFeatureText}>• Unlimited Vocabulary Builder</Text>
-                  <Text style={styles.planFeatureText}>• Advanced IELTS / Conversational Modules</Text>
-                  <TouchableOpacity style={styles.planSubscribeBtn} onPress={() => setCurrentView('chat')}>
-                    <Text style={styles.planSubscribeText}>Start English Plan</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.planCard}>
-                  <Text style={styles.planLangName}>🇮🇳 Hindi Fluency Pack</Text>
-                  <Text style={styles.planPrice}>₹399 <Text style={styles.planDuration}>/ month</Text></Text>
-                  <Text style={styles.planFeatureText}>• Shuddh Hindi Grammar Guidance</Text>
-                  <Text style={styles.planFeatureText}>• Script & Vocabulary Training</Text>
-                  <Text style={styles.planFeatureText}>• Real-time Conversational Practice</Text>
-                  <TouchableOpacity style={styles.planSubscribeBtn} onPress={() => setCurrentView('chat')}>
-                    <Text style={styles.planSubscribeText}>Start Hindi Plan</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.planCard}>
-                  <Text style={styles.planLangName}>🇮🇳 Punjabi Expert Tier</Text>
-                  <Text style={styles.planPrice}>₹399 <Text style={styles.planDuration}>/ month</Text></Text>
-                  <Text style={styles.planFeatureText}>• Gurmukhi Script Assistance</Text>
-                  <Text style={styles.planFeatureText}>• Cultural & Idiomatic Phrases</Text>
-                  <Text style={styles.planFeatureText}>• Voice-enabled Interactive Tutor</Text>
-                  <TouchableOpacity style={styles.planSubscribeBtn} onPress={() => setCurrentView('chat')}>
-                    <Text style={styles.planSubscribeText}>Start Punjabi Plan</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-
-            {/* Footer info */}
-            <View style={styles.footerRow}>
-              <Text style={styles.footerInfoText}>App version: info</Text>
-              <TouchableOpacity onPress={() => alert('Upgrade to Pro')}>
-                <Text style={styles.footerUpgradeText}>Upgrade to Pro</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </ImageBackground>
-    );
-  }
-
-  // --- RENDER CHAT INTERACTIVE VIEW ---
   return (
     <ImageBackground 
       source={{ uri: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop' }} 
@@ -464,15 +327,13 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
       resizeMode="cover"
     >
       <View style={styles.overlay}>
-        {/* Top Header Bar */}
+        
+        {/* Single Clean Top Header Bar */}
         <View style={styles.topHeaderBar}>
-          <TouchableOpacity onPress={() => setCurrentView('home')} style={styles.backHomeBtn}>
-            <Text style={styles.backHomeText}>⬅ Back to Dashboard</Text>
-          </TouchableOpacity>
-          <Text style={styles.topHeaderTitle}>AI Language Tutor</Text>
+          <Text style={styles.topHeaderTitle}>AI Language Tutor ({userProfile?.target_language || 'English'})</Text>
           <TouchableOpacity 
             style={styles.helpButton} 
-            onPress={() => alert('Help & Support: Type your queries or use voice input to practice conversation with your AI tutor.')}
+            onPress={() => alert('Help & Support: Type or use voice input to practice your target language conversation with AI.')}
           >
             <Text style={styles.helpButtonText}>❓ Help</Text>
           </TouchableOpacity>
@@ -500,7 +361,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Ask your tutor anything..."
+            placeholder={`Practice ${userProfile?.target_language || 'English'} with your tutor...`}
             placeholderTextColor="#8FA39D"
             value={input}
             onChangeText={setInput}
@@ -534,7 +395,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(10, 15, 14, 0.82)',
+    backgroundColor: 'rgba(10, 15, 14, 0.72)',
     flexDirection: 'column',
     width: '100%',
   },
@@ -544,7 +405,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 28,
     paddingVertical: 14,
-    backgroundColor: 'rgba(17, 23, 21, 0.95)',
+    backgroundColor: 'rgba(17, 23, 21, 0.85)',
     borderBottomWidth: 1.5,
     borderBottomColor: '#0A3B3D',
   },
@@ -552,281 +413,20 @@ const styles = StyleSheet.create({
     color: '#E8B486',
     fontSize: 18,
     fontWeight: 'bold',
-    letterSpacing: 1.5,
-  },
-  navAuthBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  navAuthText: {
-    color: '#E1F2EC',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  navSignUpBtn: {
-    backgroundColor: '#E8B486',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  navSignUpText: {
-    color: '#111715',
-    fontSize: 14,
-    fontWeight: 'bold',
+    letterSpacing: 1,
   },
   helpButton: {
     backgroundColor: 'rgba(23, 33, 30, 0.9)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: '#0A3B3D',
   },
   helpButtonText: {
     color: '#E1F2EC',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  backHomeBtn: {
-    backgroundColor: 'rgba(10, 59, 61, 0.8)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  backHomeText: {
-    color: '#E8B486',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  homeScrollContent: {
-    padding: 24,
-    maxWidth: 1100,
-    alignSelf: 'center',
-    width: '100%',
-    paddingBottom: 50,
-  },
-  welcomeHeading: {
-    color: '#E8B486',
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  resumeButton: {
-    backgroundColor: 'rgba(30, 40, 36, 0.9)',
-    borderWidth: 1.5,
-    borderColor: '#8C6E52',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 24,
-  },
-  resumeButtonText: {
-    color: '#E1F2EC',
     fontSize: 15,
     fontWeight: '600',
-  },
-  homeCardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    marginBottom: 24,
-  },
-  dashboardCard: {
-    backgroundColor: 'rgba(17, 23, 21, 0.85)',
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D',
-    borderRadius: 16,
-    padding: 18,
-    minWidth: 220,
-    flex: 1,
-  },
-  cardLabel: {
-    color: '#8FA39D',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-  },
-  cardValueLarge: {
-    color: '#E1F2EC',
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  progressBarBg: {
-    height: 6,
-    backgroundColor: '#0A3B3D',
-    borderRadius: 3,
-    marginTop: 10,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#E8B486',
-  },
-  featureMiniCard: {
-    backgroundColor: 'rgba(17, 23, 21, 0.85)',
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D',
-    borderRadius: 16,
-    padding: 16,
-    minWidth: 220,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  featureCardTitle: {
-    color: '#E8B486',
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  featureCardDesc: {
-    color: '#8FA39D',
-    fontSize: 13,
-  },
-  bottomSectionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    marginBottom: 32,
-  },
-  recentActivityBox: {
-    flex: 2,
-    backgroundColor: 'rgba(17, 23, 21, 0.85)',
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D',
-    borderRadius: 16,
-    padding: 20,
-    minWidth: 300,
-  },
-  quickStartBox: {
-    flex: 1.5,
-    backgroundColor: 'rgba(17, 23, 21, 0.85)',
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D',
-    borderRadius: 16,
-    padding: 20,
-    minWidth: 260,
-    justifyContent: 'center',
-  },
-  sectionHeaderTitle: {
-    color: '#E8B486',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  activityItemText: {
-    color: '#E1F2EC',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  activityTime: {
-    color: '#8FA39D',
-    fontSize: 12,
-    float: 'right',
-  },
-  quickStartDesc: {
-    color: '#E1F2EC',
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  plansSectionContainer: {
-    marginTop: 10,
-    marginBottom: 30,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#0A3B3D',
-  },
-  plansMainTitle: {
-    color: '#E8B486',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 6,
-  },
-  plansSubTitle: {
-    color: '#8FA39D',
-    fontSize: 14,
-    marginBottom: 20,
-  },
-  plansGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  planCard: {
-    flex: 1,
-    minWidth: 280,
-    backgroundColor: 'rgba(17, 23, 21, 0.9)',
-    borderWidth: 2,
-    borderColor: '#8C6E52',
-    borderRadius: 16,
-    padding: 20,
-    position: 'relative',
-  },
-  planBadge: {
-    position: 'absolute',
-    top: -12,
-    right: 20,
-    backgroundColor: '#8C6E52',
-    color: '#111715',
-    fontSize: 11,
-    fontWeight: 'bold',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 6,
-    textTransform: 'uppercase',
-  },
-  planLangName: {
-    color: '#E1F2EC',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  planPrice: {
-    color: '#E8B486',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  planDuration: {
-    color: '#8FA39D',
-    fontSize: 14,
-    fontWeight: 'normal',
-  },
-  planFeatureText: {
-    color: '#E1F2EC',
-    fontSize: 13,
-    marginBottom: 8,
-    opacity: 0.9,
-  },
-  planSubscribeBtn: {
-    backgroundColor: '#0A3B3D',
-    borderWidth: 1,
-    borderColor: '#8C6E52',
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  planSubscribeText: {
-    color: '#E8B486',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  footerInfoText: {
-    color: '#8FA39D',
-    fontSize: 13,
-  },
-  footerUpgradeText: {
-    color: '#E8B486',
-    fontSize: 13,
-    fontWeight: 'bold',
   },
   chatArea: {
     flex: 1,
@@ -848,7 +448,7 @@ const styles = StyleSheet.create({
     padding: 14, 
     borderRadius: 16, 
     marginBottom: 12, 
-    maxWidth: '75%', 
+    maxWidth: '70%', 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.4,
@@ -873,6 +473,7 @@ const styles = StyleSheet.create({
   speakerBtn: { backgroundColor: '#0A3B3D', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: '#8C6E52' },
   speakerIcon: { color: '#E8B486', fontSize: 13, fontWeight: '600' },
   messageText: { color: '#E1F2EC', fontSize: 15, lineHeight: 21 }, 
+  
   correctionContainer: {
     backgroundColor: 'rgba(23, 33, 30, 0.9)',
     borderColor: '#8C6E52',
@@ -885,6 +486,7 @@ const styles = StyleSheet.create({
   correctionOriginal: { color: '#8C6E52', fontSize: 14, marginBottom: 4 },
   correctionFixed: { color: '#E1F2EC', fontSize: 14, fontWeight: '600', marginBottom: 4 },
   correctionReason: { color: '#E1F2EC', fontSize: 13, fontStyle: 'italic', lineHeight: 18, opacity: 0.9 },
+
   loadingContainer: { 
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -899,6 +501,7 @@ const styles = StyleSheet.create({
     borderColor: '#0A3B3D',
   },
   loadingText: { color: '#E8B486', marginLeft: 8, fontSize: 15, fontWeight: '500' },
+  
   inputContainer: { 
     flexDirection: 'row', 
     padding: 16, 
