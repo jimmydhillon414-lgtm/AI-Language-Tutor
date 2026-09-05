@@ -379,10 +379,18 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
               onSubmitEditing={handleSend}
               returnKeyType="send"
             />
-            <TouchableOpacity style={styles.iconButton} onPress={toggleVoiceInput}>
+            <TouchableOpacity 
+              style={styles.iconButton} 
+              onPress={toggleVoiceInput}
+              activeOpacity={0.7}
+            >
               <Text style={{ fontSize: 20 }}>{listening ? '🎙️' : '🎤'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+            <TouchableOpacity 
+              style={styles.sendButton} 
+              onPress={handleSend}
+              activeOpacity={0.7}
+            >
               <Text style={styles.sendButtonText}>Send</Text>
             </TouchableOpacity>
           </View>
@@ -519,6 +527,10 @@ const styles = StyleSheet.create({
     borderTopColor: '#0A3B3D',
     width: '100%',
     alignItems: 'center',
+    ...(Platform.OS === 'web' ? {
+      cursor: 'default',
+      userSelect: 'none',
+    } : {}),
   },
   inputInner: {
     flexDirection: 'row',
@@ -537,7 +549,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#0A3B3D',
     fontSize: 16,
-    outlineStyle: 'none',
+    ...(Platform.OS === 'web' ? {
+      outlineStyle: 'none',
+    } : {}),
   },
   iconButton: {
     backgroundColor: 'rgba(23, 33, 30, 0.9)',
@@ -548,6 +562,9 @@ const styles = StyleSheet.create({
     borderColor: '#0A3B3D',
     justifyContent: 'center',
     alignItems: 'center',
+    ...(Platform.OS === 'web' ? {
+      cursor: 'pointer',
+    } : {}),
   },
   sendButton: {
     backgroundColor: '#C29B72',
@@ -556,6 +573,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    ...(Platform.OS === 'web' ? {
+      cursor: 'pointer',
+    } : {}),
   },
   sendButtonText: {
     color: '#111715',
