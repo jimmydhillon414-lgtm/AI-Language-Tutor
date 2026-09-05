@@ -44,7 +44,7 @@ export default function HomeScreen({ navigation }) {
         //   </View>
         // </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+       // <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           
           {/* Hero Section */}
           <View style={styles.heroSection}>
