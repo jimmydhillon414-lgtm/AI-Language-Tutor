@@ -27,7 +27,7 @@ export default function HomeScreen({ navigation }) {
         
         {/* Single Consolidated Header */}
         <View style={styles.topHeaderBar}>
-          <Text style={styles.topHeaderTitle}></Text>
+          <Text style={styles.topHeaderTitle}>hellow</Text>
           <View style={styles.headerRight}>
             <TouchableOpacity 
               style={styles.navButton} 
