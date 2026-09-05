@@ -24,6 +24,7 @@ export default function TutorChatScreen({ navigation }) {
   const [userProfile, setUserProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     fetchUserAndHistory();
@@ -50,7 +51,6 @@ export default function TutorChatScreen({ navigation }) {
     const { data, error } = await supabase
       .from('tutor_chat_history')
       .select('*')
-      .eq('id', user.id) // fixed user_id filtering bug if any
       .eq('user_id', user.id)
       .order('created_at', { ascending: true });
 
@@ -122,9 +122,8 @@ export default function TutorChatScreen({ navigation }) {
       recognition.onerror = (event) => {
         console.log('Speech recognition error:', event.error);
         setListening(false);
-        if (event.error === 'no-speech') {
-          alert('No speech was detected. Please speak clearly into your microphone.');
-        } else if (event.error === 'not-allowed') {
+        // Removed annoying alerts for no-speech so it fails silently instead of showing popups
+        if (event.error === 'not-allowed') {
           alert('Microphone access blocked. Please check your browser permissions.');
         }
       };
@@ -138,7 +137,6 @@ export default function TutorChatScreen({ navigation }) {
     } catch (err) {
       console.log('Mic init error:', err);
       setListening(false);
-      alert('Could not start microphone.');
     }
   };
 
@@ -376,26 +374,23 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
           </View>
         )}
 
-        {/* Web optimized form wrapper to ensure Enter key submission works 100% reliably */}
-        <View 
-          style={styles.inputContainer}
-          {...(Platform.OS === 'web' ? {
-            onKeyDown: (e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSend();
-              }
-            }
-          } : {})}
-        >
+        <View style={styles.inputContainer}>
           <TextInput
+            ref={inputRef}
             style={styles.input}
             placeholder="Ask your tutor anything..."
             placeholderTextColor="#8FA39D"
             value={input}
             onChangeText={setInput}
+            blurOnSubmit={false}
             onSubmitEditing={handleSend}
             returnKeyType="send"
+            onKeyPress={(e) => {
+              if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter') {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
           />
           <TouchableOpacity 
             style={[styles.micButton, listening && styles.micButtonActive]} 
