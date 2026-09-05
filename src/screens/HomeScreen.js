@@ -25,26 +25,26 @@ export default function HomeScreen({ navigation }) {
     >
       <View style={styles.overlay}>
         
-        {/* Top Header Bar (Matching your exact app style) */}
+        {/* Single Consolidated Header */}
         <View style={styles.topHeaderBar}>
           <Text style={styles.topHeaderTitle}>SIRIN LABS</Text>
           <View style={styles.headerRight}>
             <TouchableOpacity 
               style={styles.navButton} 
-              onPress={() => navigation.navigate('Login')}
+              onPress={() => alert('Login modal/screen coming soon')}
             >
               <Text style={styles.navButtonText}>Login</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.navButton, styles.signUpButton]} 
-              onPress={() => navigation.navigate('SignUp')}
+              onPress={() => alert('Sign Up modal/screen coming soon')}
             >
               <Text style={[styles.navButtonText, styles.signUpText]}>Sign Up</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           
           {/* Hero Section */}
           <View style={styles.heroSection}>
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(10, 15, 14, 0.82)',
+    backgroundColor: 'rgba(10, 15, 14, 0.85)',
     flexDirection: 'column',
     width: '100%',
   },
@@ -123,6 +123,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(17, 23, 21, 0.95)',
     borderBottomWidth: 1.5,
     borderBottomColor: '#0A3B3D',
+    width: '100%',
   },
   topHeaderTitle: {
     color: '#E8B486',
@@ -164,8 +165,8 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     alignItems: 'center',
-    marginTop: 30,
-    marginBottom: 40,
+    marginTop: 20,
+    marginBottom: 30,
     padding: 24,
     backgroundColor: 'rgba(17, 23, 21, 0.85)',
     borderRadius: 20,
