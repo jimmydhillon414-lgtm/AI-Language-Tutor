@@ -22,7 +22,7 @@ export default function HomeScreen({ navigation }) {
       source={{ uri: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop' }} 
       style={styles.container}
       resizeMode="cover"
-    >
+    // >
       //<View style={styles.overlay}>
         
         {/* Single Consolidated Header */}
