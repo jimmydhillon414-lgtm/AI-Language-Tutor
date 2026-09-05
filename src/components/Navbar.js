@@ -5,19 +5,19 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenLogin, onO
   // If user is NOT logged in (Public Home Page Navbar)
   if (!user) {
     return (
-      <View style={styles.navbar}>
-        <View style={styles.navLeft}>
-          <Text style={styles.logoText}>SIRIN LABS</Text>
-        </View>
-        <View style={styles.navRight}>
-          <TouchableOpacity style={styles.btnLogin} onPress={onOpenLogin}>
-            <Text style={styles.btnLoginText}>Login</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.btnSignup} onPress={onOpenSignup}>
-            <Text style={styles.btnSignupText}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      // <View style={styles.navbar}>
+      //   <View style={styles.navLeft}>
+      //     <Text style={styles.logoText}>SIRIN LABS</Text>
+      //   </View>
+      //   <View style={styles.navRight}>
+      //     <TouchableOpacity style={styles.btnLogin} onPress={onOpenLogin}>
+      //       <Text style={styles.btnLoginText}>Login</Text>
+      //     </TouchableOpacity>
+      //     <TouchableOpacity style={styles.btnSignup} onPress={onOpenSignup}>
+      //       <Text style={styles.btnSignupText}>Sign Up</Text>
+      //     </TouchableOpacity>
+      //   </View>
+      // </View>
     );
   }
 
