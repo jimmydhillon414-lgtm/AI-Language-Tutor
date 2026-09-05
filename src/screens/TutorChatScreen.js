@@ -71,7 +71,7 @@ export default function TutorChatScreen({ navigation }) {
       window.msSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert('Speech Recognition is not supported or is disabled in your browser.');
+      alert('Your browser does not support Speech Recognition. Please try using Google Chrome.');
       return;
     }
 
@@ -117,8 +117,10 @@ export default function TutorChatScreen({ navigation }) {
       };
 
       recognition.onerror = (event) => {
-        if (event.error !== 'no-speech') {
-          setListening(false);
+        console.log('Speech recognition error:', event.error);
+        setListening(false);
+        if (event.error === 'not-allowed') {
+          alert('Microphone permission blocked. Please allow microphone access in your browser settings.');
         }
       };
 
@@ -129,7 +131,9 @@ export default function TutorChatScreen({ navigation }) {
       recognitionRef.current = recognition;
       recognition.start();
     } catch (err) {
+      console.log('Mic init error:', err);
       setListening(false);
+      alert('Could not start microphone. Ensure you are running on localhost or HTTPS.');
     }
   };
 
@@ -374,6 +378,13 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
             placeholderTextColor="#8FA39D"
             value={input}
             onChangeText={setInput}
+            // Added explicit web keydown event listener to guarantee Enter key sends message instantly
+            onKeyPress={(e) => {
+              if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter') {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
             onSubmitEditing={handleSend}
             returnKeyType="send"
           />
@@ -548,7 +559,7 @@ const styles = StyleSheet.create({
   micButtonActive: { backgroundColor: '#0A3B3D', borderColor: '#8C6E52' },
   micText: { fontSize: 20 }, 
   sendButton: { 
-    backgroundColor: '#C29B72', // Fix applied here (# added back)
+    backgroundColor: '#C29B72', 
     justifyContent: 'center', 
     alignItems: 'center',
     paddingHorizontal: 22, 
