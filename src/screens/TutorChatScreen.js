@@ -27,6 +27,11 @@ export default function TutorChatScreen({ navigation }) {
 
   useEffect(() => {
     fetchUserAndHistory();
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+      }
+    };
   }, []);
 
   async function fetchUserAndHistory() {
@@ -80,7 +85,7 @@ export default function TutorChatScreen({ navigation }) {
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = true;
+      recognition.continuous = false; // Changed to false to prevent erratic clearing loops on web
       recognition.interimResults = true;
 
       const langMap = {
@@ -92,17 +97,34 @@ export default function TutorChatScreen({ navigation }) {
       recognition.lang = langMap[userProfile?.target_language] || 'hi-IN';
 
       recognition.onstart = () => setListening(true);
+      
       recognition.onresult = (event) => {
-        let fullTranscript = '';
-        for (let i = 0; i < event.results.length; i++) {
-          fullTranscript += event.results[i][0].transcript;
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
         }
-        setInput(fullTranscript);
+
+        const currentText = finalTranscript || interimTranscript;
+        if (currentText) {
+          setInput(currentText);
+        }
       };
+
       recognition.onerror = (event) => {
-        if (event.error !== 'no-speech') setListening(false);
+        if (event.error !== 'no-speech') {
+          setListening(false);
+        }
       };
-      recognition.onend = () => setListening(false);
+
+      recognition.onend = () => {
+        setListening(false);
+      };
 
       recognitionRef.current = recognition;
       recognition.start();
@@ -316,7 +338,6 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
     >
       <View style={styles.overlay}>
         
-        {/* Top Header Bar containing the Help Button on the right */}
         <View style={styles.topHeaderBar}>
           <Text style={styles.topHeaderTitle}>AI Language Tutor</Text>
           <TouchableOpacity 
@@ -527,7 +548,7 @@ const styles = StyleSheet.create({
   micButtonActive: { backgroundColor: '#0A3B3D', borderColor: '#8C6E52' },
   micText: { fontSize: 20 }, 
   sendButton: { 
-    backgroundColor: '#C29B72', 
+    backgroundColor: 'C29B72', 
     justifyContent: 'center', 
     alignItems: 'center',
     paddingHorizontal: 22, 
