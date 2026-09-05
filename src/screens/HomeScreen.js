@@ -83,7 +83,6 @@ export default function TutorChatScreen({ navigation }) {
       recognition.continuous = true;
       recognition.interimResults = true;
 
-      // International Audience Language Map (Top 5 Languages)
       const langMap = {
         English: 'en-US',
         Spanish: 'es-ES',
@@ -328,7 +327,6 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
     >
       <View style={styles.overlay}>
         
-        {/* Single Clean Top Header Bar */}
         <View style={styles.topHeaderBar}>
           <Text style={styles.topHeaderTitle}>AI Language Tutor ({userProfile?.target_language || 'English'})</Text>
           <TouchableOpacity 
