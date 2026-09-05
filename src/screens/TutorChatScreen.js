@@ -3,7 +3,6 @@ import {
   StyleSheet,
   Text,
   View,
-  TextInput,
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
@@ -24,7 +23,6 @@ export default function TutorChatScreen({ navigation }) {
   const [userProfile, setUserProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
-  const inputRef = useRef(null);
 
   useEffect(() => {
     fetchUserAndHistory();
@@ -102,30 +100,18 @@ export default function TutorChatScreen({ navigation }) {
       };
       
       recognition.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
-
+        let transcript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
-          }
+          transcript += event.results[i][0].transcript;
         }
-
-        const currentText = finalTranscript || interimTranscript;
-        if (currentText) {
-          setInput(currentText);
+        if (transcript) {
+          setInput(transcript);
         }
       };
 
       recognition.onerror = (event) => {
         console.log('Speech recognition error:', event.error);
         setListening(false);
-        // Removed annoying alerts for no-speech so it fails silently instead of showing popups
-        if (event.error === 'not-allowed') {
-          alert('Microphone access blocked. Please check your browser permissions.');
-        }
       };
 
       recognition.onend = () => {
@@ -157,18 +143,13 @@ export default function TutorChatScreen({ navigation }) {
 
   async function getAiResponse(promptText) {
     const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-    
-    if (!apiKey) {
-      throw new Error('Gemini API key is missing.');
-    }
+    if (!apiKey) throw new Error('Gemini API key is missing.');
 
     const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
-
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',
       contents: promptText,
     });
-
     return response.text.trim();
   }
 
@@ -176,9 +157,7 @@ export default function TutorChatScreen({ navigation }) {
     if (!input || !input.trim() || !userId) return;
 
     if (listening && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {}
+      try { recognitionRef.current.stop(); } catch (e) {}
       setListening(false);
     }
 
@@ -374,34 +353,82 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
           </View>
         )}
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            ref={inputRef}
-            style={styles.input}
-            placeholder="Ask your tutor anything..."
-            placeholderTextColor="#8FA39D"
-            value={input}
-            onChangeText={setInput}
-            blurOnSubmit={false}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-            onKeyPress={(e) => {
-              if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter') {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-          />
-          <TouchableOpacity 
-            style={[styles.micButton, listening && styles.micButtonActive]} 
-            onPress={toggleVoiceInput}
-          >
-            <Text style={styles.micText}>{listening ? '🎙️' : '🎤'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={loading}>
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Web Direct HTML Input implementation to bypass React Native Web synthetic event bugs */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          padding: '16px',
+          backgroundColor: 'rgba(17, 23, 21, 0.92)',
+          borderTop: '1.5px solid #0A3B3D',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{ display: 'flex', flex: 1, maxWidth: '700px', alignItems: 'center', gap: '10px' }}>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Ask your tutor anything..."
+              style={{
+                flex: 1,
+                backgroundColor: 'rgba(23, 33, 30, 0.9)',
+                color: '#E1F2EC',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                border: '1.5px solid #0A3B3D',
+                fontSize: '16px',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+            <button
+              onClick={toggleVoiceInput}
+              style={{
+                backgroundColor: listening ? '#0A3B3D' : 'rgba(23, 33, 30, 0.9)',
+                width: '48px',
+                height: '48px',
+                borderRadius: '14px',
+                border: '1.5px solid #0A3B3D',
+                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                fontSize: '20px',
+                flexShrink: 0
+              }}
+              title="Voice Input"
+            >
+              {listening ? '🎙️' : '🎤'}
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={loading}
+              style={{
+                backgroundColor: '#C29B72',
+                color: '#111715',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                padding: '0 22px',
+                height: '48px',
+                borderRadius: '14px',
+                border: 'none',
+                cursor: 'pointer',
+                flexShrink: '0'
+              }}
+            >
+              Send
+            </button>
+          </div>
+        </div>
+
       </View>
     </ImageBackground>
   );
@@ -525,50 +552,4 @@ const styles = StyleSheet.create({
     borderColor: '#0A3B3D',
   },
   loadingText: { color: '#E8B486', marginLeft: 8, fontSize: 15, fontWeight: '500' },
-  
-  inputContainer: { 
-    flexDirection: 'row', 
-    padding: 16, 
-    backgroundColor: 'rgba(17, 23, 21, 0.92)',
-    borderTopWidth: 1.5, 
-    borderTopColor: '#0A3B3D', 
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  input: { 
-    flex: 1, 
-    maxWidth: 700,
-    backgroundColor: 'rgba(23, 33, 30, 0.9)', 
-    color: '#E1F2EC', 
-    paddingHorizontal: 18,
-    paddingVertical: 12, 
-    borderRadius: 14, 
-    marginRight: 10,
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D',
-    fontSize: 16, 
-  },
-  micButton: { 
-    backgroundColor: 'rgba(23, 33, 30, 0.9)', 
-    width: 48,
-    height: 48, 
-    borderRadius: 14, 
-    marginRight: 10, 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D',
-  },
-  micButtonActive: { backgroundColor: '#0A3B3D', borderColor: '#8C6E52' },
-  micText: { fontSize: 20 }, 
-  sendButton: { 
-    backgroundColor: '#C29B72', 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    paddingHorizontal: 22, 
-    height: 48,
-    borderRadius: 14,
-  },
-  sendButtonText: { color: '#111715', fontWeight: 'bold', fontSize: 16 }, 
 });
