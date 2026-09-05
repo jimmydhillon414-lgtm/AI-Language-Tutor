@@ -44,29 +44,29 @@ export default function HomeScreen({ navigation }) {
         //   </View>
         // </View>
 
-      // <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           
-          // {/* Hero Section */}
-          // <View style={styles.heroSection}>
-          //   <Text style={styles.heroBadge}>✨ AI-Powered Language Mastery</Text>
-          //   <Text style={styles.heroTitle}>Learn Any Language with Your Personal AI Tutor</Text>
-          //   <Text style={styles.heroSubtitle}>
-          //     Experience real-time voice conversations, instant grammar corrections, and tailored lesson plans built specifically for your learning pace.
-          //   </Text>
+          {/* Hero Section */}
+          <View style={styles.heroSection}>
+            <Text style={styles.heroBadge}>✨ AI-Powered Language Mastery</Text>
+            <Text style={styles.heroTitle}>Learn Any Language with Your Personal AI Tutor</Text>
+            <Text style={styles.heroSubtitle}>
+              Experience real-time voice conversations, instant grammar corrections, and tailored lesson plans built specifically for your learning pace.
+            </Text>
             
-          //   <TouchableOpacity 
-          //     style={styles.primaryCta} 
-          //     onPress={() => navigation.navigate('TutorChat')}
-          //   >
-          //     <Text style={styles.primaryCtaText}>Start Practicing Now 🚀</Text>
-          //   </TouchableOpacity>
-          // </View>
+            <TouchableOpacity 
+              style={styles.primaryCta} 
+              onPress={() => navigation.navigate('TutorChat')}
+            >
+              <Text style={styles.primaryCtaText}>Start Practicing Now 🚀</Text>
+            </TouchableOpacity>
+          </View>
 
-          // {/* Recommended Plans Section */}
-          // <View style={styles.sectionHeaderContainer}>
-          //   <Text style={styles.sectionTitle}>Recommended Language Plans</Text>
-          //   <Text style={styles.sectionSubtitle}>Choose your target language and unlock specialized AI coaching modules.</Text>
-          // </View>
+          {/* Recommended Plans Section */}
+          <View style={styles.sectionHeaderContainer}>
+            <Text style={styles.sectionTitle}>Recommended Language Plans</Text>
+            <Text style={styles.sectionSubtitle}>Choose your target language and unlock specialized AI coaching modules.</Text>
+          </View>
 
           <View style={styles.plansGrid}>
             {plans.map((plan, index) => (
