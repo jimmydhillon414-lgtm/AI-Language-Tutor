@@ -1,323 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  TextInput,
   TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
+  ScrollView,
   Platform,
   ImageBackground,
 } from 'react-native';
-import * as Speech from 'expo-speech';
-import { supabase } from '../api/supabase';
-import { GoogleGenAI } from '@google/genai';
 
-export default function TutorChatScreen({ navigation }) {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [listening, setListening] = useState(false);
-  const [userId, setUserId] = useState(null);
-  const [speakingId, setSpeakingId] = useState(null);
-  const [userProfile, setUserProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
-  const flatListRef = useRef();
-  const recognitionRef = useRef(null);
-
-  useEffect(() => {
-    fetchUserAndHistory();
-  }, []);
-
-  async function fetchUserAndHistory() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    setUserId(user.id);
-
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (profile) setUserProfile(profile);
-
-    const { data, error } = await supabase
-      .from('tutor_chat_history')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true });
-
-    if (!error && data) {
-      setMessages(data);
-    }
-  }
-
-  const toggleVoiceInput = () => {
-    if (Platform.OS !== 'web') {
-      alert('Speech Recognition is currently configured for Web browsers.');
-      return;
-    }
-
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition ||
-      window.mozSpeechRecognition ||
-      window.msSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert('Speech Recognition is not supported or is disabled in your browser.');
-      return;
-    }
-
-    if (listening && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {}
-      setListening(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-
-      const langMap = {
-        English: 'en-US',
-        Spanish: 'es-ES',
-        French: 'fr-FR',
-        German: 'de-DE',
-        Mandarin: 'zh-CN',
-      };
-
-      recognition.lang = langMap[userProfile?.target_language] || 'en-US';
-
-      recognition.onstart = () => setListening(true);
-      recognition.onresult = (event) => {
-        let fullTranscript = '';
-        for (let i = 0; i < event.results.length; i++) {
-          fullTranscript += event.results[i][0].transcript;
-        }
-        setInput(fullTranscript);
-      };
-      recognition.onerror = (event) => {
-        if (event.error !== 'no-speech') setListening(false);
-      };
-      recognition.onend = () => setListening(false);
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (err) {
-      setListening(false);
-    }
-  };
-
-  const speakText = (text, messageId) => {
-    if (speakingId === messageId) {
-      Speech.stop();
-      setSpeakingId(null);
-      return;
-    }
-    Speech.stop();
-    setSpeakingId(messageId);
-    
-    const speechLangMap = {
-      English: 'en-US',
-      Spanish: 'es-ES',
-      French: 'fr-FR',
-      German: 'de-DE',
-      Mandarin: 'zh-CN',
-    };
-
-    Speech.speak(text, {
-      language: speechLangMap[userProfile?.target_language] || 'en-US',
-      onDone: () => setSpeakingId(null),
-      onError: () => setSpeakingId(null),
-    });
-  };
-
-  async function getAiResponse(promptText) {
-    const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-    
-    if (!apiKey) {
-      throw new Error('Gemini API key is missing.');
-    }
-
-    const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: promptText,
-    });
-
-    return response.text.trim();
-  }
-
-  async function handleSend() {
-    if (!input.trim() || !userId) return;
-
-    if (listening && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {}
-      setListening(false);
-    }
-
-    const userText = input.trim();
-    setInput('');
-
-    const tempUserMsg = {
-      id: Date.now().toString(),
-      user_id: userId,
-      role: 'user',
-      message: userText,
-    };
-
-    setMessages((prev) => [...prev, tempUserMsg]);
-    setLoading(true);
-
-    try {
-      await supabase.from('tutor_chat_history').insert({
-        user_id: userId,
-        role: 'user',
-        message: userText,
-      });
-
-      const targetLang = userProfile?.target_language || 'English';
-      const proficiency = userProfile?.proficiency_level || 'Beginner';
-
-      const prompt = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level international student. The user says: "${userText}".
-Answer their question directly and helpfully in ${targetLang} (with English support if needed for explanation). Check if their text has any grammatical mistakes.
-
-You MUST reply ONLY with a valid JSON object in this exact format (no markdown code blocks, just raw JSON text):
-{
-  "hasCorrection": false,
-  "originalText": "${userText}",
-  "correctedText": "",
-  "explanation": "",
-  "reply": "Your detailed and helpful answer here"
-}`;
-
-      const responseText = await getAiResponse(prompt);
-
-      let parsedData;
-      try {
-        const cleanJsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-        parsedData = JSON.parse(cleanJsonStr);
-      } catch (e) {
-        parsedData = {
-          hasCorrection: false,
-          originalText: userText,
-          correctedText: '',
-          explanation: '',
-          reply: responseText || 'Please tell me more about what you would like to learn.',
-        };
-      }
-
-      const messagePayload = JSON.stringify(parsedData);
-
-      const { data: savedAiMsg } = await supabase
-        .from('tutor_chat_history')
-        .insert({
-          user_id: userId,
-          role: 'model',
-          message: messagePayload,
-        })
-        .select()
-        .maybeSingle();
-
-      const newAiId = savedAiMsg ? savedAiMsg.id : Date.now().toString();
-      const aiMsgObj = savedAiMsg || { id: newAiId, role: 'model', message: messagePayload };
-
-      if (savedAiMsg) {
-        setMessages((prev) => [...prev.filter((m) => m.id !== tempUserMsg.id), tempUserMsg, savedAiMsg]);
-      } else {
-        setMessages((prev) => [...prev, aiMsgObj]);
-      }
-
-      const autoSpeechText = parsedData.reply || responseText;
-      if (autoSpeechText) {
-        speakText(autoSpeechText, newAiId);
-      }
-
-    } catch (err) {
-      let errorReply = 'An error occurred with the AI service.';
-      if (err.message && err.message.includes('429')) {
-        errorReply = '⚠️ API Quota limit exceeded. Please wait a few minutes.';
-      }
-
-      const errorPayload = JSON.stringify({
-        hasCorrection: false,
-        originalText: userText,
-        correctedText: '',
-        explanation: '',
-        reply: errorReply,
-      });
-
-      const errorMsgObj = {
-        id: Date.now().toString(),
-        user_id: userId,
-        role: 'model',
-        message: errorPayload,
-      };
-      setMessages((prev) => [...prev, errorMsgObj]);
-      speakText(errorReply, errorMsgObj.id);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const renderMessageItem = ({ item }) => {
-    if (item.role === 'user') {
-      return (
-        <View style={[styles.bubble, styles.userBubble]}>
-          <Text style={styles.senderLabel}>You</Text>
-          <Text style={styles.messageText}>{item.message}</Text>
-        </View>
-      );
-    }
-
-    let parsedData = null;
-    try {
-      parsedData = JSON.parse(item.message);
-    } catch (e) {
-      parsedData = { reply: item.message, hasCorrection: false };
-    }
-
-    const textToSpeak = parsedData.reply || item.message;
-
-    return (
-      <View style={[styles.bubble, styles.aiBubble]}>
-        <View style={styles.aiHeader}>
-          <Text style={styles.senderLabel}>AI Tutor ({userProfile?.target_language || 'English'})</Text>
-          <TouchableOpacity 
-            onPress={() => speakText(textToSpeak, item.id)} 
-            style={styles.speakerBtn}
-          >
-            <Text style={styles.speakerIcon}>
-              {speakingId === item.id ? '⏹ Stop' : '🔊 Listen'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {parsedData.hasCorrection && (
-          <View style={styles.correctionContainer}>
-            <Text style={styles.correctionTitle}>💡 Grammar Correction Tip</Text>
-            <Text style={styles.correctionOriginal}>❌ {parsedData.originalText || item.message}</Text>
-            {parsedData.correctedText ? (
-              <Text style={styles.correctionFixed}>✅ {parsedData.correctedText}</Text>
-            ) : null}
-            {parsedData.explanation ? (
-              <Text style={styles.correctionReason}>{parsedData.explanation}</Text>
-            ) : null}
-          </View>
-        )}
-
-        <Text style={styles.messageText}>{parsedData.reply || item.message}</Text>
-      </View>
-    );
-  };
+export default function HomeScreen({ navigation }) {
+  const plans = [
+    { language: 'English', level: 'Beginner to Advanced', price: 'Free / Pro', desc: 'Master conversational fluency, grammar correction, and accent training.' },
+    { language: 'Spanish', level: 'All Levels', price: '$9.99/mo', desc: 'Interactive roleplays and real-time corrections for Spanish learners.' },
+    { language: 'French', level: 'Intermediate', price: '$9.99/mo', desc: 'Focus on complex phrasing, pronunciation, and vocabulary building.' },
+    { language: 'German', level: 'Beginner', price: '$9.99/mo', desc: 'Structured grammar paths and precise vocabulary coaching.' },
+  ];
 
   return (
     <ImageBackground 
@@ -327,55 +25,75 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
     >
       <View style={styles.overlay}>
         
+        {/* Top Header Bar (Matching your exact app style) */}
         <View style={styles.topHeaderBar}>
-          <Text style={styles.topHeaderTitle}>AI Language Tutor ({userProfile?.target_language || 'English'})</Text>
-          <TouchableOpacity 
-            style={styles.helpButton} 
-            onPress={() => alert('Help & Support: Type or use voice input to practice your target language conversation with AI.')}
-          >
-            <Text style={styles.helpButtonText}>❓ Help</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.chatArea}>
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
-            style={styles.flatListStyle}
-            contentContainerStyle={styles.chatContainer}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            renderItem={renderMessageItem}
-          />
-        </View>
-
-        {loading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#FFCB9A" />
-            <Text style={styles.loadingText}>Tutor is typing...</Text>
+          <Text style={styles.topHeaderTitle}>SIRIN LABS</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.navButton} 
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Text style={styles.navButtonText}>Login</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.navButton, styles.signUpButton]} 
+              onPress={() => navigation.navigate('SignUp')}
+            >
+              <Text style={[styles.navButtonText, styles.signUpText]}>Sign Up</Text>
+            </TouchableOpacity>
           </View>
-        )}
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder={`Practice ${userProfile?.target_language || 'English'} with your tutor...`}
-            placeholderTextColor="#8FA39D"
-            value={input}
-            onChangeText={setInput}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-          />
-          <TouchableOpacity 
-            style={[styles.micButton, listening && styles.micButtonActive]} 
-            onPress={toggleVoiceInput}
-          >
-            <Text style={styles.micText}>{listening ? '🎙️' : '🎤'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={loading}>
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
         </View>
+
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          
+          {/* Hero Section */}
+          <View style={styles.heroSection}>
+            <Text style={styles.heroBadge}>✨ AI-Powered Language Mastery</Text>
+            <Text style={styles.heroTitle}>Learn Any Language with Your Personal AI Tutor</Text>
+            <Text style={styles.heroSubtitle}>
+              Experience real-time voice conversations, instant grammar corrections, and tailored lesson plans built specifically for your learning pace.
+            </Text>
+            
+            <TouchableOpacity 
+              style={styles.primaryCta} 
+              onPress={() => navigation.navigate('TutorChat')}
+            >
+              <Text style={styles.primaryCtaText}>Start Practicing Now 🚀</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Recommended Plans Section */}
+          <View style={styles.sectionHeaderContainer}>
+            <Text style={styles.sectionTitle}>Recommended Language Plans</Text>
+            <Text style={styles.sectionSubtitle}>Choose your target language and unlock specialized AI coaching modules.</Text>
+          </View>
+
+          <View style={styles.plansGrid}>
+            {plans.map((plan, index) => (
+              <View key={index} style={styles.planCard}>
+                <View style={styles.planCardHeader}>
+                  <Text style={styles.planLanguage}>{plan.language}</Text>
+                  <Text style={styles.planPrice}>{plan.price}</Text>
+                </View>
+                <Text style={styles.planLevel}>Level: {plan.level}</Text>
+                <Text style={styles.planDesc}>{plan.desc}</Text>
+                
+                <TouchableOpacity 
+                  style={styles.selectPlanBtn}
+                  onPress={() => navigation.navigate('TutorChat', { selectedLanguage: plan.language })}
+                >
+                  <Text style={styles.selectPlanText}>Select & Practice</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+
+          {/* Footer Info */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>AI Language Tutor Platform • Powered by Gemini AI & Supabase</Text>
+          </View>
+
+        </ScrollView>
       </View>
     </ImageBackground>
   );
@@ -387,13 +105,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     ...(Platform.OS === 'web' ? {
-      height: 'calc(100vh - 56px)',
-      maxHeight: 'calc(100vh - 56px)',
+      minHeight: '100vh',
     } : {}),
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(10, 15, 14, 0.72)',
+    backgroundColor: 'rgba(10, 15, 14, 0.82)',
     flexDirection: 'column',
     width: '100%',
   },
@@ -403,146 +120,177 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 28,
     paddingVertical: 14,
-    backgroundColor: 'rgba(17, 23, 21, 0.85)',
+    backgroundColor: 'rgba(17, 23, 21, 0.95)',
     borderBottomWidth: 1.5,
     borderBottomColor: '#0A3B3D',
   },
   topHeaderTitle: {
     color: '#E8B486',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
   },
-  helpButton: {
-    backgroundColor: 'rgba(23, 33, 30, 0.9)',
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  navButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 10,
+    marginLeft: 10,
     borderWidth: 1.5,
     borderColor: '#0A3B3D',
+    backgroundColor: 'rgba(23, 33, 30, 0.9)',
   },
-  helpButtonText: {
+  navButtonText: {
     color: '#E1F2EC',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
   },
-  chatArea: {
-    flex: 1,
-    width: '100%',
-    overflow: 'hidden',
+  signUpButton: {
+    backgroundColor: '#C29B72',
+    borderColor: '#C29B72',
   },
-  flatListStyle: {
-    flex: 1,
-    width: '100%',
+  signUpText: {
+    color: '#111715',
+    fontWeight: 'bold',
   },
-  chatContainer: { 
-    padding: 16, 
-    paddingBottom: 24,
-    maxWidth: 800,
+  scrollContainer: {
+    padding: 24,
+    maxWidth: 900,
     alignSelf: 'center',
     width: '100%',
   },
-  bubble: {
-    padding: 14, 
-    borderRadius: 16, 
-    marginBottom: 12, 
-    maxWidth: '70%', 
+  heroSection: {
+    alignItems: 'center',
+    marginTop: 30,
+    marginBottom: 40,
+    padding: 24,
+    backgroundColor: 'rgba(17, 23, 21, 0.85)',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#0A3B3D',
+  },
+  heroBadge: {
+    color: '#E8B486',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+  },
+  heroTitle: {
+    color: '#E1F2EC',
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 40,
+  },
+  heroSubtitle: {
+    color: '#8FA39D',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+    maxWidth: 700,
+  },
+  primaryCta: {
+    backgroundColor: '#C29B72',
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 5,
   },
-  userBubble: { 
+  primaryCtaText: {
+    color: '#111715',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  sectionHeaderContainer: {
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: {
+    color: '#E8B486',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  sectionSubtitle: {
+    color: '#8FA39D',
+    fontSize: 14,
+  },
+  plansGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 16,
+    marginBottom: 40,
+  },
+  planCard: {
+    backgroundColor: 'rgba(17, 23, 21, 0.9)',
+    borderWidth: 1.5,
+    borderColor: '#0A3B3D',
+    borderRadius: 16,
+    padding: 20,
+    width: Platform.OS === 'web' ? '48%' : '100%',
+    marginBottom: 16,
+  },
+  planCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  planLanguage: {
+    color: '#E1F2EC',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  planPrice: {
+    color: '#E8B486',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  planLevel: {
+    color: '#8FA39D',
+    fontSize: 13,
+    marginBottom: 10,
+    fontWeight: '500',
+  },
+  planDesc: {
+    color: '#E1F2EC',
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
+    opacity: 0.9,
+  },
+  selectPlanBtn: {
     backgroundColor: 'rgba(10, 59, 61, 0.85)',
-    alignSelf: 'flex-end',
-    borderBottomRightRadius: 4,
     borderWidth: 1.5,
     borderColor: '#8C6E52',
-  },
-  aiBubble: { 
-    backgroundColor: 'rgba(17, 23, 21, 0.88)',
-    alignSelf: 'flex-start',
-    borderBottomLeftRadius: 4,
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D', 
-  },
-  aiHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  senderLabel: { color: '#E8B486', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  speakerBtn: { backgroundColor: '#0A3B3D', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: '#8C6E52' },
-  speakerIcon: { color: '#E8B486', fontSize: 13, fontWeight: '600' },
-  messageText: { color: '#E1F2EC', fontSize: 15, lineHeight: 21 }, 
-  
-  correctionContainer: {
-    backgroundColor: 'rgba(23, 33, 30, 0.9)',
-    borderColor: '#8C6E52',
-    borderWidth: 1.5,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-  },
-  correctionTitle: { color: '#E8B486', fontSize: 14, fontWeight: 'bold', marginBottom: 6 },
-  correctionOriginal: { color: '#8C6E52', fontSize: 14, marginBottom: 4 },
-  correctionFixed: { color: '#E1F2EC', fontSize: 14, fontWeight: '600', marginBottom: 4 },
-  correctionReason: { color: '#E1F2EC', fontSize: 13, fontStyle: 'italic', lineHeight: 18, opacity: 0.9 },
-
-  loadingContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 16, 
     paddingVertical: 10,
-    backgroundColor: 'rgba(17, 23, 21, 0.88)',
-    alignSelf: 'flex-start',
-    borderRadius: 12,
-    marginLeft: 16,
-    marginBottom: 10,
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D',
-  },
-  loadingText: { color: '#E8B486', marginLeft: 8, fontSize: 15, fontWeight: '500' },
-  
-  inputContainer: { 
-    flexDirection: 'row', 
-    padding: 16, 
-    backgroundColor: 'rgba(17, 23, 21, 0.92)',
-    borderTopWidth: 1.5, 
-    borderTopColor: '#0A3B3D', 
+    borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
   },
-  input: { 
-    flex: 1, 
-    maxWidth: 700,
-    backgroundColor: 'rgba(23, 33, 30, 0.9)', 
-    color: '#E1F2EC', 
-    paddingHorizontal: 18,
-    paddingVertical: 12, 
-    borderRadius: 14, 
-    marginRight: 10,
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D',
-    fontSize: 16, 
+  selectPlanText: {
+    color: '#E8B486',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  micButton: { 
-    backgroundColor: 'rgba(23, 33, 30, 0.9)', 
-    width: 48,
-    height: 48, 
-    borderRadius: 14, 
-    marginRight: 10, 
-    justifyContent: 'center', 
+  footer: {
+    paddingVertical: 20,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#0A3B3D',
+    borderTopWidth: 1,
+    borderTopColor: '#0A3B3D',
   },
-  micButtonActive: { backgroundColor: '#0A3B3D', borderColor: '#8C6E52' },
-  micText: { fontSize: 20 }, 
-  sendButton: { 
-    backgroundColor: '#C29B72', 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    paddingHorizontal: 22, 
-    height: 48,
-    borderRadius: 14,
+  footerText: {
+    color: '#8FA39D',
+    fontSize: 13,
   },
-  sendButtonText: { color: '#111715', fontWeight: 'bold', fontSize: 16 }, 
 });
