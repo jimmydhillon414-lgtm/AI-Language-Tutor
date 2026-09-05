@@ -7,7 +7,7 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenLogin, onO
     return (
       <View style={styles.navbar}>
         <View style={styles.navLeft}>
-          <Text style={styles.logoText}>SIRIN LABS</Text>
+          <Text style={styles.logoText}>SIRIN</Text>
         </View>
         <View style={styles.navRight}>
           <TouchableOpacity style={styles.btnLogin} onPress={onOpenLogin}>
