@@ -95,18 +95,23 @@ export default function TutorChatScreen({ navigation }) {
 
       recognition.lang = langMap[userProfile?.target_language] || 'hi-IN';
 
+      let finalTranscript = '';
+
       recognition.onstart = () => {
+        finalTranscript = '';
         setListening(true);
       };
       
       recognition.onresult = (event) => {
-        let transcript = '';
+        let interim = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          transcript += event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
         }
-        if (transcript) {
-          setInput(transcript);
-        }
+        setInput(finalTranscript || interim);
       };
 
       recognition.onerror = (event) => {
@@ -116,6 +121,12 @@ export default function TutorChatScreen({ navigation }) {
 
       recognition.onend = () => {
         setListening(false);
+        const textToSend = finalTranscript.trim() || input.trim();
+        if (textToSend) {
+          setTimeout(() => {
+            handleSendDirect(textToSend);
+          }, 100);
+        }
       };
 
       recognitionRef.current = recognition;
@@ -154,21 +165,24 @@ export default function TutorChatScreen({ navigation }) {
   }
 
   async function handleSend() {
-    if (!input || !input.trim() || !userId) return;
+    handleSendDirect(input.trim());
+  }
+
+  async function handleSendDirect(textToSend) {
+    if (!textToSend || !userId || loading) return;
 
     if (listening && recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
       setListening(false);
     }
 
-    const userText = input.trim();
     setInput('');
 
     const tempUserMsg = {
       id: Date.now().toString(),
       user_id: userId,
       role: 'user',
-      message: userText,
+      message: textToSend,
     };
 
     setMessages((prev) => [...prev, tempUserMsg]);
@@ -178,19 +192,19 @@ export default function TutorChatScreen({ navigation }) {
       await supabase.from('tutor_chat_history').insert({
         user_id: userId,
         role: 'user',
-        message: userText,
+        message: textToSend,
       });
 
       const targetLang = userProfile?.target_language || 'English';
       const proficiency = userProfile?.proficiency_level || 'Beginner';
 
-      const prompt = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level student. The user says: "${userText}".
+      const prompt = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level student. The user says: "${textToSend}".
 Answer their question directly and helpfully. Check if their text has any mistakes based on ${targetLang}.
 
 You MUST reply ONLY with a valid JSON object in this exact format (no markdown code blocks, just raw JSON text):
 {
   "hasCorrection": false,
-  "originalText": "${userText}",
+  "originalText": "${textToSend}",
   "correctedText": "",
   "explanation": "",
   "reply": "Your detailed and helpful answer here"
@@ -205,7 +219,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
       } catch (e) {
         parsedData = {
           hasCorrection: false,
-          originalText: userText,
+          originalText: textToSend,
           correctedText: '',
           explanation: '',
           reply: responseText || 'Please tell me more about what you would like to learn.',
@@ -246,7 +260,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
 
       const errorPayload = JSON.stringify({
         hasCorrection: false,
-        originalText: userText,
+        originalText: textToSend,
         correctedText: '',
         explanation: '',
         reply: errorReply,
