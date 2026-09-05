@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Navbar from '../components/Navbar';
 import LoginScreen from '../screens/LoginScreen';
 import AuthScreen from '../screens/AuthScreen';
 
@@ -70,14 +69,6 @@ export default function AppNavigator() {
 
   return (
     <View style={styles.container}>
-      <Navbar 
-        user={user} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        onOpenLogin={() => { setAuthMode('login'); setShowAuthModal(true); }}
-        onOpenSignup={() => { setAuthMode('signup'); setShowAuthModal(true); }}
-        onSignOut={handleSignOut}
-      />
       <View style={styles.content}>
         {renderContent()}
       </View>
