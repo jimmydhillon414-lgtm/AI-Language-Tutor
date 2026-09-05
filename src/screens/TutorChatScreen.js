@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Platform,
   ImageBackground,
+  TextInput,
 } from 'react-native';
 import * as Speech from 'expo-speech';
 import { supabase } from '../api/supabase';
@@ -164,9 +165,9 @@ export default function TutorChatScreen({ navigation }) {
     return response.text.trim();
   }
 
-  async function handleSend() {
+  const handleSend = () => {
     handleSendDirect(input.trim());
-  }
+  };
 
   async function handleSendDirect(textToSend) {
     if (!textToSend || !userId || loading) return;
@@ -367,81 +368,25 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
           </View>
         )}
 
-        {/* Web Direct HTML Input implementation to bypass React Native Web synthetic event bugs */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'row',
-          padding: '16px',
-          backgroundColor: 'rgba(17, 23, 21, 0.92)',
-          borderTop: '1.5px solid #0A3B3D',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          boxSizing: 'border-box'
-        }}>
-          <div style={{ display: 'flex', flex: 1, maxWidth: '700px', alignItems: 'center', gap: '10px' }}>
-            <input
-              type="text"
+        <View style={styles.inputBar}>
+          <View style={styles.inputInner}>
+            <TextInput
+              style={styles.textInput}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
+              onChangeText={setInput}
               placeholder="Ask your tutor anything..."
-              style={{
-                flex: 1,
-                backgroundColor: 'rgba(23, 33, 30, 0.9)',
-                color: '#E1F2EC',
-                padding: '12px 18px',
-                borderRadius: '14px',
-                border: '1.5px solid #0A3B3D',
-                fontSize: '16px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
+              placeholderTextColor="#8C6E52"
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
             />
-            <button
-              onClick={toggleVoiceInput}
-              style={{
-                backgroundColor: listening ? '#0A3B3D' : 'rgba(23, 33, 30, 0.9)',
-                width: '48px',
-                height: '48px',
-                borderRadius: '14px',
-                border: '1.5px solid #0A3B3D',
-                cursor: 'pointer',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                fontSize: '20px',
-                flexShrink: 0
-              }}
-              title="Voice Input"
-            >
-              {listening ? '🎙️' : '🎤'}
-            </button>
-            <button
-              onClick={handleSend}
-              disabled={loading}
-              style={{
-                backgroundColor: '#C29B72',
-                color: '#111715',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                padding: '0 22px',
-                height: '48px',
-                borderRadius: '14px',
-                border: 'none',
-                cursor: 'pointer',
-                flexShrink: '0'
-              }}
-            >
-              Send
-            </button>
-          </div>
-        </div>
+            <TouchableOpacity style={styles.iconButton} onPress={toggleVoiceInput}>
+              <Text style={{ fontSize: 20 }}>{listening ? '🎙️' : '🎤'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+              <Text style={styles.sendButtonText}>Send</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
       </View>
     </ImageBackground>
@@ -566,4 +511,55 @@ const styles = StyleSheet.create({
     borderColor: '#0A3B3D',
   },
   loadingText: { color: '#E8B486', marginLeft: 8, fontSize: 15, fontWeight: '500' },
+
+  inputBar: {
+    padding: 16,
+    backgroundColor: 'rgba(17, 23, 21, 0.92)',
+    borderTopWidth: 1.5,
+    borderTopColor: '#0A3B3D',
+    width: '100%',
+    alignItems: 'center',
+  },
+  inputInner: {
+    flexDirection: 'row',
+    maxWidth: 700,
+    width: '100%',
+    alignItems: 'center',
+    gap: 10,
+  },
+  textInput: {
+    flex: 1,
+    backgroundColor: 'rgba(23, 33, 30, 0.9)',
+    color: '#E1F2EC',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#0A3B3D',
+    fontSize: 16,
+    outlineStyle: 'none',
+  },
+  iconButton: {
+    backgroundColor: 'rgba(23, 33, 30, 0.9)',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#0A3B3D',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendButton: {
+    backgroundColor: '#C29B72',
+    paddingHorizontal: 22,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendButtonText: {
+    color: '#111715',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
