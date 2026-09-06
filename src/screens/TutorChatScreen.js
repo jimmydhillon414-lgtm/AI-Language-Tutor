@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,62 +11,34 @@ import {
   TextInput,
 } from 'react-native';
 import * as Speech from 'expo-speech';
-import { supabase } from '../api/supabase';
 import { GoogleGenAI } from '@google/genai';
 
 export default function TutorChatScreen({ navigation }) {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([
+    {
+      id: '1',
+      role: 'model',
+      message: JSON.stringify({
+        hasCorrection: false,
+        reply: 'Hello! I am your AI language tutor. What would you like to practice today?',
+      }),
+    },
+  ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sessionLoading, setSessionLoading] = useState(true);
   const [listening, setListening] = useState(false);
-  const [userId, setUserId] = useState(null);
   const [speakingId, setSpeakingId] = useState(null);
-  const [userProfile, setUserProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
+  const [userProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
 
   useEffect(() => {
-    fetchUserAndHistory();
     return () => {
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (e) {}
       }
     };
   }, []);
-
-  async function fetchUserAndHistory() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setSessionLoading(false);
-        return;
-      }
-      setUserId(user.id);
-
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (profile) setUserProfile(profile);
-
-      const { data, error } = await supabase
-        .from('tutor_chat_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
-
-      if (!error && data) {
-        setMessages(data);
-      }
-    } catch (err) {
-      console.log('Session fetch error:', err);
-    } finally {
-      setSessionLoading(false);
-    }
-  }
 
   const toggleVoiceInput = () => {
     if (Platform.OS !== 'web') {
@@ -181,11 +153,6 @@ export default function TutorChatScreen({ navigation }) {
 
   async function handleSendDirect(textToSend) {
     if (!textToSend || loading) return;
-    
-    if (!userId) {
-      alert('Session still loading. Please wait a second.');
-      return;
-    }
 
     if (listening && recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
@@ -196,7 +163,6 @@ export default function TutorChatScreen({ navigation }) {
 
     const tempUserMsg = {
       id: Date.now().toString(),
-      user_id: userId,
       role: 'user',
       message: textToSend,
     };
@@ -205,12 +171,6 @@ export default function TutorChatScreen({ navigation }) {
     setLoading(true);
 
     try {
-      await supabase.from('tutor_chat_history').insert({
-        user_id: userId,
-        role: 'user',
-        message: textToSend,
-      });
-
       const targetLang = userProfile?.target_language || 'English';
       const proficiency = userProfile?.proficiency_level || 'Beginner';
 
@@ -243,25 +203,10 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
       }
 
       const messagePayload = JSON.stringify(parsedData);
+      const newAiId = Date.now().toString();
 
-      const { data: savedAiMsg } = await supabase
-        .from('tutor_chat_history')
-        .insert({
-          user_id: userId,
-          role: 'model',
-          message: messagePayload,
-        })
-        .select()
-        .maybeSingle();
-
-      const newAiId = savedAiMsg ? savedAiMsg.id : Date.now().toString();
-      const aiMsgObj = savedAiMsg || { id: newAiId, role: 'model', message: messagePayload };
-
-      if (savedAiMsg) {
-        setMessages((prev) => [...prev.filter((m) => m.id !== tempUserMsg.id), tempUserMsg, savedAiMsg]);
-      } else {
-        setMessages((prev) => [...prev, aiMsgObj]);
-      }
+      const aiMsgObj = { id: newAiId, role: 'model', message: messagePayload };
+      setMessages((prev) => [...prev, aiMsgObj]);
 
       const autoSpeechText = parsedData.reply || responseText;
       if (autoSpeechText) {
@@ -284,7 +229,6 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
 
       const errorMsgObj = {
         id: Date.now().toString(),
-        user_id: userId,
         role: 'model',
         message: errorPayload,
       };
@@ -386,28 +330,25 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
         <View style={styles.inputBar}>
           <View style={styles.inputInner}>
             <TextInput
-              style={[styles.textInput, sessionLoading && { opacity: 0.7 }]}
+              style={styles.textInput}
               value={input}
               onChangeText={setInput}
-              placeholder={sessionLoading ? "Loading session..." : "Ask your tutor anything..."}
+              placeholder="Ask your tutor anything..."
               placeholderTextColor="#8C6E52"
               onSubmitEditing={handleSend}
               returnKeyType="send"
-              editable={!sessionLoading}
             />
             <TouchableOpacity 
-              style={[styles.iconButton, sessionLoading && { opacity: 0.7 }]} 
+              style={styles.iconButton} 
               onPress={toggleVoiceInput}
               activeOpacity={0.7}
-              disabled={sessionLoading}
             >
               <Text style={{ fontSize: 20 }}>{listening ? '🎙️' : '🎤'}</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.sendButton, sessionLoading && { opacity: 0.7 }]} 
+              style={styles.sendButton} 
               onPress={handleSend}
               activeOpacity={0.7}
-              disabled={sessionLoading}
             >
               <Text style={styles.sendButtonText}>Send</Text>
             </TouchableOpacity>
