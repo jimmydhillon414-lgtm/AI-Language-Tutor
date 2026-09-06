@@ -150,7 +150,10 @@ export default function TutorChatScreen({ navigation }) {
             {
               parts: [{ text: promptText }]
             }
-          ]
+          ],
+          generationConfig: {
+            response_mime_type: "application/json",
+          }
         })
       }
     );
@@ -191,7 +194,7 @@ export default function TutorChatScreen({ navigation }) {
       const prompt = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level student. The user says: "${messageValue.trim()}".
 Answer their question directly and helpfully. Check if their text has any mistakes based on ${targetLang}.
 
-You MUST reply ONLY with a valid JSON object in this exact format (no markdown code blocks, just raw JSON text):
+You MUST reply ONLY with a valid JSON object in this exact format:
 {
   "hasCorrection": false,
   "originalText": "${messageValue.trim()}",
@@ -204,8 +207,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
 
       let parsedData;
       try {
-        const cleanJsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-        parsedData = JSON.parse(cleanJsonStr);
+        parsedData = JSON.parse(responseText);
       } catch (e) {
         parsedData = {
           hasCorrection: false,
