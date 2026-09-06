@@ -53,7 +53,7 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
       }
 
       // 3. Show Attractive Success Message & Trigger parent login success callback
-      setSuccessBanner('🎉 Login Successful! Welcome Back');
+      setSuccessBanner(' Login Successful');
       setTimeout(() => {
         if (onLogin) {
           onLogin(user.email);
