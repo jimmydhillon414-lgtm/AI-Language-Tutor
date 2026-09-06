@@ -16,6 +16,7 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [successBanner, setSuccessBanner] = useState('');
 
   const handlePressLogin = async () => {
     if (!email.trim() || !password) {
@@ -51,14 +52,17 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
         // Non-blocking error: Even if log table entry fails, user can still proceed if auth succeeded
       }
 
-      // 3. Trigger parent login success callback
-      if (onLogin) {
-        onLogin(user.email);
-      }
+      // 3. Show Attractive Success Message & Trigger parent login success callback
+      setSuccessBanner('🎉 Login Successful! Welcome Back');
+      setTimeout(() => {
+        if (onLogin) {
+          onLogin(user.email);
+        }
+      }, 1000);
+
     } catch (err) {
       console.log('Login error:', err);
       alert('An unexpected error occurred during login.');
-    } finally {
       setLoading(false);
     }
   };
@@ -72,6 +76,12 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
       <View style={styles.overlay}>
         <View style={styles.card}>
           <Text style={styles.title}>AI TUTOR</Text>
+
+          {successBanner ? (
+            <View style={styles.successBox}>
+              <Text style={styles.successText}>{successBanner}</Text>
+            </View>
+          ) : null}
           
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email Address</Text>
@@ -165,8 +175,23 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: 20,
     letterSpacing: 1,
+  },
+  successBox: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  successText: {
+    color: '#34D399',
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   inputGroup: {
     marginBottom: 20,
