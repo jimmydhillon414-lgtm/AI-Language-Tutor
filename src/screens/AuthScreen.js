@@ -17,6 +17,7 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [successBanner, setSuccessBanner] = useState('');
 
   const handleSignup = async () => {
     if (!email.trim() || !password || !confirmPassword) {
@@ -34,7 +35,6 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
 
     setLoading(true);
     try {
-      // 1. Register user securely in Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
@@ -52,16 +52,17 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
         return;
       }
 
-      alert('Account created successfully! Please log in with your credentials.');
-      
-      // 2. Safely switch to login screen so they log in with password
-      if (onSwitchToLogin) {
-        onSwitchToLogin();
-      }
+      // Attractive Success Notification
+      setSuccessBanner('✨ Account Created Successfully! Redirecting...');
+      setTimeout(() => {
+        if (onSwitchToLogin) {
+          onSwitchToLogin();
+        }
+      }, 1500);
+
     } catch (err) {
       console.log('Signup error:', err);
       alert('An unexpected error occurred during signup.');
-    } finally {
       setLoading(false);
     }
   };
@@ -75,6 +76,12 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
       <View style={styles.overlay}>
         <View style={styles.card}>
           <Text style={styles.title}>Create Account</Text>
+
+          {successBanner ? (
+            <View style={styles.successBox}>
+              <Text style={styles.successText}>{successBanner}</Text>
+            </View>
+          ) : null}
           
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email Address</Text>
@@ -180,8 +187,23 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
     letterSpacing: 1,
+  },
+  successBox: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  successText: {
+    color: '#34D399',
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   inputGroup: {
     marginBottom: 16,
@@ -230,10 +252,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 18,
-    shadowColor: '#C29B72',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
   },
   signupButtonText: {
     color: '#111715',
