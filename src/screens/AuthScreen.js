@@ -7,16 +7,19 @@ import {
   TouchableOpacity,
   Platform,
   ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
+import { supabase } from '../api/supabase';
 
 export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSignup = () => {
-    if (!email || !password) {
+  const handleSignup = async () => {
+    if (!email.trim() || !password || !confirmPassword) {
       alert('Please fill in all fields');
       return;
     }
@@ -24,7 +27,43 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
       alert('Passwords do not match');
       return;
     }
-    onAuthSuccess(email);
+    if (password.length < 6) {
+      alert('Password must be at least 6 characters long');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1. Register user securely in Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password,
+      });
+
+      if (error) {
+        alert(error.message || 'Signup failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (!data.user) {
+        alert('Signup failed. User could not be created.');
+        setLoading(false);
+        return;
+      }
+
+      alert('Account created successfully! Please log in with your credentials.');
+      
+      // 2. Safely switch to login screen so they log in with password
+      if (onSwitchToLogin) {
+        onSwitchToLogin();
+      }
+    } catch (err) {
+      console.log('Signup error:', err);
+      alert('An unexpected error occurred during signup.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,6 +85,7 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
+              keyboardType="email-address"
             />
           </View>
 
@@ -81,8 +121,16 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
             />
           </View>
 
-          <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
-            <Text style={styles.signupButtonText}>Sign Up</Text>
+          <TouchableOpacity 
+            style={[styles.signupButton, loading && { opacity: 0.7 }]} 
+            onPress={handleSignup}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#111715" />
+            ) : (
+              <Text style={styles.signupButtonText}>Sign Up</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.footerContainer}>
