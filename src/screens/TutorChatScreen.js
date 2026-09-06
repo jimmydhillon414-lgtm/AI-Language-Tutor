@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,34 +11,64 @@ import {
   TextInput,
 } from 'react-native';
 import * as Speech from 'expo-speech';
+import { supabase } from '../api/supabase';
 import { GoogleGenAI } from '@google/genai';
 
 export default function TutorChatScreen({ navigation }) {
-  const [messages, setMessages] = useState([
-    {
-      id: '1',
-      role: 'model',
-      message: JSON.stringify({
-        hasCorrection: false,
-        reply: 'Hello! I am your AI language tutor. What would you like to practice today?',
-      }),
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [listening, setListening] = useState(false);
+  const [userId, setUserId] = useState(null);
   const [speakingId, setSpeakingId] = useState(null);
-  const [userProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
+  const [userProfile, setUserProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
 
   useEffect(() => {
+    checkUserSession();
     return () => {
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (e) {}
       }
     };
   }, []);
+
+  async function checkUserSession() {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        // If not logged in, redirect to Login screen
+        navigation.replace('Login');
+        return;
+      }
+      setUserId(user.id);
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile) setUserProfile(profile);
+
+      const { data, error: historyError } = await supabase
+        .from('tutor_chat_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (!historyError && data) {
+        setMessages(data);
+      }
+    } catch (err) {
+      console.log('Session check error:', err);
+      navigation.replace('Login');
+    } finally {
+      setSessionLoading(false);
+    }
+  }
 
   const toggleVoiceInput = () => {
     if (Platform.OS !== 'web') {
@@ -141,7 +171,7 @@ export default function TutorChatScreen({ navigation }) {
 
     const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       contents: promptText,
     });
     return response.text.trim();
@@ -153,6 +183,11 @@ export default function TutorChatScreen({ navigation }) {
 
   async function handleSendDirect(textToSend) {
     if (!textToSend || loading) return;
+    
+    if (!userId) {
+      alert('Session still loading. Please wait a second.');
+      return;
+    }
 
     if (listening && recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
@@ -163,6 +198,7 @@ export default function TutorChatScreen({ navigation }) {
 
     const tempUserMsg = {
       id: Date.now().toString(),
+      user_id: userId,
       role: 'user',
       message: textToSend,
     };
@@ -171,6 +207,12 @@ export default function TutorChatScreen({ navigation }) {
     setLoading(true);
 
     try {
+      await supabase.from('tutor_chat_history').insert({
+        user_id: userId,
+        role: 'user',
+        message: textToSend,
+      });
+
       const targetLang = userProfile?.target_language || 'English';
       const proficiency = userProfile?.proficiency_level || 'Beginner';
 
@@ -203,10 +245,25 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
       }
 
       const messagePayload = JSON.stringify(parsedData);
-      const newAiId = Date.now().toString();
 
-      const aiMsgObj = { id: newAiId, role: 'model', message: messagePayload };
-      setMessages((prev) => [...prev, aiMsgObj]);
+      const { data: savedAiMsg } = await supabase
+        .from('tutor_chat_history')
+        .insert({
+          user_id: userId,
+          role: 'model',
+          message: messagePayload,
+        })
+        .select()
+        .maybeSingle();
+
+      const newAiId = savedAiMsg ? savedAiMsg.id : Date.now().toString();
+      const aiMsgObj = savedAiMsg || { id: newAiId, role: 'model', message: messagePayload };
+
+      if (savedAiMsg) {
+        setMessages((prev) => [...prev.filter((m) => m.id !== tempUserMsg.id), tempUserMsg, savedAiMsg]);
+      } else {
+        setMessages((prev) => [...prev, aiMsgObj]);
+      }
 
       const autoSpeechText = parsedData.reply || responseText;
       if (autoSpeechText) {
@@ -229,6 +286,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
 
       const errorMsgObj = {
         id: Date.now().toString(),
+        user_id: userId,
         role: 'model',
         message: errorPayload,
       };
@@ -289,6 +347,15 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
       </View>
     );
   };
+
+  if (sessionLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#111715' }]}>
+        <ActivityIndicator size="large" color="#E8B486" />
+        <Text style={{ color: '#E1F2EC', marginTop: 12, fontSize: 16 }}>Loading session...</Text>
+      </View>
+    );
+  }
 
   return (
     <ImageBackground 
