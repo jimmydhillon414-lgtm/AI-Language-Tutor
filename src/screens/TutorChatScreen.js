@@ -135,22 +135,37 @@ export default function TutorChatScreen({ navigation }) {
     });
   };
 
-  async function getAiResponse(promptText) {
-    const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-    if (!apiKey) throw new Error('Gemini API key is missing.');
+ async function getAiResponse(promptText) {
+  const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+  if (!apiKey) throw new Error('Gemini API key is missing.');
 
-    const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
-    const response = await ai.models.generateContent({
-      // FIX: Changed from invalid 'gemini-2.5-flash' to valid 'gemini-1.5-flash'
-      model: 'gemini-1.5-flash',
-      contents: promptText,
-    });
-    return response.text.trim();
+  // Direct REST API call (Works with any valid key format)
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: promptText }]
+          }
+        ]
+      })
+    }
+  );
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error?.message || 'Failed to communicate with AI service.');
   }
 
-  const handleSend = () => {
-    handleSendDirect(input.trim());
-  };
+  // Extract text from Gemini REST response structure
+  return data.candidates[0].content.parts[0].text;
+}
 
   async function handleSendDirect(textToSend) {
     if (!textToSend || loading) return;
