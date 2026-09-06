@@ -71,7 +71,7 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
     >
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.title}>AI TUTOR</Text>
           
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email Address</Text>
