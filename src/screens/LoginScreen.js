@@ -7,15 +7,60 @@ import {
   TouchableOpacity,
   Platform,
   ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
+import { supabase } from '../api/supabase';
 
 export default function LoginScreen({ onLogin, onSwitchToSignup }) {
-  const [email, setEmail] = useState('creatorstack9@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handlePressLogin = () => {
-    onLogin(email);
+  const handlePressLogin = async () => {
+    if (!email.trim() || !password) {
+      alert('Please enter both email and password.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1. Authenticate user with Supabase Password Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
+
+      if (error) {
+        alert(error.message || 'Login failed. Please check your credentials.');
+        setLoading(false);
+        return;
+      }
+
+      const user = data.user;
+
+      // 2. Insert Login Session / Entry into database table (e.g. user_login_logs)
+      try {
+        await supabase.from('user_login_logs').insert({
+          user_id: user.id,
+          email: user.email,
+          logged_in_at: new Date().toISOString(),
+        });
+      } catch (dbErr) {
+        console.log('Session log insert note:', dbErr);
+        // Non-blocking error: Even if log table entry fails, user can still proceed if auth succeeded
+      }
+
+      // 3. Trigger parent login success callback
+      if (onLogin) {
+        onLogin(user.email);
+      }
+    } catch (err) {
+      console.log('Login error:', err);
+      alert('An unexpected error occurred during login.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,6 +82,7 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
+              keyboardType="email-address"
             />
           </View>
 
@@ -60,8 +106,16 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.loginButton} onPress={handlePressLogin}>
-            <Text style={styles.loginButtonText}>Login</Text>
+          <TouchableOpacity 
+            style={[styles.loginButton, loading && { opacity: 0.7 }]} 
+            onPress={handlePressLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#111715" />
+            ) : (
+              <Text style={styles.loginButtonText}>Login</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.footerContainer}>
