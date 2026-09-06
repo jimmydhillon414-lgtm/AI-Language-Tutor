@@ -11,7 +11,6 @@ import {
   TextInput,
 } from 'react-native';
 import * as Speech from 'expo-speech';
-import { GoogleGenAI } from '@google/genai';
 
 export default function TutorChatScreen({ navigation }) {
   const [messages, setMessages] = useState([
@@ -135,40 +134,39 @@ export default function TutorChatScreen({ navigation }) {
     });
   };
 
- async function getAiResponse(promptText) {
-  const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-  if (!apiKey) throw new Error('Gemini API key is missing.');
+  async function getAiResponse(promptText) {
+    const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+    if (!apiKey) throw new Error('Gemini API key is missing.');
 
-  // Direct REST API call (Works with any valid key format)
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: promptText }]
-          }
-        ]
-      })
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: promptText }]
+            }
+          ]
+        })
+      }
+    );
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Failed to communicate with AI service.');
     }
-  );
 
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error(data.error?.message || 'Failed to communicate with AI service.');
+    return data.candidates[0].content.parts[0].text;
   }
 
-  // Extract text from Gemini REST response structure
-  return data.candidates[0].content.parts[0].text;
-}
-
   async function handleSendDirect(textToSend) {
-    if (!textToSend || loading) return;
+    const messageValue = typeof textToSend === 'string' ? textToSend : input;
+    if (!messageValue || !messageValue.trim() || loading) return;
 
     if (listening && recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
@@ -180,7 +178,7 @@ export default function TutorChatScreen({ navigation }) {
     const tempUserMsg = {
       id: Date.now().toString(),
       role: 'user',
-      message: textToSend,
+      message: messageValue.trim(),
     };
 
     setMessages((prev) => [...prev, tempUserMsg]);
@@ -190,13 +188,13 @@ export default function TutorChatScreen({ navigation }) {
       const targetLang = userProfile?.target_language || 'English';
       const proficiency = userProfile?.proficiency_level || 'Beginner';
 
-      const prompt = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level student. The user says: "${textToSend}".
+      const prompt = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level student. The user says: "${messageValue.trim()}".
 Answer their question directly and helpfully. Check if their text has any mistakes based on ${targetLang}.
 
 You MUST reply ONLY with a valid JSON object in this exact format (no markdown code blocks, just raw JSON text):
 {
   "hasCorrection": false,
-  "originalText": "${textToSend}",
+  "originalText": "${messageValue.trim()}",
   "correctedText": "",
   "explanation": "",
   "reply": "Your detailed and helpful answer here"
@@ -211,7 +209,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
       } catch (e) {
         parsedData = {
           hasCorrection: false,
-          originalText: textToSend,
+          originalText: messageValue.trim(),
           correctedText: '',
           explanation: '',
           reply: responseText || 'Please tell me more about what you would like to learn.',
@@ -240,7 +238,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
 
       const errorPayload = JSON.stringify({
         hasCorrection: false,
-        originalText: textToSend,
+        originalText: messageValue.trim(),
         correctedText: '',
         explanation: '',
         reply: errorReply,
@@ -354,7 +352,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
               onChangeText={setInput}
               placeholder="Ask your tutor anything..."
               placeholderTextColor="#8C6E52"
-              onSubmitEditing={handleSend}
+              onSubmitEditing={() => handleSendDirect(input)}
               returnKeyType="send"
             />
             <TouchableOpacity 
@@ -366,7 +364,7 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.sendButton} 
-              onPress={handleSend}
+              onPress={() => handleSendDirect(input)}
               activeOpacity={0.7}
             >
               <Text style={styles.sendButtonText}>Send</Text>
