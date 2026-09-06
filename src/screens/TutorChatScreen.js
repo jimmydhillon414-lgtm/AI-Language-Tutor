@@ -141,7 +141,8 @@ export default function TutorChatScreen({ navigation }) {
 
     const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      // FIX: Changed from invalid 'gemini-2.5-flash' to valid 'gemini-1.5-flash'
+      model: 'gemini-1.5-flash',
       contents: promptText,
     });
     return response.text.trim();
@@ -214,9 +215,12 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
       }
 
     } catch (err) {
+      console.log('AI Error details:', err);
       let errorReply = 'An error occurred with the AI service.';
       if (err.message && err.message.includes('429')) {
         errorReply = '⚠️ API Quota limit exceeded. Please wait a few minutes.';
+      } else if (err.message && err.message.includes('400')) {
+        errorReply = '⚠️ Bad Request (400): Check API key configuration or model support.';
       }
 
       const errorPayload = JSON.stringify({
