@@ -170,7 +170,14 @@ export default function TutorChatScreen({ navigation }) {
   };
 
   async function handleSendDirect(textToSend) {
-    if (!textToSend || !userId || loading) return;
+    if (!textToSend) return;
+    
+    if (!userId) {
+      alert('Please wait a moment, your session is still loading...');
+      return;
+    }
+
+    if (loading) return;
 
     if (listening && recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
