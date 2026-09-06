@@ -1,4 +1,4 @@
-import React, et { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
     borderColor: '#0A3B3D',
     justifyContent: 'center',
     alignItems: 'center',
-    ...(Platform.OS ===erspace = {
+    ...(Platform.OS === 'web' ? {
       cursor: 'pointer',
       pointerEvents: 'auto',
     } : {}),
