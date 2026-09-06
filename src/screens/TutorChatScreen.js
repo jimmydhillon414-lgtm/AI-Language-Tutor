@@ -18,6 +18,7 @@ export default function TutorChatScreen({ navigation }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [listening, setListening] = useState(false);
   const [userId, setUserId] = useState(null);
   const [speakingId, setSpeakingId] = useState(null);
@@ -35,26 +36,35 @@ export default function TutorChatScreen({ navigation }) {
   }, []);
 
   async function fetchUserAndHistory() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    setUserId(user.id);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setSessionLoading(false);
+        return;
+      }
+      setUserId(user.id);
 
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    if (profile) setUserProfile(profile);
+      if (profile) setUserProfile(profile);
 
-    const { data, error } = await supabase
-      .from('tutor_chat_history')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true });
+      const { data, error } = await supabase
+        .from('tutor_chat_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
 
-    if (!error && data) {
-      setMessages(data);
+      if (!error && data) {
+        setMessages(data);
+      }
+    } catch (err) {
+      console.log('Session fetch error:', err);
+    } finally {
+      setSessionLoading(false);
     }
   }
 
@@ -170,14 +180,11 @@ export default function TutorChatScreen({ navigation }) {
   };
 
   async function handleSendDirect(textToSend) {
-    if (!textToSend) return;
+    if (!textToSend || loading) return;
     
     if (!userId) {
-      alert('Please wait a moment, your session is still loading...');
       return;
     }
-
-    if (loading) return;
 
     if (listening && recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
@@ -378,25 +385,28 @@ You MUST reply ONLY with a valid JSON object in this exact format (no markdown c
         <View style={styles.inputBar}>
           <View style={styles.inputInner}>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, sessionLoading && { opacity: 0.7 }]}
               value={input}
               onChangeText={setInput}
-              placeholder="Ask your tutor anything..."
+              placeholder={sessionLoading ? "Loading session..." : "Ask your tutor anything..."}
               placeholderTextColor="#8C6E52"
               onSubmitEditing={handleSend}
               returnKeyType="send"
+              editable={!sessionLoading}
             />
             <TouchableOpacity 
-              style={styles.iconButton} 
+              style={[styles.iconButton, sessionLoading && { opacity: 0.7 }]} 
               onPress={toggleVoiceInput}
               activeOpacity={0.7}
+              disabled={sessionLoading}
             >
               <Text style={{ fontSize: 20 }}>{listening ? '🎙️' : '🎤'}</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.sendButton} 
+              style={[styles.sendButton, sessionLoading && { opacity: 0.7 }]} 
               onPress={handleSend}
               activeOpacity={0.7}
+              disabled={sessionLoading}
             >
               <Text style={styles.sendButtonText}>Send</Text>
             </TouchableOpacity>
