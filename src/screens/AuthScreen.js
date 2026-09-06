@@ -53,7 +53,7 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
       }
 
       // Attractive Success Notification
-      setSuccessBanner('✨ Account Created Successfully! Redirecting...');
+      setSuccessBanner('Account Created Successfully');
       setTimeout(() => {
         if (onSwitchToLogin) {
           onSwitchToLogin();
