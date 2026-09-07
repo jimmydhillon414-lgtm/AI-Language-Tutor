@@ -124,15 +124,25 @@ export default function TutorChatScreen({ navigation }) {
   async function getAiResponse(promptText) {
     const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
     if (!apiKey) throw new Error('Gemini API key is missing.');
-
-   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey.trim()}`,
-      },
+const response = await fetch(
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [{ text: promptText }]
+        }
+      ],
+      generationConfig: {
+        response_mime_type: "application/json",
+      }
+    })
+  }
+);
         body: JSON.stringify({
           contents: [
             {
