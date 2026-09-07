@@ -1,13 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-// Environment variable se secure key load ho rahi hai
-const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-
-const genAI = new GoogleGenerativeAI(apiKey);
-
 export const getTutorResponse = async (userMessage, targetLanguage = 'English', level = 'Beginner') => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const apiKey = process.env.EXPO_PUBLIC_GEMINI_AI_KEY;
+    if (!apiKey) {
+      throw new Error('Gemini API key is missing.');
+    }
 
     const systemPrompt = `You are a friendly, encouraging AI Language Tutor teaching ${targetLanguage} to a ${level} level student. 
     Rules:
@@ -15,13 +11,39 @@ export const getTutorResponse = async (userMessage, targetLanguage = 'English', 
     2. If the student makes a grammar or vocabulary mistake, politely correct it first in brackets like [Correction: ...].
     3. Always end with a short question to keep the practice going.`;
 
-    const prompt = `${systemPrompt}\n\nStudent: "${userMessage}"`;
+    const promptText = `${systemPrompt}\n\nStudent: "${userMessage}"`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+    // Direct fetch use kar rahe hain taaki AQ. token / Bearer token properly pass ho sake
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey.trim()}`
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: promptText }]
+            }
+          ]
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Failed to communicate with AI service.');
+    }
+
+    // Gemini API response structure se text extract karna
+    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    return aiText || 'No response generated.';
+
   } catch (error) {
     console.error('Gemini API Error:', error);
-    return 'Sorry, I am having trouble connecting right now. Please check your API key.';
+    return `Sorry, I am having trouble connecting right now. (${error.message})`;
   }
 };
