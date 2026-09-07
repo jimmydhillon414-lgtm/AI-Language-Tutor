@@ -29,96 +29,61 @@ export default function TutorChatScreen({ navigation }) {
   const [speakingId, setSpeakingId] = useState(null);
   const [userProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
   const flatListRef = useRef();
-  const recognitionRef = useRef(null);
+  
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   useEffect(() => {
     return () => {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (e) {}
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try { mediaRecorderRef.current.stop(); } catch (e) {}
       }
     };
   }, []);
 
-  const toggleVoiceInput = () => {
-    const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
-    if (isFirefox) {
-      alert('Speech Recognition is not natively supported in Mozilla Firefox. Please use Google Chrome or Microsoft Edge for voice features.');
-      return;
-    }
-
+  const toggleVoiceInput = async () => {
     if (Platform.OS !== 'web') {
-      alert('Speech Recognition is currently configured for Web browsers.');
+      alert('Voice recording is configured for Web browsers.');
       return;
     }
 
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert('Speech Recognition is not supported in this browser. Please use Google Chrome.');
-      return;
-    }
-
-    if (listening && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {}
+    if (listening) {
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
       setListening(false);
       return;
     }
 
     try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-
-      const langMap = {
-        English: 'en-IN',
-        Punjabi: 'pa-IN',
-        Hindi: 'hi-IN',
-      };
-
-      recognition.lang = langMap[userProfile?.target_language] || 'hi-IN';
-
-      let finalTranscript = '';
-
-      recognition.onstart = () => {
-        finalTranscript = '';
-        setListening(true);
-      };
+      audioChunksRef.current = [];
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      recognition.onresult = (event) => {
-        let interim = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interim += event.results[i][0].transcript;
-          }
-        }
-        setInput(finalTranscript || interim);
-      };
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
 
-      recognition.onerror = (event) => {
-        console.log('Speech recognition error:', event.error);
-        setListening(false);
-      };
-
-      recognition.onend = () => {
-        setListening(false);
-        const textToSend = finalTranscript.trim() || input.trim();
-        if (textToSend) {
-          setTimeout(() => {
-            handleSendDirect(textToSend);
-          }, 100);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
         }
       };
 
-      recognitionRef.current = recognition;
-      recognition.start();
+      mediaRecorder.onstop = async () => {
+        // Stop all audio tracks
+        stream.getTracks().forEach(track => track.stop());
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (audioBlob.size > 0) {
+          await handleAudioSend(audioBlob);
+        }
+      };
+
+      mediaRecorder.start();
+      setListening(true);
     } catch (err) {
-      console.log('Mic init error:', err);
+      console.log('Microphone permission or init error:', err);
+      alert('Could not access microphone. Please check browser permissions.');
       setListening(false);
     }
   };
@@ -138,7 +103,7 @@ export default function TutorChatScreen({ navigation }) {
     });
   };
 
-  async function getAiResponse(promptText) {
+  async function getAiResponse(partsPayload) {
     const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
     if (!apiKey) throw new Error('Gemini API key is missing.');
 
@@ -152,7 +117,7 @@ export default function TutorChatScreen({ navigation }) {
         body: JSON.stringify({
           contents: [
             {
-              parts: [{ text: promptText }]
+              parts: partsPayload
             }
           ],
           generationConfig: {
@@ -171,14 +136,107 @@ export default function TutorChatScreen({ navigation }) {
     return data.candidates[0].content.parts[0].text;
   }
 
+  const blobToBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result.split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  async function handleAudioSend(audioBlob) {
+    setLoading(true);
+    try {
+      const base64Audio = await blobToBase64(audioBlob);
+      const targetLang = userProfile?.target_language || 'English';
+      const proficiency = userProfile?.proficiency_level || 'Beginner';
+
+      const promptText = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level student. The user has sent an audio message. 
+1. Listen to the audio, transcribe what they said.
+2. Answer their question directly and helpfully in the "reply" field.
+3. Check if their spoken text has any grammar mistakes.
+
+You MUST reply ONLY with a valid JSON object in this exact format:
+{
+  "hasCorrection": false,
+  "originalText": "[Transcribed text from user audio]",
+  "correctedText": "",
+  "explanation": "",
+  "reply": "Your detailed and helpful answer here"
+}`;
+
+      const responseText = await getAiResponse([
+        { text: promptText },
+        {
+          inline_data: {
+            mime_type: "audio/webm",
+            data: base64Audio
+          }
+        }
+      ]);
+
+      let parsedData;
+      try {
+        parsedData = JSON.parse(responseText);
+      } catch (e) {
+        parsedData = {
+          hasCorrection: false,
+          originalText: 'Audio message',
+          correctedText: '',
+          explanation: '',
+          reply: responseText || 'I received your audio message!',
+        };
+      }
+
+      const userDisplayMsg = parsedData.originalText && parsedData.originalText !== '[Transcribed text from user audio]' 
+        ? parsedData.originalText 
+        : '🎤 Voice Message';
+
+      const tempUserMsg = {
+        id: Date.now().toString(),
+        role: 'user',
+        message: userDisplayMsg,
+      };
+
+      const messagePayload = JSON.stringify(parsedData);
+      const newAiId = (Date.now() + 1).toString();
+      const aiMsgObj = { id: newAiId, role: 'model', message: messagePayload };
+
+      setMessages((prev) => [...prev, tempUserMsg, aiMsgObj]);
+
+      const autoSpeechText = parsedData.reply || responseText;
+      if (autoSpeechText) {
+        speakText(autoSpeechText, newAiId);
+      }
+
+    } catch (err) {
+      console.log('Audio AI Error:', err);
+      const errorPayload = JSON.stringify({
+        hasCorrection: false,
+        originalText: 'Voice Message',
+        correctedText: '',
+        explanation: '',
+        reply: '⚠️ Error processing audio message. Please try again or type your message.',
+      });
+
+      const errorMsgObj = {
+        id: Date.now().toString(),
+        role: 'model',
+        message: errorPayload,
+      };
+      setMessages((prev) => [...prev, errorMsgObj]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleSendDirect(textToSend) {
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
-
-    if (listening && recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (e) {}
-      setListening(false);
-    }
 
     setInput('');
 
@@ -207,7 +265,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "reply": "Your detailed and helpful answer here"
 }`;
 
-      const responseText = await getAiResponse(prompt);
+      const responseText = await getAiResponse([{ text: prompt }]);
 
       let parsedData;
       try {
@@ -325,7 +383,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           <Text style={styles.topHeaderTitle}>AI Language Tutor</Text>
           <TouchableOpacity 
             style={styles.helpButton} 
-            onPress={() => alert('Help & Support: Type your queries or use voice input to practice conversation with your AI tutor.')}
+            onPress={() => alert('Help & Support: Click the microphone to record your voice message. Firefox & Chrome are both fully supported now!')}
           >
             <Text style={styles.helpButtonText}>❓ Help</Text>
           </TouchableOpacity>
@@ -346,7 +404,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color="#FFCB9A" />
-            <Text style={styles.loadingText}>Tutor is typing...</Text>
+            <Text style={styles.loadingText}>Tutor is listening & typing...</Text>
           </View>
         )}
 
@@ -362,11 +420,11 @@ You MUST reply ONLY with a valid JSON object in this exact format:
               returnKeyType="send"
             />
             <TouchableOpacity 
-              style={styles.iconButton} 
+              style={[styles.iconButton, listening && { borderColor: '#E8B486', backgroundColor: '#0A3B3D' }]} 
               onPress={toggleVoiceInput}
               activeOpacity={0.7}
             >
-              <Text style={{ fontSize: 20 }}>{listening ? '🎙️' : '🎤'}</Text>
+              <Text style={{ fontSize: 20 }}>{listening ? '⏹️' : '🎤'}</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.sendButton} 
