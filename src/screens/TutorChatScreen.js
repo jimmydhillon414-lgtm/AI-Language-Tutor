@@ -124,25 +124,15 @@ export default function TutorChatScreen({ navigation }) {
   async function getAiResponse(promptText) {
     const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
     if (!apiKey) throw new Error('Gemini API key is missing.');
-const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [{ text: promptText }]
-        }
-      ],
-      generationConfig: {
-        response_mime_type: "application/json",
-      }
-    })
-  }
-);
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey.trim()}`,
+        },
         body: JSON.stringify({
           contents: [
             {
@@ -232,7 +222,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       let errorReply = 'An error occurred with the AI service.';
       if (err.message && err.message.includes('429')) {
         errorReply = '⚠️ API Quota limit exceeded. Please wait a few minutes.';
-      } else if (err.message && err.message.includes('401') || err.message.includes('400')) {
+      } else if (err.message && (err.message.includes('401') || err.message.includes('400'))) {
         errorReply = '⚠️ API Configuration Error. Please check your Gemini API Key.';
       }
 
