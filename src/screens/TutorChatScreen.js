@@ -38,8 +38,8 @@ export default function TutorChatScreen({ navigation }) {
       }
     };
   }, []);
-const toggleVoiceInput = () => {
-    // Detect Firefox or unsupported browsers
+
+  const toggleVoiceInput = () => {
     const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
     if (isFirefox) {
       alert('Speech Recognition is not natively supported in Mozilla Firefox. Please use Google Chrome or Microsoft Edge for voice features.');
@@ -59,8 +59,6 @@ const toggleVoiceInput = () => {
       alert('Speech Recognition is not supported in this browser. Please use Google Chrome.');
       return;
     }
-    // Rest of your speech logic...
-  };
 
     if (listening && recognitionRef.current) {
       try {
