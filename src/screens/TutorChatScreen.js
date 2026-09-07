@@ -122,26 +122,21 @@ export default function TutorChatScreen({ navigation }) {
   };
 
   async function getAiResponse(promptText) {
-    const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-    if (!apiKey) throw new Error('Gemini API key is missing.');
+    const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
+    if (!apiKey) throw new Error('Groq API key is missing.');
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
+      'https://api.groq.com/openai/v1/chat/completions',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey.trim()}`,
+          'Authorization': `Bearer ${apiKey.trim()}`
         },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: promptText }]
-            }
-          ],
-          generationConfig: {
-            response_mime_type: "application/json",
-          }
+          model: 'llama3-8b-8192',
+          messages: [{ role: 'user', content: promptText }],
+          response_format: { type: "json_object" }
         })
       }
     );
@@ -152,7 +147,7 @@ export default function TutorChatScreen({ navigation }) {
       throw new Error(data.error?.message || 'Failed to communicate with AI service.');
     }
 
-    return data.candidates[0].content.parts[0].text;
+    return data.choices[0].message.content;
   }
 
   async function handleSendDirect(textToSend) {
@@ -223,7 +218,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       if (err.message && err.message.includes('429')) {
         errorReply = '⚠️ API Quota limit exceeded. Please wait a few minutes.';
       } else if (err.message && (err.message.includes('401') || err.message.includes('400'))) {
-        errorReply = '⚠️ API Configuration Error. Please check your Gemini API Key.';
+        errorReply = '⚠️ API Configuration Error. Please check your Groq API Key.';
       }
 
       const errorPayload = JSON.stringify({
