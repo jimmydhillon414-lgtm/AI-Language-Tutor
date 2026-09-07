@@ -38,8 +38,14 @@ export default function TutorChatScreen({ navigation }) {
       }
     };
   }, []);
+const toggleVoiceInput = () => {
+    // Detect Firefox or unsupported browsers
+    const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
+    if (isFirefox) {
+      alert('Speech Recognition is not natively supported in Mozilla Firefox. Please use Google Chrome or Microsoft Edge for voice features.');
+      return;
+    }
 
-  const toggleVoiceInput = () => {
     if (Platform.OS !== 'web') {
       alert('Speech Recognition is currently configured for Web browsers.');
       return;
@@ -47,14 +53,14 @@ export default function TutorChatScreen({ navigation }) {
 
     const SpeechRecognition =
       window.SpeechRecognition ||
-      window.webkitSpeechRecognition ||
-      window.mozSpeechRecognition ||
-      window.msSpeechRecognition;
+      window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       alert('Speech Recognition is not supported in this browser. Please use Google Chrome.');
       return;
     }
+    // Rest of your speech logic...
+  };
 
     if (listening && recognitionRef.current) {
       try {
