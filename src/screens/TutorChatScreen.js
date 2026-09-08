@@ -14,13 +14,15 @@ import * as Speech from 'expo-speech';
 import { supabase } from '../api/supabase'; // 👈 Make sure supabase client is imported correctly
 
 export default function TutorChatScreen({ navigation }) {
+  const [userProfile] = useState({ target_language: 'German', proficiency_level: 'Beginner' });
+  
   const [messages, setMessages] = useState([
     {
       id: '1',
       role: 'model',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: 'Hello! I am your AI language tutor. What would you like to practice today?',
+        reply: `Hello! I am your AI language tutor. You are here to learn ${userProfile.target_language}. What would you like to practice today?`,
       }),
     },
   ]);
@@ -28,7 +30,6 @@ export default function TutorChatScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const [speakingId, setSpeakingId] = useState(null);
-  const [userProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
 
