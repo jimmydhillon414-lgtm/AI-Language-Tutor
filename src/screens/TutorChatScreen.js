@@ -11,6 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import * as Speech from 'expo-speech';
+import { supabase } from '../services/supabase'; // 👈 Make sure supabase client is imported correctly
 
 export default function TutorChatScreen({ navigation }) {
   const [messages, setMessages] = useState([
@@ -122,21 +123,17 @@ export default function TutorChatScreen({ navigation }) {
   };
 
   async function getAiResponse(promptText) {
-    const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
-    if (!apiKey) throw new Error('Groq API key is missing.');
-
- async function getAiResponse(promptText) {
     const { data, error } = await supabase.functions.invoke('ai-proxy', {
       body: { prompt: promptText },
     });
 
     if (error) {
-      console.error("Supabase Invoke Error:", error); // 👈 Yeh add karein
+      console.error("Supabase Invoke Error:", error);
       throw new Error(error.message || 'Failed to communicate with AI proxy.');
     }
 
-    if (data.error) {
-      console.error("AI Proxy Data Error:", data.error); // 👈 Yeh add karein
+    if (data && data.error) {
+      console.error("AI Proxy Data Error:", data.error);
       throw new Error(data.error || 'AI service returned an error.');
     }
 
