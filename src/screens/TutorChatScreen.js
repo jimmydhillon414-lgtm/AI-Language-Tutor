@@ -11,7 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import * as Speech from 'expo-speech';
-import { supabase } from '../services/supabase'; // 👈 Make sure supabase client is imported correctly
+import { supabase } from '../api/supabase'; // 👈 Make sure supabase client is imported correctly
 
 export default function TutorChatScreen({ navigation }) {
   const [messages, setMessages] = useState([
