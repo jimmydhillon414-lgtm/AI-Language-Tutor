@@ -125,26 +125,19 @@ export default function TutorChatScreen({ navigation }) {
     const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
     if (!apiKey) throw new Error('Groq API key is missing.');
 
-    const response = await fetch(
-      'https://api.groq.com/openai/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey.trim()}`
-        },
-        body: JSON.stringify({
-          model: 'llama3-8b-8192',
-          messages: [{ role: 'user', content: promptText }],
-          response_format: { type: "json_object" }
-        })
-      }
-    );
+ async function getAiResponse(promptText) {
+    const { data, error } = await supabase.functions.invoke('ai-proxy', {
+      body: { prompt: promptText },
+    });
 
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error?.message || 'Failed to communicate with AI service.');
+    if (error) {
+      console.error("Supabase Invoke Error:", error); // 👈 Yeh add karein
+      throw new Error(error.message || 'Failed to communicate with AI proxy.');
+    }
+
+    if (data.error) {
+      console.error("AI Proxy Data Error:", data.error); // 👈 Yeh add karein
+      throw new Error(data.error || 'AI service returned an error.');
     }
 
     return data.choices[0].message.content;
