@@ -11,10 +11,10 @@ import {
   TextInput,
 } from 'react-native';
 import * as Speech from 'expo-speech';
-import { supabase } from '../api/supabase'; // 👈 Make sure supabase client is imported correctly
+import { supabase } from '../api/supabase';
 
 export default function TutorChatScreen({ navigation }) {
-  const [userProfile] = useState({ target_language: 'German', proficiency_level: 'Beginner' });
+  const [userProfile, setUserProfile] = useState({ target_language: 'German', proficiency_level: 'Beginner' });
   
   const [messages, setMessages] = useState([
     {
@@ -22,7 +22,7 @@ export default function TutorChatScreen({ navigation }) {
       role: 'model',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: `Hello! I am your AI language tutor. You are here to learn ${userProfile.target_language}. What would you like to practice today?`,
+        reply: `Hello! I am your AI language tutor. You are here to learn German. What would you like to practice today?`,
       }),
     },
   ]);
@@ -34,12 +34,55 @@ export default function TutorChatScreen({ navigation }) {
   const recognitionRef = useRef(null);
 
   useEffect(() => {
+    fetchUserAndProfile();
     return () => {
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (e) {}
       }
     };
   }, []);
+
+  async function fetchUserAndProfile() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile) {
+        setUserProfile(profile);
+        setMessages([
+          {
+            id: '1',
+            role: 'model',
+            message: JSON.stringify({
+              hasCorrection: false,
+              reply: `Hello! I am your AI language tutor. You are here to learn ${profile.target_language || 'German'}. What would you like to practice today?`,
+            }),
+          },
+        ]);
+      }
+    } catch (err) {
+      console.log('Error fetching user profile:', err);
+    }
+  }
+
+  const getLanguageCode = (lang) => {
+    const langMap = {
+      English: 'en-US',
+      German: 'de-DE',
+      Hindi: 'hi-IN',
+      Punjabi: 'pa-IN',
+      French: 'fr-FR',
+      Spanish: 'es-ES',
+      Italian: 'it-IT',
+    };
+    return langMap[lang] || 'en-US';
+  };
 
   const toggleVoiceInput = () => {
     const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
@@ -64,7 +107,7 @@ export default function TutorChatScreen({ navigation }) {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = getLanguageCode(userProfile?.target_language);
 
       let finalTranscript = '';
 
@@ -117,7 +160,7 @@ export default function TutorChatScreen({ navigation }) {
     Speech.stop();
     setSpeakingId(messageId);
     Speech.speak(text, {
-      language: 'en-US',
+      language: getLanguageCode(userProfile?.target_language),
       onDone: () => setSpeakingId(null),
       onError: () => setSpeakingId(null),
     });
@@ -162,7 +205,7 @@ export default function TutorChatScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const targetLang = userProfile?.target_language || 'English';
+      const targetLang = userProfile?.target_language || 'German';
       const proficiency = userProfile?.proficiency_level || 'Beginner';
 
       const prompt = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level student. The user says: "${messageValue.trim()}".
@@ -254,7 +297,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
     return (
       <View style={[styles.bubble, styles.aiBubble]}>
         <View style={styles.aiHeader}>
-          <Text style={styles.senderLabel}>AI Tutor</Text>
+          <Text style={styles.senderLabel}>AI Tutor ({userProfile?.target_language || 'Tutor'})</Text>
           <TouchableOpacity 
             onPress={() => speakText(textToSpeak, item.id)} 
             style={styles.speakerBtn}
@@ -292,10 +335,10 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       <View style={styles.overlay} pointerEvents="box-none">
         
         <View style={styles.topHeaderBar}>
-          <Text style={styles.topHeaderTitle}>AI Language Tutor</Text>
+          <Text style={styles.topHeaderTitle}>AI Language Tutor ({userProfile?.target_language || 'General'})</Text>
           <TouchableOpacity 
             style={styles.helpButton} 
-            onPress={() => alert('Tip: Firefox does not support browser speech-to-text natively. Please type your messages or use Google Chrome for voice input.')}
+            onPress={() => alert('Tip: Select your target language in your profile settings to practice seamlessly.')}
           >
             <Text style={styles.helpButtonText}>❓ Help</Text>
           </TouchableOpacity>
@@ -326,7 +369,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
               style={styles.textInput}
               value={input}
               onChangeText={setInput}
-              placeholder="Ask your tutor anything..."
+              placeholder={`Ask your ${userProfile?.target_language || ''} tutor anything...`}
               placeholderTextColor="#8C6E52"
               onSubmitEditing={() => handleSendDirect(input)}
               returnKeyType="send"
