@@ -87,15 +87,9 @@ export default function TutorChatScreen({ navigation }) {
     return langMap[lang] || 'en-US';
   };
 
-  // Universal MediaRecorder & Whisper API Integration for all browsers/mobile
-  const toggleVoiceInput = async () => {
-    if (listening) {
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.stop();
-      }
-      setListening(false);
-      return;
-    }
+  // Push-to-Talk Start (Press In) - Prevents mid-sentence cutoff
+  const startVoiceInput = async () => {
+    if (listening || loading) return;
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -104,26 +98,37 @@ export default function TutorChatScreen({ navigation }) {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') 
+        ? 'audio/webm' 
+        : MediaRecorder.isTypeSupported('audio/mp4') 
+          ? 'audio/mp4' 
+          : '';
+
+      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        
-        // Stop all microphone tracks to turn off mic indicator
         stream.getTracks().forEach((track) => track.stop());
-        
+
+        if (audioChunksRef.current.length === 0) {
+          setListening(false);
+          return;
+        }
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/webm' });
         await handleAudioTranscription(audioBlob);
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(100);
       setListening(true);
     } catch (err) {
       console.error('Microphone permission error:', err);
@@ -132,7 +137,22 @@ export default function TutorChatScreen({ navigation }) {
     }
   };
 
+  // Push-to-Talk Stop (Press Out)
+  const stopVoiceInput = () => {
+    if (!listening) return;
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    setListening(false);
+  };
+
   async function handleAudioTranscription(audioBlob) {
+    if (audioBlob.size < 1000) {
+      setListening(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const formData = new FormData();
@@ -159,6 +179,7 @@ export default function TutorChatScreen({ navigation }) {
       alert('Failed to process voice recording. Please type your message.');
     } finally {
       setLoading(false);
+      setListening(false);
     }
   }
 
@@ -363,7 +384,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           <Text style={styles.topHeaderTitle}>AI Language Tutor ({userProfile?.target_language || 'General'})</Text>
           <TouchableOpacity 
             style={styles.helpButton} 
-            onPress={() => alert('Tip: Select your target language in your profile settings to practice seamlessly.')}
+            onPress={() => alert('Tip: Hold the mic button to speak, release to send!')}
           >
             <Text style={styles.helpButtonText}>❓ Help</Text>
           </TouchableOpacity>
@@ -403,7 +424,8 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             />
             <TouchableOpacity 
               style={[styles.iconButton, listening && { borderColor: '#E8B486', backgroundColor: '#0A3B3D' }]} 
-              onPress={toggleVoiceInput}
+              onPressIn={startVoiceInput}
+              onPressOut={stopVoiceInput}
               activeOpacity={0.7}
             >
               <Text style={{ fontSize: 20 }}>{listening ? '🔴' : '🎤'}</Text>
