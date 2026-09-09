@@ -146,13 +146,21 @@ export default function TutorChatScreen({ navigation }) {
     }
   };
 
-  const speakText = (text, messageId) => {
+ const speakText = (text, messageId) => {
     if (speakingId === messageId) {
       Speech.stop();
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
       setSpeakingId(null);
       return;
     }
+    
     Speech.stop();
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    
     setSpeakingId(messageId);
     
     Speech.speak(text, {
@@ -161,7 +169,7 @@ export default function TutorChatScreen({ navigation }) {
       onError: () => setSpeakingId(null),
     });
 
-    // Fix 2: Fallback timer taaki Chrome mein agar onDone event miss ho jaye toh button auto-reset ho jaye
+    // Fallback timer taaki state hamesha sync rahe
     const estimatedDuration = Math.min(Math.max(text.length * 80, 3000), 15000);
     setTimeout(() => {
       setSpeakingId((current) => (current === messageId ? null : current));
