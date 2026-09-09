@@ -4,11 +4,13 @@ import { supabase } from '../api/supabase';
 const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Hindi', 'Japanese', 'Italian'];
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
+
 export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [targetLang, setTargetLang] = useState('English');
   const [level, setLevel] = useState('Beginner');
+  const [showToast, setShowToast] = useState(false); // <-- 1. Yahan Toast State add ki hai
 
   useEffect(() => {
     loadProfile();
@@ -19,7 +21,6 @@ export default function ProfileScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // .single() ki jagah .maybeSingle() use karein taaki row na hone par 406 error na aaye
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -55,7 +56,11 @@ export default function ProfileScreen() {
         });
 
       if (error) throw error;
-      alert('Preferences saved!');
+      
+      // <-- 2. Purane alert('Preferences saved!') ko hata kar yahan toast trigger set kiya hai
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+
     } catch (err) {
       alert(err.message);
     } finally {
@@ -128,6 +133,28 @@ export default function ProfileScreen() {
           {saving ? 'Saving...' : 'Save Preferences'}
         </button>
       </div>
+
+      {/* <-- 3. Yahan sabse aakhri container ke baad Custom Toast UI add ki hai */}
+      {showToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '30px',
+          right: '30px',
+          backgroundColor: '#1e1e1e',
+          border: '1px solid #c29b61',
+          color: '#ffffff',
+          padding: '14px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          zIndex: 9999
+        }}>
+          <span style={{ color: '#c29b61', fontSize: '18px' }}>✨</span>
+          <span style={{ fontWeight: '500', fontSize: '14px' }}>Preferences saved successfully!</span>
+        </div>
+      )}
     </div>
   );
 }
