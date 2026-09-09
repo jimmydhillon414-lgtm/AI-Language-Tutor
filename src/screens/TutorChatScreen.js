@@ -32,15 +32,16 @@ export default function TutorChatScreen({ navigation }) {
   const [speakingId, setSpeakingId] = useState(null);
   
   const flatListRef = useRef();
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  const recognitionRef = useRef(null);
+  const silenceTimerRef = useRef(null);
 
   useEffect(() => {
     fetchUserAndProfile();
     return () => {
-      if (mediaRecorderRef.current && listening) {
-        try { mediaRecorderRef.current.stop(); } catch (e) {}
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
       }
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       Speech.stop();
     };
   }, []);
@@ -87,101 +88,81 @@ export default function TutorChatScreen({ navigation }) {
     return langMap[lang] || 'en-US';
   };
 
-  // Push-to-Talk Start (Press In) - Prevents mid-sentence cutoff
-  const startVoiceInput = async () => {
-    if (listening || loading) return;
-
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('Microphone recording is not supported on this browser/device.');
-        return;
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm') 
-        ? 'audio/webm' 
-        : MediaRecorder.isTypeSupported('audio/mp4') 
-          ? 'audio/mp4' 
-          : '';
-
-      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-      
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach((track) => track.stop());
-
-        if (audioChunksRef.current.length === 0) {
-          setListening(false);
-          return;
-        }
-
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/webm' });
-        await handleAudioTranscription(audioBlob);
-      };
-
-      mediaRecorder.start(100);
-      setListening(true);
-    } catch (err) {
-      console.error('Microphone permission error:', err);
-      alert('Microphone access was denied or is not supported.');
-      setListening(false);
-    }
-  };
-
-  // Push-to-Talk Stop (Press Out)
-  const stopVoiceInput = () => {
-    if (!listening) return;
-
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    setListening(false);
-  };
-
-  async function handleAudioTranscription(audioBlob) {
-    if (audioBlob.size < 1000) {
-      setListening(false);
+  // Toggle Voice Input (Live typing & Auto-send after pause)
+  const toggleVoiceInput = () => {
+    if (listening) {
+      stopVoiceInput();
       return;
     }
 
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', audioBlob, 'audio.webm');
-
-      // Call Supabase Edge Function to transcribe using Whisper API
-      const { data, error } = await supabase.functions.invoke('ai-proxy', {
-        body: formData,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Transcription failed');
-      }
-
-      const transcribedText = data?.text;
-      if (transcribedText && transcribedText.trim()) {
-        setInput(transcribedText);
-        handleSendDirect(transcribedText);
-      } else {
-        alert('Could not detect clear speech. Please try again.');
-      }
-    } catch (err) {
-      console.error('Transcription error:', err);
-      alert('Failed to process voice recording. Please type your message.');
-    } finally {
-      setLoading(false);
-      setListening(false);
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Google Chrome.');
+      return;
     }
-  }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = getLanguageCode(userProfile?.target_language);
+
+      recognitionRef.current = recognition;
+      setListening(true);
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        const currentText = finalTranscript || interimTranscript;
+        if (currentText) {
+          setInput(currentText);
+
+          // Reset silence timer: Auto-send 2.5 seconds after user stops speaking
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = setTimeout(() => {
+            stopVoiceInput();
+            if (currentText.trim()) {
+              handleSendDirect(currentText.trim());
+            }
+          }, 2500);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setListening(false);
+      };
+
+      recognition.onend = () => {
+        setListening(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.error('Failed to start speech recognition:', err);
+      setListening(false);
+      alert('Could not start speech recognition.');
+    }
+  };
+
+  const stopVoiceInput = () => {
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+    }
+    setListening(false);
+  };
 
   const speakText = (text, messageId) => {
     if (speakingId === messageId) {
@@ -234,11 +215,7 @@ export default function TutorChatScreen({ navigation }) {
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
 
-    if (listening && mediaRecorderRef.current) {
-      try { mediaRecorderRef.current.stop(); } catch (e) {}
-      setListening(false);
-    }
-
+    stopVoiceInput();
     setInput('');
 
     const tempUserMsg = {
@@ -384,7 +361,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           <Text style={styles.topHeaderTitle}>AI Language Tutor ({userProfile?.target_language || 'General'})</Text>
           <TouchableOpacity 
             style={styles.helpButton} 
-            onPress={() => alert('Tip: Hold the mic button to speak, release to send!')}
+            onPress={() => alert('Tip: Click the mic once to speak. It will automatically type and send when you pause!')}
           >
             <Text style={styles.helpButtonText}>❓ Help</Text>
           </TouchableOpacity>
@@ -406,7 +383,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color="#FFCB9A" />
             <Text style={styles.loadingText}>
-              {listening ? 'Processing audio...' : 'Tutor is typing...'}
+              {listening ? 'Listening...' : 'Tutor is typing...'}
             </Text>
           </View>
         )}
@@ -424,8 +401,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             />
             <TouchableOpacity 
               style={[styles.iconButton, listening && { borderColor: '#E8B486', backgroundColor: '#0A3B3D' }]} 
-              onPressIn={startVoiceInput}
-              onPressOut={stopVoiceInput}
+              onPress={toggleVoiceInput}
               activeOpacity={0.7}
             >
               <Text style={{ fontSize: 20 }}>{listening ? '🔴' : '🎤'}</Text>
