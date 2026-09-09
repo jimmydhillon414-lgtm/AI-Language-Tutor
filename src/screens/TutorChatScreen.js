@@ -39,6 +39,7 @@ export default function TutorChatScreen({ navigation }) {
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (e) {}
       }
+      Speech.stop();
     };
   }, []);
 
@@ -105,7 +106,7 @@ export default function TutorChatScreen({ navigation }) {
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
+      recognition.continuous = true; // <-- Fix 1: Continuous true kiya taaki beech mein cut na ho
       recognition.interimResults = true;
       recognition.lang = getLanguageCode(userProfile?.target_language);
 
@@ -120,12 +121,12 @@ export default function TutorChatScreen({ navigation }) {
         let interim = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+            finalTranscript += event.results[i][0].transcript + ' ';
           } else {
             interim += event.results[i][0].transcript;
           }
         }
-        setInput(finalTranscript || interim);
+        setInput((finalTranscript + interim).trim());
       };
 
       recognition.onerror = (event) => {
@@ -135,12 +136,6 @@ export default function TutorChatScreen({ navigation }) {
 
       recognition.onend = () => {
         setListening(false);
-        const textToSend = finalTranscript.trim() || input.trim();
-        if (textToSend) {
-          setTimeout(() => {
-            handleSendDirect(textToSend);
-          }, 100);
-        }
       };
 
       recognitionRef.current = recognition;
@@ -159,11 +154,18 @@ export default function TutorChatScreen({ navigation }) {
     }
     Speech.stop();
     setSpeakingId(messageId);
+    
     Speech.speak(text, {
       language: getLanguageCode(userProfile?.target_language),
       onDone: () => setSpeakingId(null),
       onError: () => setSpeakingId(null),
     });
+
+    // Fix 2: Fallback timer taaki Chrome mein agar onDone event miss ho jaye toh button auto-reset ho jaye
+    const estimatedDuration = Math.min(Math.max(text.length * 80, 3000), 15000);
+    setTimeout(() => {
+      setSpeakingId((current) => (current === messageId ? null : current));
+    }, estimatedDuration);
   };
 
   async function getAiResponse(promptText) {
@@ -521,7 +523,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: 'rgba(17, 23, 21, 0.88)',
     alignSelf: 'flex-start',
-    borderRadius: 12,
+    borderRadius: '12px',
     marginLeft: 16,
     marginBottom: 10,
     borderWidth: 1.5,
