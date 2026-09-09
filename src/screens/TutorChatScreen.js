@@ -30,14 +30,16 @@ export default function TutorChatScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const [speakingId, setSpeakingId] = useState(null);
+  
   const flatListRef = useRef();
-  const recognitionRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   useEffect(() => {
     fetchUserAndProfile();
     return () => {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (e) {}
+      if (mediaRecorderRef.current && listening) {
+        try { mediaRecorderRef.current.stop(); } catch (e) {}
       }
       Speech.stop();
     };
@@ -85,68 +87,82 @@ export default function TutorChatScreen({ navigation }) {
     return langMap[lang] || 'en-US';
   };
 
-  const toggleVoiceInput = () => {
-    const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('firefox');
-    if (isFirefox) {
-      alert('Speech Recognition is not natively supported in Mozilla Firefox. Please use Google Chrome or type your message below.');
-      return;
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Speech Recognition is not supported in this browser. Please use Google Chrome.');
-      return;
-    }
-
-    if (listening && recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (e) {}
+  // Universal MediaRecorder & Whisper API Integration for all browsers/mobile
+  const toggleVoiceInput = async () => {
+    if (listening) {
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+      }
       setListening(false);
       return;
     }
 
     try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true; // <-- Fix 1: Continuous true kiya taaki beech mein cut na ho
-      recognition.interimResults = true;
-      recognition.lang = getLanguageCode(userProfile?.target_language);
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Microphone recording is not supported on this browser/device.');
+        return;
+      }
 
-      let finalTranscript = '';
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-      recognition.onstart = () => {
-        finalTranscript = '';
-        setListening(true);
-      };
-      
-      recognition.onresult = (event) => {
-        let interim = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript + ' ';
-          } else {
-            interim += event.results[i][0].transcript;
-          }
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
         }
-        setInput((finalTranscript + interim).trim());
       };
 
-      recognition.onerror = (event) => {
-        console.log('Speech recognition error:', event.error);
-        setListening(false);
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        // Stop all microphone tracks to turn off mic indicator
+        stream.getTracks().forEach((track) => track.stop());
+        
+        await handleAudioTranscription(audioBlob);
       };
 
-      recognition.onend = () => {
-        setListening(false);
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
+      mediaRecorder.start();
+      setListening(true);
     } catch (err) {
-      console.log('Mic init error:', err);
+      console.error('Microphone permission error:', err);
+      alert('Microphone access was denied or is not supported.');
       setListening(false);
     }
   };
 
- const speakText = (text, messageId) => {
+  async function handleAudioTranscription(audioBlob) {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audio.webm');
+
+      // Call Supabase Edge Function to transcribe using Whisper API
+      const { data, error } = await supabase.functions.invoke('ai-proxy', {
+        body: formData,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Transcription failed');
+      }
+
+      const transcribedText = data?.text;
+      if (transcribedText && transcribedText.trim()) {
+        setInput(transcribedText);
+        handleSendDirect(transcribedText);
+      } else {
+        alert('Could not detect clear speech. Please try again.');
+      }
+    } catch (err) {
+      console.error('Transcription error:', err);
+      alert('Failed to process voice recording. Please type your message.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const speakText = (text, messageId) => {
     if (speakingId === messageId) {
       Speech.stop();
       if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
@@ -169,7 +185,6 @@ export default function TutorChatScreen({ navigation }) {
       onError: () => setSpeakingId(null),
     });
 
-    // Fallback timer taaki state hamesha sync rahe
     const estimatedDuration = Math.min(Math.max(text.length * 80, 3000), 15000);
     setTimeout(() => {
       setSpeakingId((current) => (current === messageId ? null : current));
@@ -198,8 +213,8 @@ export default function TutorChatScreen({ navigation }) {
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
 
-    if (listening && recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (e) {}
+    if (listening && mediaRecorderRef.current) {
+      try { mediaRecorderRef.current.stop(); } catch (e) {}
       setListening(false);
     }
 
@@ -369,7 +384,9 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color="#FFCB9A" />
-            <Text style={styles.loadingText}>Tutor is typing...</Text>
+            <Text style={styles.loadingText}>
+              {listening ? 'Processing audio...' : 'Tutor is typing...'}
+            </Text>
           </View>
         )}
 
@@ -389,7 +406,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
               onPress={toggleVoiceInput}
               activeOpacity={0.7}
             >
-              <Text style={{ fontSize: 20 }}>{listening ? '🎙️' : '🎤'}</Text>
+              <Text style={{ fontSize: 20 }}>{listening ? '🔴' : '🎤'}</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.sendButton} 
@@ -531,7 +548,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: 'rgba(17, 23, 21, 0.88)',
     alignSelf: 'flex-start',
-    borderRadius: '12px',
+    borderRadius: 12,
     marginLeft: 16,
     marginBottom: 10,
     borderWidth: 1.5,
