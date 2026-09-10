@@ -5,14 +5,14 @@ export default function AppBackground({ children }) {
   if (Platform.OS === 'web') {
     return (
       <div style={{
-        minHeight: '100vh',
+        height: 'calc(100vh - 56px)', // Top navigation bar ko minus karke exact fit karega
         width: '100%',
-        backgroundImage: `linear-gradient(rgba(15, 23, 21, 0.85), rgba(15, 23, 21, 0.85)), url(${require('../../assets/tutor_girl.png.png')})`,
+        backgroundImage: `linear-gradient(rgba(15, 23, 21, 0.75), rgba(15, 23, 21, 0.75)), url(${require('../../assets/tutor_girl.png.png')})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'hidden',
       }}>
         {children}
       </div>
@@ -39,6 +39,6 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 21, 0.85)',
+    backgroundColor: 'rgba(15, 23, 21, 0.75)',
   },
 });
