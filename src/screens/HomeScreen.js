@@ -66,14 +66,14 @@ export default function HomeScreen({ navigation }) {
         </div>
       </div>
 
-      {/* Main Hero Card with Custom HD 3D Student Image */}
+      {/* Main Hero Card with Full Visible HD 3D Student Image */}
       <div style={styles.heroCard}>
         
-        {/* Custom HD 3D Character Illustration Container */}
+        {/* Image Container with contain mode so full image shows */}
         <div style={styles.aiIllustrationContainer}>
           <Image 
-            source={require('../../assets/tutor_girl.png.png')} // Line 66 updated path
-            style={styles.tutorHDImage}
+            source={require('../../assets/tutor_girl.png.png')} 
+            style={styles.tutorHDImage} 
           />
         </div>
 
@@ -177,6 +177,10 @@ const styles = StyleSheet.create({
   container: {
     padding: '24px 16px',
     alignItems: 'center',
+    // Home page background image with dark gradient overlay for readability
+    backgroundImage: 'linear-gradient(rgba(15, 23, 21, 0.9), rgba(15, 23, 21, 0.95)), url("assets/tutor_girl.png.png")',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
     backgroundColor: '#0F1715',
     minHeight: '100vh',
   },
@@ -227,7 +231,7 @@ const styles = StyleSheet.create({
   },
   aiIllustrationContainer: {
     width: '100%',
-    height: '240px',
+    height: '300px',
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
@@ -235,13 +239,13 @@ const styles = StyleSheet.create({
     marginBottom: '20px',
     overflow: 'hidden',
     borderRadius: '16px',
+    backgroundColor: '#0A1411',
   },
   tutorHDImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    resizeMode: 'contain', // Yeh ensure karega ki image poori dikhe aur kate nahi
     borderRadius: '16px',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
   },
   aiBadge: {
     display: 'inline-flex',
