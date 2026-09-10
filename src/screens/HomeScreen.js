@@ -127,8 +127,9 @@ export default function HomeScreen({ navigation }) {
                 muted
                 loop
                 playsInline
-                src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+                preload="auto"
               >
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             ) : (
@@ -393,6 +394,7 @@ const styles = StyleSheet.create({
     height: '280px',
     objectFit: 'cover',
     display: 'block',
+    outlineStyle: 'none',
   },
   videoPlaceholder: {
     height: '240px',
