@@ -65,6 +65,18 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
 
   return (
     <AppBackground>
+      {Platform.OS === 'web' && (
+        <style type="text/css">{`
+          input:-webkit-autofill,
+          input:-webkit-autofill:hover, 
+          input:-webkit-autofill:focus, 
+          input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px rgba(0, 0, 0, 0.4) inset !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+            transition: background-color 5000s ease-in-out 0s;
+          }
+        `}</style>
+      )}
       <View style={styles.container}>
         <View style={styles.card}>
           <Text style={styles.title}>AI TUTOR</Text>
@@ -192,7 +204,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     color: '#FFFFFF',
     paddingHorizontal: 18,
     paddingVertical: 14,
@@ -202,21 +214,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     ...(Platform.OS === 'web' ? {
       outlineStyle: 'none',
-      boxShadow: 'inset 0 0 0 1000px rgba(0, 0, 0, 0.25)',
-      WebkitTextFillColor: '#FFFFFF',
     } : {}),
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 203, 154, 0.35)',
     overflow: 'hidden',
-    ...(Platform.OS === 'web' ? {
-      boxShadow: 'inset 0 0 0 1000px rgba(0, 0, 0, 0.25)',
-    } : {}),
   },
   passwordInput: {
     flex: 1,
@@ -226,8 +233,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     ...(Platform.OS === 'web' ? {
       outlineStyle: 'none',
-      boxShadow: 'none',
-      WebkitTextFillColor: '#FFFFFF',
       backgroundColor: 'transparent',
     } : {}),
   },
