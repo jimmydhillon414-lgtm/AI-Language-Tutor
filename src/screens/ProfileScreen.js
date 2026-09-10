@@ -38,7 +38,7 @@ export default function ProfileScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', user.id)
@@ -92,78 +92,118 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.headerRow}>
-          <Text style={styles.headerIcon}>⚙️</Text>
-          <Text style={styles.headerTitle}>TUTOR PREFERENCES & GOALS</Text>
-        </View>
+    <View style={styles.mainWrapper}>
+      {/* Background Image Layer */}
+      {Platform.OS === 'web' && (
+        <div style={styles.bgImageWrapper}>
+          <img src={require('../../assets/tutor_girl.png.png')} style={styles.bgImageStyle} alt="Background" />
+          <div style={styles.bgOverlay} />
+        </div>
+      )}
 
-        <Text style={styles.sectionSubtitle}>
-          Choose the language you want to master and your current proficiency level to personalize your AI sessions.
-        </Text>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.card}>
+          <View style={styles.headerRow}>
+            <Text style={styles.headerIcon}>⚙️</Text>
+            <Text style={styles.headerTitle}>TUTOR PREFERENCES & GOALS</Text>
+          </View>
 
-        {/* Target Languages Grid (7 Languages) */}
-        <Text style={styles.label}>Select Target Language</Text>
-        <View style={styles.gridContainer}>
-          {LANGUAGES.map((lang) => {
-            const isSelected = targetLanguage === lang.id;
-            return (
-              <TouchableOpacity
-                key={lang.id}
-                style={[styles.optionCard, isSelected && styles.selectedOptionCard]}
-                onPress={() => setTargetLanguage(lang.id)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.flagEmoji}>{lang.flag}</Text>
-                <Text style={[styles.optionText, isSelected && styles.selectedOptionText]}>
-                  {lang.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Proficiency Levels */}
-        <Text style={styles.label}>Select Proficiency Level</Text>
-        <View style={styles.levelRow}>
-          {LEVELS.map((lvl) => {
-            const isSelected = proficiencyLevel === lvl;
-            return (
-              <TouchableOpacity
-                key={lvl}
-                style={[styles.levelCard, isSelected && styles.selectedLevelCard]}
-                onPress={() => setProficiencyLevel(lvl)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.levelText, isSelected && styles.selectedLevelText]}>
-                  {lvl}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {message ? (
-          <Text style={styles.messageText}>{message}</Text>
-        ) : null}
-
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSavePreferences}
-          disabled={saving}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.saveButtonText}>
-            {saving ? 'Saving...' : 'Save Preferences 🚀'}
+          <Text style={styles.sectionSubtitle}>
+            Choose the language you want to master and your current proficiency level to personalize your AI sessions.
           </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+
+          {/* Target Languages Grid (7 Languages) */}
+          <Text style={styles.label}>Select Target Language</Text>
+          <View style={styles.gridContainer}>
+            {LANGUAGES.map((lang) => {
+              const isSelected = targetLanguage === lang.id;
+              return (
+                <TouchableOpacity
+                  key={lang.id}
+                  style={[styles.optionCard, isSelected && styles.selectedOptionCard]}
+                  onPress={() => setTargetLanguage(lang.id)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.flagEmoji}>{lang.flag}</Text>
+                  <Text style={[styles.optionText, isSelected && styles.selectedOptionText]}>
+                    {lang.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Proficiency Levels */}
+          <Text style={styles.label}>Select Proficiency Level</Text>
+          <View style={styles.levelRow}>
+            {LEVELS.map((lvl) => {
+              const isSelected = proficiencyLevel === lvl;
+              return (
+                <TouchableOpacity
+                  key={lvl}
+                  style={[styles.levelCard, isSelected && styles.selectedLevelCard]}
+                  onPress={() => setProficiencyLevel(lvl)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.levelText, isSelected && styles.selectedLevelText]}>
+                    {lvl}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {message ? (
+            <Text style={styles.messageText}>{message}</Text>
+          ) : null}
+
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSavePreferences}
+            disabled={saving}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.saveButtonText}>
+              {saving ? 'Saving...' : 'Save Preferences 🚀'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  mainWrapper: {
+    flex: 1,
+    position: 'relative',
+    minHeight: '100vh',
+    backgroundColor: '#0F1715',
+  },
+  bgImageWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: -1,
+    overflow: 'hidden',
+  },
+  bgImageStyle: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    filter: 'blur(3px)',
+    transform: 'scale(1.05)',
+  },
+  bgOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(15, 23, 21, 0.82)',
+  },
   centerLoader: {
     flex: 1,
     backgroundColor: '#0F1715',
@@ -171,10 +211,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    padding: 20,
+    padding: '24px 16px',
     alignItems: 'center',
-    backgroundColor: '#0F1715',
-    minHeight: '100vh',
+    position: 'relative',
+    zIndex: 1,
   },
   card: {
     width: '100%',
@@ -184,10 +224,7 @@ const styles = StyleSheet.create({
     padding: 30,
     borderWidth: 2,
     borderColor: '#116466',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
+    boxShadow: '0 16px 48px rgba(0, 0, 0, 0.7), 0 0 20px rgba(17, 100, 102, 0.2)',
     elevation: 8,
   },
   headerRow: {
@@ -294,11 +331,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#FFCB9A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer', border: 'none' } : {}),
   },
   saveButtonText: {
     color: '#121E1A',
