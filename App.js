@@ -8,7 +8,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <NavigationContainer>
-        <StatusBar style="light" backgroundColor="#05070B" />
+        <StatusBar style="light" backgroundColor="#121E1A" />
         <AppNavigator />
       </NavigationContainer>
     </View>
@@ -18,7 +18,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#05070B',
+    backgroundColor: '#121E1A', // Updated to match your uniform theme
     ...(Platform.OS === 'web' ? {
       height: '100vh',
       width: '100vw',
