@@ -5,11 +5,10 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  Platform,
-  ImageBackground,
   ActivityIndicator,
 } from 'react-native';
 import { supabase } from '../api/supabase';
+import AppBackground from '../components/AppBackground';
 
 export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
   const [email, setEmail] = useState('');
@@ -52,7 +51,6 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
         return;
       }
 
-      // Attractive Success Notification
       setSuccessBanner('Account Created Successfully');
       setTimeout(() => {
         if (onSwitchToLogin) {
@@ -68,12 +66,8 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
   };
 
   return (
-    <ImageBackground 
-      source={{ uri: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop' }} 
-      style={styles.container}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay}>
+    <AppBackground>
+      <View style={styles.container}>
         <View style={styles.card}>
           <Text style={styles.title}>Create Account</Text>
 
@@ -148,26 +142,17 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
           </View>
         </View>
       </View>
-    </ImageBackground>
+    </AppBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: { 
     flex: 1,
-    width: '100%',
-    height: '100%',
-    ...(Platform.OS === 'web' ? {
-      height: 'calc(100vh - 56px)',
-      maxHeight: 'calc(100vh - 56px)',
-    } : {}),
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(10, 15, 14, 0.78)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    width: '100%',
   },
   card: {
     backgroundColor: 'rgba(17, 23, 21, 0.92)',
