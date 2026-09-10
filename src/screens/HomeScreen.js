@@ -47,7 +47,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.mainWrapper}>
-      {/* Absolute Full Screen Background Image with Dark Overlay */}
+      {/* Background Image Layer (Absolute) */}
       {Platform.OS === 'web' && (
         <div style={styles.bgImageWrapper}>
           <img src={require('../../assets/tutor_girl.png.png')} style={styles.bgImageStyle} alt="Background" />
@@ -56,7 +56,6 @@ export default function HomeScreen({ navigation }) {
       )}
 
       <ScrollView contentContainerStyle={styles.container}>
-        
         {/* Play Store Style Trust & Rating Header Banner */}
         <div style={styles.trustBanner}>
           <div style={styles.trustBadgeItem}>
@@ -75,9 +74,8 @@ export default function HomeScreen({ navigation }) {
           </div>
         </div>
 
-        {/* Main Hero Card with Clean Cover Image */}
+        {/* Main Hero Card */}
         <div style={styles.heroCard}>
-          
           <div style={styles.aiIllustrationContainer}>
             <Image 
               source={require('../../assets/tutor_girl.png.png')} 
@@ -189,20 +187,21 @@ const styles = StyleSheet.create({
     minHeight: '100vh',
     backgroundColor: '#0F1715',
   },
+  // Header ko wapis lane ke liye fixed ki jagah absolute aur zIndex adjust kiya hai
   bgImageWrapper: {
-    position: 'fixed',
+    position: 'absolute', 
     top: 0,
     left: 0,
-    width: '100vw',
-    height: '100vh',
-    zIndex: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: -1, // Content ke peeche rakhne ke liye negative zIndex
     overflow: 'hidden',
   },
   bgImageStyle: {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    filter: 'blur(8px)',
+    filter: 'blur(2px)', // Blur kam kar diya hai
     transform: 'scale(1.1)',
   },
   bgOverlay: {
@@ -211,13 +210,13 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(15, 23, 21, 0.88)',
+    backgroundColor: 'rgba(15, 23, 21, 0.88)', // Dark overlay opacity
   },
   container: {
     padding: '24px 16px',
     alignItems: 'center',
     position: 'relative',
-    zIndex: 1,
+    zIndex: 1, // Scroll view content overlay se upar rahega
   },
   trustBanner: {
     width: '100%',
@@ -279,7 +278,7 @@ const styles = StyleSheet.create({
   tutorHDImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover', // Black bars hatane ke liye cover use kiya hai
+    resizeMode: 'cover',
     borderRadius: '16px',
   },
   aiBadge: {
@@ -450,16 +449,4 @@ const styles = StyleSheet.create({
     backgroundColor: '#182C25',
     paddingVertical: '16px',
     paddingHorizontal: '20px',
-    borderRadius: '16px',
-    border: '1.5px solid #116466',
-    alignItems: 'center',
-    marginBottom: '14px',
-    cursor: 'pointer',
-    boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
-  },
-  secondaryButtonText: {
-    color: '#D1E8E2',
-    fontSize: '14px',
-    fontWeight: '600',
-  },
-});
+    borderRadius
