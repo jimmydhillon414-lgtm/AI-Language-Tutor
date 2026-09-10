@@ -60,7 +60,7 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenLogin, onO
         </TouchableOpacity>
       </View>
 
-      {/* Right side: Clean, with Logout or User info */}
+      {/* Right side: Updated Sign Out button matching other nav items */}
       <View style={styles.navRight}>
         <TouchableOpacity style={styles.signOutBtn} onPress={onSignOut} activeOpacity={0.8}>
           <Text style={styles.signOutText}>Sign Out</Text>
@@ -180,15 +180,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   signOutBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
     borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 203, 154, 0.2)',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
   },
   signOutText: {
-    color: '#f87171',
+    color: '#cbd5e0',
     fontSize: 13,
     fontWeight: '600',
   },
