@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
@@ -140,17 +141,22 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   card: {
-    backgroundColor: 'rgba(17, 23, 21, 0.92)',
+    backgroundColor: 'rgba(15, 23, 21, 0.55)', // Sleek translucent glassmorphism effect
     borderWidth: 1.5,
-    borderColor: '#0A3B3D',
+    borderColor: 'rgba(255, 203, 154, 0.35)', // Glowing subtle border
     borderRadius: 24,
     padding: 32,
     width: '100%',
     maxWidth: 450,
+    ...(Platform.OS === 'web' ? {
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+    } : {}),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
   },
   title: {
     color: '#FFCB9A',
@@ -161,7 +167,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   successBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    backgroundColor: 'rgba(16, 185, 129, 0.25)',
     borderWidth: 1.5,
     borderColor: '#10B981',
     borderRadius: 12,
@@ -185,22 +191,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'rgba(23, 33, 30, 0.9)',
+    backgroundColor: 'rgba(18, 30, 26, 0.75)',
     color: '#E1F2EC',
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#0A3B3D',
+    borderColor: '#116466',
     fontSize: 16,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(23, 33, 30, 0.9)',
+    backgroundColor: 'rgba(18, 30, 26, 0.75)',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#0A3B3D',
+    borderColor: '#116466',
   },
   passwordInput: {
     flex: 1,
@@ -216,13 +222,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   loginButton: {
-    backgroundColor: '#C29B72',
+    backgroundColor: '#FFCB9A',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 20,
-    shadowColor: '#C29B72',
+    shadowColor: '#FFCB9A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -238,7 +244,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    color: '#8FA39D',
+    color: '#A3B8B0',
     fontSize: 14,
   },
   signupLink: {
