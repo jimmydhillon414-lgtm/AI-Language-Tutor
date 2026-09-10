@@ -337,29 +337,9 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   return (
     <AppBackground>
       <View style={styles.container}>
-        {/* Sharp & Vibrant Top AI Header */}
-        <View style={styles.headerContainer}>
-          <View style={styles.aiAvatarHeader}>
-            <View style={styles.avatarGlowWrapper}>
-              <Text style={{ fontSize: 22 }}>🧠</Text>
-            </View>
-            <View style={styles.aiHeaderBubble}>
-              <Text style={styles.aiHeaderTitle}>SOLARIN NEURAL TUTOR</Text>
-              <Text style={styles.aiHeaderSubtitle}>Active Session • High-Frequency Fluency Mode</Text>
-            </View>
-          </View>
-          <View style={styles.progressSection}>
-            <View style={styles.progressLabelRow}>
-              <Text style={styles.progressText}>Mastery Progress</Text>
-              <Text style={styles.progressPercentage}>45%</Text>
-            </View>
-            <View style={styles.progressBarTrack}>
-              <View style={[styles.progressBarFill, { width: '45%' }]} />
-            </View>
-          </View>
-        </View>
+        {/* Solarin Neural Tutor Header completely removed as requested */}
 
-        {/* Transparent Chat Area so AppBackground shines through */}
+        {/* Fully Transparent Chat Area to show background image clearly */}
         <View style={styles.chatArea}>
           <View style={styles.chatOverlay}>
             <FlatList
@@ -373,7 +353,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </View>
         </View>
 
-        {/* Sleek Bottom Input Bar */}
+        {/* Sleek Transparent Input Bar */}
         <View style={styles.inputBar}>
           <TouchableOpacity style={styles.plusButton}>
             <Text style={{ color: '#FFCB9A', fontSize: 20, fontWeight: 'bold' }}>+</Text>
@@ -410,90 +390,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  headerContainer: {
-    backgroundColor: 'rgba(24, 44, 37, 0.85)', // Semi-transparent to let background peek through
-    paddingTop: 16,
-    paddingHorizontal: 20,
-    paddingBottom: 14,
-    borderBottomWidth: 2,
-    borderBottomColor: '#116466',
-    shadowColor: '#FFCB9A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  aiAvatarHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  avatarGlowWrapper: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: '#116466',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFCB9A',
-  },
-  aiHeaderBubble: {
-    backgroundColor: '#116466',
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 14,
-    marginLeft: 12,
-    borderWidth: 1.5,
-    borderColor: '#FFCB9A',
-  },
-  aiHeaderTitle: {
-    color: '#FFCB9A',
-    fontWeight: 'bold',
-    fontSize: 13,
-    letterSpacing: 1.2,
-  },
-  aiHeaderSubtitle: {
-    color: '#E0F2FE',
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  progressSection: {
-    marginTop: 4,
-  },
-  progressLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  progressText: {
-    color: '#D1E8E2',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  progressPercentage: {
-    color: '#FFCB9A',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  progressBarTrack: {
-    height: 8,
-    backgroundColor: '#0E1714',
-    borderRadius: 4,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#116466',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#FFCB9A',
-  },
   chatArea: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   chatOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(18, 30, 26, 0.4)', // Made highly translucent so AppBackground image is clearly visible
+    backgroundColor: 'transparent', // Completely removed green layer tint to show clean background image
   },
   messageListContainer: {
     padding: 16,
@@ -617,7 +520,7 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(24, 44, 37, 0.85)', // Semi-transparent to let background peek through
+    backgroundColor: 'rgba(24, 44, 37, 0.75)', // Subtle translucent background for typing bar
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 2,
