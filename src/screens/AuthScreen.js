@@ -239,6 +239,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'rgba(255, 203, 154, 0.35)',
     overflow: 'hidden',
+    ...(Platform.OS === 'web' ? {
+      boxShadow: 'inset 0 0 0 1000px rgba(0, 0, 0, 0.25)',
+    } : {}),
   },
   passwordInput: {
     flex: 1,
@@ -248,8 +251,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     ...(Platform.OS === 'web' ? {
       outlineStyle: 'none',
-      boxShadow: 'inset 0 0 0 1000px rgba(0, 0, 0, 0.25)',
+      boxShadow: 'none',
       WebkitTextFillColor: '#FFFFFF',
+      backgroundColor: 'transparent',
     } : {}),
   },
   eyeBtn: {
@@ -257,6 +261,7 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   eyeText: {
     fontSize: 18,
