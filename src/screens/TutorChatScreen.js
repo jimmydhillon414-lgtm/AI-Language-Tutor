@@ -5,11 +5,9 @@ import {
   View,
   TouchableOpacity,
   FlatList,
-  ActivityIndicator,
   Platform,
   ImageBackground,
   TextInput,
-  Image,
 } from 'react-native';
 import * as Speech from 'expo-speech';
 import { supabase } from '../api/supabase';
@@ -24,7 +22,7 @@ export default function TutorChatScreen({ navigation }) {
       timestamp: '09:30 AM',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: "Hi Sarah! Today we're learning common greetings.",
+        reply: "Hello! I'm Buddy. Welcome to your elite AI language journey.",
         isVoiceNote: false,
       }),
     },
@@ -32,7 +30,7 @@ export default function TutorChatScreen({ navigation }) {
       id: '2',
       role: 'user',
       timestamp: '09:30 AM',
-      message: 'Hello Buddy!',
+      message: 'I want to master English fluently.',
     },
     {
       id: '3',
@@ -40,7 +38,7 @@ export default function TutorChatScreen({ navigation }) {
       timestamp: '09:31 AM',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: "Great start! How are you today?",
+        reply: "Splendid! Let's begin with your personalized session today.",
         isVoiceNote: true,
         duration: '0:03',
       }),
@@ -292,7 +290,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             <Text style={styles.userText}>{item.message}</Text>
             <View style={styles.timeAndAvatarRowUser}>
               <Text style={styles.timestampText}>{item.timestamp}</Text>
-              <View style={styles.miniAvatarContainer}>
+              <View style={styles.miniAvatarContainerUser}>
                 <Text style={{ fontSize: 10 }}>👤</Text>
               </View>
             </View>
@@ -310,7 +308,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       <View style={styles.aiBubbleRow}>
         <View style={styles.aiBubble}>
           <View style={styles.aiSenderHeader}>
-            <Text style={styles.buddyLabel}>Buddy</Text>
+            <Text style={styles.buddyLabel}>BUDDY AI</Text>
             <TouchableOpacity onPress={() => speakText(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>🔊</Text>
             </TouchableOpacity>
@@ -338,22 +336,29 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
   return (
     <View style={styles.container}>
+      {/* Top Elite AI Header & Progress Bar */}
       <View style={styles.headerContainer}>
         <View style={styles.aiAvatarHeader}>
-          <Text style={{ fontSize: 24 }}>🤖</Text>
+          <View style={styles.avatarGlowWrapper}>
+            <Text style={{ fontSize: 22 }}>🌐</Text>
+          </View>
           <View style={styles.aiHeaderBubble}>
-            <Text style={styles.aiHeaderTitle}>Hello! I'm Buddy.</Text>
-            <Text style={styles.aiHeaderSubtitle}>Ready to practice?</Text>
+            <Text style={styles.aiHeaderTitle}>SOLARIN AI BUDDY</Text>
+            <Text style={styles.aiHeaderSubtitle}>Active Session • 60-Day Mastery Plan</Text>
           </View>
         </View>
         <View style={styles.progressSection}>
-          <Text style={styles.progressText}>Lesson progress: 45%</Text>
+          <View style={styles.progressLabelRow}>
+            <Text style={styles.progressText}>Lesson Progress</Text>
+            <Text style={styles.progressPercentage}>45%</Text>
+          </View>
           <View style={styles.progressBarTrack}>
             <View style={[styles.progressBarFill, { width: '45%' }]} />
           </View>
         </View>
       </View>
 
+      {/* Futuristic Background Area */}
       <ImageBackground 
         source={{ uri: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop' }} 
         style={styles.chatArea}
@@ -370,30 +375,31 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
       </ImageBackground>
 
+      {/* Elite Bottom Input Bar */}
       <View style={styles.inputBar}>
         <TouchableOpacity style={styles.plusButton}>
-          <Text style={{ color: '#888', fontSize: 20 }}>+</Text>
+          <Text style={{ color: '#D1E8E2', fontSize: 20, fontWeight: 'bold' }}>+</Text>
         </TouchableOpacity>
         
         <TextInput
           style={styles.textInput}
           value={input}
           onChangeText={setInput}
-          placeholder="Type your message..."
-          placeholderTextColor="#888"
+          placeholder="Type or use voice note..."
+          placeholderTextColor="#8A9E96"
           onSubmitEditing={() => handleSendDirect(input)}
           returnKeyType="send"
         />
 
         <TouchableOpacity 
-          style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
+          style={[styles.micButton, listening && { backgroundColor: '#FFCB9A' }]} 
           onPress={toggleVoiceInput}
         >
-          <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎤'}</Text>
+          <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
-          <Text style={{ fontSize: 16 }}>➤</Text>
+          <Text style={{ fontSize: 16, color: '#2C3531', fontWeight: 'bold' }}>➤</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -403,61 +409,91 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#2C3531',
   },
   headerContainer: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#1b2320',
     paddingTop: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#116466',
+    shadowColor: '#116466',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   aiAvatarHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  avatarGlowWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#116466',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#D9B08C',
   },
   aiHeaderBubble: {
-    backgroundColor: '#3B82F6',
-    paddingHorizontal: 14,
+    backgroundColor: '#116466',
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 16,
-    marginLeft: 10,
+    borderRadius: 14,
+    marginLeft: 12,
+    borderWidth: 1,
+    borderColor: '#D9B08C',
   },
   aiHeaderTitle: {
-    color: '#FFF',
+    color: '#FFCB9A',
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 13,
+    letterSpacing: 1,
   },
   aiHeaderSubtitle: {
-    color: '#E2E8F0',
-    fontSize: 12,
+    color: '#D1E8E2',
+    fontSize: 11,
   },
   progressSection: {
     marginTop: 4,
   },
+  progressLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
   progressText: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginBottom: 4,
+    color: '#D1E8E2',
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  progressPercentage: {
+    color: '#FFCB9A',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   progressBarTrack: {
-    height: 6,
-    backgroundColor: '#334155',
-    borderRadius: 3,
+    height: 7,
+    backgroundColor: '#2C3531',
+    borderRadius: 4,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#116466',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#D9B08C',
   },
   chatArea: {
     flex: 1,
   },
   chatOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    backgroundColor: 'rgba(44, 53, 49, 0.92)',
   },
   messageListContainer: {
     padding: 16,
@@ -465,136 +501,161 @@ const styles = StyleSheet.create({
   },
   aiBubbleRow: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 14,
     justifyContent: 'flex-start',
   },
   userBubbleRow: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 14,
     justifyContent: 'flex-end',
   },
   aiBubble: {
-    backgroundColor: '#1D4ED8',
-    padding: 12,
+    backgroundColor: '#116466',
+    padding: 14,
     borderRadius: 16,
     borderTopLeftRadius: 4,
-    maxWidth: '75%',
+    maxWidth: '78%',
+    borderWidth: 1,
+    borderColor: '#D9B08C',
+    shadowColor: '#D9B08C',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   userBubble: {
-    backgroundColor: '#059669',
-    padding: 12,
+    backgroundColor: '#2C3531',
+    padding: 14,
     borderRadius: 16,
     borderTopRightRadius: 4,
-    maxWidth: '75%',
+    maxWidth: '78%',
+    borderWidth: 1.5,
+    borderColor: '#FFCB9A',
   },
   aiSenderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   buddyLabel: {
-    color: '#93C5FD',
-    fontSize: 12,
+    color: '#FFCB9A',
+    fontSize: 11,
     fontWeight: 'bold',
+    letterSpacing: 0.8,
   },
   aiText: {
-    color: '#F8FAFC',
+    color: '#D1E8E2',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
   },
   userText: {
-    color: '#F8FAFC',
+    color: '#D1E8E2',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
   },
   timeAndAvatarRowUser: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginTop: 4,
+    marginTop: 6,
   },
   timeAndAvatarRowAi: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    marginTop: 4,
+    marginTop: 6,
   },
   timestampText: {
-    color: '#CBD5E1',
+    color: '#8A9E96',
     fontSize: 10,
     marginHorizontal: 4,
   },
-  miniAvatarContainer: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#047857',
+  miniAvatarContainerUser: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#116466',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#D9B08C',
   },
   miniAvatarContainerAi: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#1E40AF',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#2C3531',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
   },
   voiceNoteContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    padding: 6,
+    borderRadius: 8,
   },
   voiceIcon: {
-    color: '#FFF',
-    fontSize: 13,
-    fontWeight: '600',
+    color: '#FFCB9A',
+    fontSize: 12,
+    fontWeight: 'bold',
     marginRight: 8,
   },
   waveformMock: {
     flex: 1,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.4)',
+    backgroundColor: '#D9B08C',
     borderRadius: 2,
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#334155',
+    backgroundColor: '#1b2320',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1.5,
+    borderTopColor: '#116466',
   },
-  plusButton: {
-    padding: 8,
+    plusButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#116466',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#D9B08C',
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#0F172A',
-    color: '#FFF',
-    paddingHorizontal: 14,
+    backgroundColor: '#2C3531',
+    color: '#D1E8E2',
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: 22,
     fontSize: 14,
-    marginHorizontal: 8,
-    borderWidth: 1,
-    borderColor: '#334155',
+    marginHorizontal: 6,
+    borderWidth: 1.5,
+    borderColor: '#116466',
   },
   micButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#334155',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#116466',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 6,
+    marginHorizontal: 6,
+    borderWidth: 1,
+    borderColor: '#D9B08C',
   },
   sendPlaneButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#3B82F6',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#D9B08C',
     alignItems: 'center',
     justifyContent: 'center',
   },
