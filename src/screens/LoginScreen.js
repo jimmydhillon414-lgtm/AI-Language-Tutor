@@ -5,11 +5,10 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  Platform,
-  ImageBackground,
   ActivityIndicator,
 } from 'react-native';
 import { supabase } from '../api/supabase';
+import AppBackground from '../components/AppBackground';
 
 export default function LoginScreen({ onLogin, onSwitchToSignup }) {
   const [email, setEmail] = useState('');
@@ -26,7 +25,6 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
 
     setLoading(true);
     try {
-      // 1. Authenticate user with Supabase Password Auth
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password,
@@ -40,7 +38,6 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
 
       const user = data.user;
 
-      // 2. Insert Login Session / Entry into database table (e.g. user_login_logs)
       try {
         await supabase.from('user_login_logs').insert({
           user_id: user.id,
@@ -49,10 +46,8 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
         });
       } catch (dbErr) {
         console.log('Session log insert note:', dbErr);
-        // Non-blocking error: Even if log table entry fails, user can still proceed if auth succeeded
       }
 
-      // 3. Show Attractive Success Message & Trigger parent login success callback
       setSuccessBanner(' Login Successful');
       setTimeout(() => {
         if (onLogin) {
@@ -68,12 +63,8 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
   };
 
   return (
-    <ImageBackground 
-      source={{ uri: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop' }} 
-      style={styles.container}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay}>
+    <AppBackground>
+      <View style={styles.container}>
         <View style={styles.card}>
           <Text style={styles.title}>AI TUTOR</Text>
 
@@ -136,26 +127,17 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
           </View>
         </View>
       </View>
-    </ImageBackground>
+    </AppBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: { 
     flex: 1,
-    width: '100%',
-    height: '100%',
-    ...(Platform.OS === 'web' ? {
-      height: 'calc(100vh - 56px)',
-      maxHeight: 'calc(100vh - 56px)',
-    } : {}),
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(10, 15, 14, 0.78)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    width: '100%',
   },
   card: {
     backgroundColor: 'rgba(17, 23, 21, 0.92)',
