@@ -72,8 +72,8 @@ export default function HomeScreen({ navigation }) {
         {/* Custom HD 3D Character Illustration Container */}
         <div style={styles.aiIllustrationContainer}>
           <Image 
-            source={{ uri: 'YOUR_IMAGE_PUBLIC_URL_HERE' }} 
-            style={styles.tutorHDImage} 
+            source={require('../../assets/tutor_girl.png.png')} // Line 66 updated path
+            style={styles.tutorHDImage}
           />
         </div>
 
