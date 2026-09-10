@@ -1,266 +1,245 @@
 import React, { useState, useEffect } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  ImageBackground,
+} from 'react-native';
 import { supabase } from '../api/supabase';
 
-const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Hindi', 'Japanese', 'Italian'];
-const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
-
-
-export default function ProfileScreen() {
+export default function HomeScreen({ navigation }) {
+  const [userProfile, setUserProfile] = useState({
+    target_language: 'English',
+    proficiency_level: 'Beginner',
+  });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [targetLang, setTargetLang] = useState('English');
-  const [level, setLevel] = useState('Beginner');
-  const [showToast, setShowToast] = useState(false); // <-- 1. Yahan Toast State add ki hai
 
   useEffect(() => {
-    loadProfile();
+    fetchProfile();
   }, []);
 
-  async function loadProfile() {
+  async function fetchProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (error) throw error;
-
       if (data) {
-        setTargetLang(data.target_language || 'English');
-        setLevel(data.proficiency_level || 'Beginner');
+        setUserProfile(data);
       }
     } catch (err) {
-      console.log('Error loading profile:', err.message);
+      console.log('Error fetching profile:', err);
     } finally {
       setLoading(false);
     }
   }
 
-  async function saveProfile() {
-    setSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('user_profiles')
-        .upsert({
-          id: user.id,
-          target_language: targetLang,
-          proficiency_level: level,
-          updated_at: new Date(),
-        });
-
-      if (error) throw error;
-      
-      // <-- 2. Purane alert('Preferences saved!') ko hata kar yahan toast trigger set kiya hai
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (loading) {
-    return (
-      <div style={styles.loaderContainer}>
-        <div style={styles.spinner} />
-      </div>
-    );
-  }
-
   return (
-    <div style={styles.backgroundImage}>
-      <div style={styles.darkOverlay} />
+    <ImageBackground 
+      source={{ uri: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop' }} 
+      style={styles.backgroundImage}
+    >
+      <View style={styles.darkOverlay} />
+      <ScrollView contentContainerStyle={styles.container}>
+        
+        {/* Top AI Hero Card */}
+        <View style={styles.heroCard}>
+          <View style={styles.aiBadge}>
+            <Text style={{ fontSize: 12 }}>⚡</Text>
+            <Text style={styles.aiBadgeText}>SOLARIN NEURAL TUTOR</Text>
+          </View>
+          
+          <Text style={styles.heroTitle}>Master {userProfile.target_language || 'Languages'} with AI</Text>
+          <Text style={styles.heroSubtitle}>
+            Your personal 1-on-1 voice & chat coach designed for rapid fluency at a {userProfile.proficiency_level || 'Beginner'} level.
+          </Text>
 
-      <div style={styles.container}>
-        <h1 style={styles.heading}>Language Tutor Preferences</h1>
+          <TouchableOpacity 
+            style={styles.primaryButton}
+            onPress={() => navigation.navigate('TutorChat')}
+          >
+            <Text style={styles.primaryButtonText}>Start Live AI Session 🎙️</Text>
+          </TouchableOpacity>
+        </View>
 
-        <label style={styles.label}>Target Language:</label>
-        <div style={styles.row}>
-          {LANGUAGES.map((lang) => (
-            <button
-              key={lang}
-              style={{
-                ...styles.chip,
-                ...(targetLang === lang && styles.activeChip)
-              }}
-              onClick={() => setTargetLang(lang)}
-            >
-              <span style={{
-                ...styles.chipText,
-                ...(targetLang === lang && styles.activeChipText)
-              }}>
-                {lang}
-              </span>
-            </button>
-          ))}
-        </div>
+        {/* Quick Stat Grid */}
+        <View style={styles.gridContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statIcon}>🎯</Text>
+            <Text style={styles.statTitle}>Target Language</Text>
+            <Text style={styles.statValue}>{userProfile.target_language || 'English'}</Text>
+          </View>
 
-        <label style={styles.label}>Proficiency Level:</label>
-        <div style={styles.row}>
-          {LEVELS.map((lvl) => (
-            <button
-              key={lvl}
-              style={{
-                ...styles.chip,
-                ...(level === lvl && styles.activeChip)
-              }}
-              onClick={() => setLevel(lvl)}
-            >
-              <span style={{
-                ...styles.chipText,
-                ...(level === lvl && styles.activeChipText)
-              }}>
-                {lvl}
-              </span>
-            </button>
-          ))}
-        </div>
+          <View style={styles.statCard}>
+            <Text style={styles.statIcon}>📈</Text>
+            <Text style={styles.statTitle}>Current Level</Text>
+            <Text style={styles.statValue}>{userProfile.proficiency_level || 'Beginner'}</Text>
+          </View>
+        </View>
 
-        <button 
-          style={styles.saveBtn} 
-          onClick={saveProfile} 
-          disabled={saving}
-        >
-          {saving ? 'Saving...' : 'Save Preferences'}
-        </button>
-      </div>
+        {/* Action Navigation */}
+        <View style={styles.actionSection}>
+          <TouchableOpacity 
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate('History')}
+          >
+            <Text style={styles.secondaryButtonText}>📊 View Learning History</Text>
+          </TouchableOpacity>
 
-      {/* <-- 3. Yahan sabse aakhri container ke baad Custom Toast UI add ki hai */}
-      {showToast && (
-        <div style={{
-          position: 'fixed',
-          bottom: '30px',
-          right: '30px',
-          backgroundColor: '#1e1e1e',
-          border: '1px solid #c29b61',
-          color: '#ffffff',
-          padding: '14px 24px',
-          borderRadius: '12px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          zIndex: 9999
-        }}>
-          <span style={{ color: '#c29b61', fontSize: '18px' }}>✨</span>
-          <span style={{ fontWeight: '500', fontSize: '14px' }}>Preferences saved successfully!</span>
-        </div>
-      )}
-    </div>
+          <TouchableOpacity 
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Text style={styles.secondaryButtonText}>⚙️ Update Tutor Preferences</Text>
+          </TouchableOpacity>
+        </View>
+
+      </ScrollView>
+    </ImageBackground>
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   backgroundImage: {
-    minHeight: '100vh',
-    backgroundImage: 'url("https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1920&auto=format&fit=crop")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundColor: '#121619',
-    position: 'relative',
-    overflowX: 'hidden',
-    padding: '24px 16px',
-    boxSizing: 'border-box',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#121E1A',
   },
   darkOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(14, 18, 22, 0.86)',
-    pointerEvents: 'none',
-    zIndex: 0,
-  },
-  loaderContainer: {
-    minHeight: '100vh',
-    backgroundColor: '#121619',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  spinner: {
-    width: '40px',
-    height: '40px',
-    border: '4px solid rgba(224, 180, 134, 0.2)',
-    borderTop: '4px solid #E0B486',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(18, 30, 26, 0.90)',
   },
   container: {
-    maxWidth: '800px',
-    margin: '0 auto',
-    position: 'relative',
+    padding: 24,
+    paddingTop: 40,
+    alignItems: 'center',
     zIndex: 1,
-    backgroundColor: 'rgba(15, 23, 26, 0.92)',
-    borderRadius: '16px',
-    padding: '24px',
-    border: '1.5px solid #1a3536',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
   },
-  heading: { 
-    color: '#ffffff', 
-    fontSize: '24px', 
-    fontWeight: '800', 
-    marginBottom: '20px', 
-    marginTop: '10px' 
-  },
-  label: { 
-    color: '#E0B486', 
-    fontSize: '15px', 
-    fontWeight: '700',
-    marginTop: '20px', 
-    marginBottom: '10px',
-    display: 'block' 
-  },
-  row: { 
-    display: 'flex', 
-    flexWrap: 'wrap', 
-    gap: '10px',
-    marginBottom: '10px'
-  },
-  chip: { 
-    backgroundColor: 'rgba(15, 23, 26, 0.9)', 
-    padding: '10px 18px', 
-    borderRadius: '12px',
-    border: '1.5px solid #1a3536',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  activeChip: { 
-    backgroundColor: '#163838',
-    borderColor: '#225d5f',
-  },
-  chipText: { 
-    color: '#9fb4ad', 
-    fontSize: '14px',
-    fontWeight: '600'
-  },
-  activeChipText: { 
-    color: '#ffffff', 
-    fontWeight: 'bold' 
-  },
-  saveBtn: { 
-    backgroundColor: '#E0B486', 
-    color: '#121619',
-    padding: '14px', 
-    borderRadius: '12px', 
-    border: 'none',
-    fontWeight: '700', 
-    fontSize: '16px',
-    cursor: 'pointer', 
+  heroCard: {
     width: '100%',
-    marginTop: '30px',
-    transition: 'opacity 0.2s',
+    maxWidth: 600,
+    backgroundColor: '#182C25',
+    borderRadius: 20,
+    padding: 28,
+    borderWidth: 2,
+    borderColor: '#116466',
+    shadowColor: '#FFCB9A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    alignItems: 'center',
+    marginBottom: 24,
   },
-};
+  aiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#116466',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
+    marginBottom: 16,
+  },
+  aiBadgeText: {
+    color: '#FFCB9A',
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 1.2,
+  },
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  heroSubtitle: {
+    color: '#D1E8E2',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  primaryButton: {
+    width: '100%',
+    backgroundColor: '#FFCB9A',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    shadowColor: '#FFCB9A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  primaryButtonText: {
+    color: '#121E1A',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    maxWidth: 600,
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#182C25',
+    borderRadius: 16,
+    padding: 18,
+    marginHorizontal: 6,
+    borderWidth: 1.5,
+    borderColor: '#116466',
+    alignItems: 'center',
+  },
+  statIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  statTitle: {
+    color: '#94A3B8',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  statValue: {
+    color: '#FFCB9A',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  actionSection: {
+    width: '100%',
+    maxWidth: 600,
+  },
+  secondaryButton: {
+    backgroundColor: '#182C25',
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#116466',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  secondaryButtonText: {
+    color: '#D1E8E2',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+});
