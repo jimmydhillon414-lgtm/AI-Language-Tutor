@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   FlatList,
   Platform,
-  ImageBackground,
   TextInput,
 } from 'react-native';
 import * as Speech from 'expo-speech';
 import { supabase } from '../api/supabase';
+import AppBackground from '../components/AppBackground';
 
 export default function TutorChatScreen({ navigation }) {
   const [userProfile, setUserProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
@@ -335,81 +335,80 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   };
 
   return (
-    <View style={styles.container}>
-      {/* Sharp & Vibrant Top AI Header */}
-      <View style={styles.headerContainer}>
-        <View style={styles.aiAvatarHeader}>
-          <View style={styles.avatarGlowWrapper}>
-            <Text style={{ fontSize: 22 }}>🧠</Text>
+    <AppBackground>
+      <View style={styles.container}>
+        {/* Sharp & Vibrant Top AI Header */}
+        <View style={styles.headerContainer}>
+          <View style={styles.aiAvatarHeader}>
+            <View style={styles.avatarGlowWrapper}>
+              <Text style={{ fontSize: 22 }}>🧠</Text>
+            </View>
+            <View style={styles.aiHeaderBubble}>
+              <Text style={styles.aiHeaderTitle}>SOLARIN NEURAL TUTOR</Text>
+              <Text style={styles.aiHeaderSubtitle}>Active Session • High-Frequency Fluency Mode</Text>
+            </View>
           </View>
-          <View style={styles.aiHeaderBubble}>
-            <Text style={styles.aiHeaderTitle}>SOLARIN NEURAL TUTOR</Text>
-            <Text style={styles.aiHeaderSubtitle}>Active Session • High-Frequency Fluency Mode</Text>
+          <View style={styles.progressSection}>
+            <View style={styles.progressLabelRow}>
+              <Text style={styles.progressText}>Mastery Progress</Text>
+              <Text style={styles.progressPercentage}>45%</Text>
+            </View>
+            <View style={styles.progressBarTrack}>
+              <View style={[styles.progressBarFill, { width: '45%' }]} />
+            </View>
           </View>
         </View>
-        <View style={styles.progressSection}>
-          <View style={styles.progressLabelRow}>
-            <Text style={styles.progressText}>Mastery Progress</Text>
-            <Text style={styles.progressPercentage}>45%</Text>
-          </View>
-          <View style={styles.progressBarTrack}>
-            <View style={[styles.progressBarFill, { width: '45%' }]} />
-          </View>
-        </View>
-      </View>
 
-      {/* High-Impact Sharp Neural Background */}
-      <ImageBackground 
-        source={{ uri: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop' }} 
-        style={styles.chatArea}
-      >
-        <View style={styles.chatOverlay}>
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.messageListContainer}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            renderItem={renderMessageItem}
+        {/* High-Impact Sharp Neural Background Area */}
+        <View style={styles.chatArea}>
+          <View style={styles.chatOverlay}>
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.messageListContainer}
+              onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+              renderItem={renderMessageItem}
+            />
+          </View>
+        </View>
+
+        {/* Sleek Bottom Input Bar */}
+        <View style={styles.inputBar}>
+          <TouchableOpacity style={styles.plusButton}>
+            <Text style={{ color: '#FFCB9A', fontSize: 20, fontWeight: 'bold' }}>+</Text>
+          </TouchableOpacity>
+          
+          <TextInput
+            style={styles.textInput}
+            value={input}
+            onChangeText={setInput}
+            placeholder="Ask your AI tutor or speak..."
+            placeholderTextColor="#A3B8B0"
+            onSubmitEditing={() => handleSendDirect(input)}
+            returnKeyType="send"
           />
+
+          <TouchableOpacity 
+            style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
+            onPress={toggleVoiceInput}
+          >
+            <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
+            <Text style={{ fontSize: 16, color: '#1B2A26', fontWeight: 'bold' }}>➤</Text>
+          </TouchableOpacity>
         </View>
-      </ImageBackground>
-
-      {/* Sleek Bottom Input Bar */}
-      <View style={styles.inputBar}>
-        <TouchableOpacity style={styles.plusButton}>
-          <Text style={{ color: '#FFCB9A', fontSize: 20, fontWeight: 'bold' }}>+</Text>
-        </TouchableOpacity>
-        
-        <TextInput
-          style={styles.textInput}
-          value={input}
-          onChangeText={setInput}
-          placeholder="Ask your AI tutor or speak..."
-          placeholderTextColor="#A3B8B0"
-          onSubmitEditing={() => handleSendDirect(input)}
-          returnKeyType="send"
-        />
-
-        <TouchableOpacity 
-          style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
-          onPress={toggleVoiceInput}
-        >
-          <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
-          <Text style={{ fontSize: 16, color: '#1B2A26', fontWeight: 'bold' }}>➤</Text>
-        </TouchableOpacity>
       </View>
-    </View>
+    </AppBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121E1A',
+    backgroundColor: 'transparent',
   },
   headerContainer: {
     backgroundColor: '#182C25',
