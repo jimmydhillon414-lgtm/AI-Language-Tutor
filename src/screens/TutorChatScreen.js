@@ -359,7 +359,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </View>
         </View>
 
-        {/* High-Impact Sharp Neural Background Area */}
+        {/* Transparent Chat Area so AppBackground shines through */}
         <View style={styles.chatArea}>
           <View style={styles.chatOverlay}>
             <FlatList
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   headerContainer: {
-    backgroundColor: '#182C25',
+    backgroundColor: 'rgba(24, 44, 37, 0.85)', // Semi-transparent to let background peek through
     paddingTop: 16,
     paddingHorizontal: 20,
     paddingBottom: 14,
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
   },
   chatOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(18, 30, 26, 0.88)',
+    backgroundColor: 'rgba(18, 30, 26, 0.4)', // Made highly translucent so AppBackground image is clearly visible
   },
   messageListContainer: {
     padding: 16,
@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#182C25',
+    backgroundColor: 'rgba(24, 44, 37, 0.85)', // Semi-transparent to let background peek through
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 2,
