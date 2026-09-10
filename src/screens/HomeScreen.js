@@ -66,45 +66,14 @@ export default function HomeScreen({ navigation }) {
         </div>
       </div>
 
-      {/* Main Hero Card with 3D Girl Character & Concentric Rings Background */}
+      {/* Main Hero Card with Custom HD 3D Student Image */}
       <div style={styles.heroCard}>
         
-        {/* Concentric Dark Rings & 3D AI Tutor Illustration Container */}
+        {/* Custom HD 3D Character Illustration Container */}
         <div style={styles.aiIllustrationContainer}>
-          <div style={styles.ring3}></div>
-          <div style={styles.ring2}></div>
-          <div style={styles.ring1}></div>
-
-          {/* Floating Learner Avatar Circles */}
-          <div style={{ ...styles.floatingAvatar, top: '15%', left: '18%' }}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop' }} 
-              style={styles.avatarImg} 
-            />
-          </div>
-          <div style={{ ...styles.floatingAvatar, top: '8%', right: '22%' }}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop' }} 
-              style={styles.avatarImg} 
-            />
-          </div>
-          <div style={{ ...styles.floatingAvatar, top: '45%', left: '8%' }}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=150&auto=format&fit=crop' }} 
-              style={styles.avatarImg} 
-            />
-          </div>
-          <div style={{ ...styles.floatingAvatar, top: '40%', right: '12%' }}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop' }} 
-              style={styles.avatarImg} 
-            />
-          </div>
-
-          {/* Center 3D Beautiful AI Tutor Girl Image */}
           <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop' }} 
-            style={styles.tutor3DImage} 
+            source={{ uri: 'YOUR_IMAGE_PUBLIC_URL_HERE' }} 
+            style={styles.tutorHDImage} 
           />
         </div>
 
@@ -258,57 +227,20 @@ const styles = StyleSheet.create({
   },
   aiIllustrationContainer: {
     width: '100%',
-    height: '260px',
+    height: '240px',
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: '20px',
     overflow: 'hidden',
+    borderRadius: '16px',
   },
-  ring1: {
-    position: 'absolute',
-    width: '210px',
-    height: '210px',
-    borderRadius: '50%',
-    border: '1.5px solid rgba(255, 203, 154, 0.15)',
-  },
-  ring2: {
-    position: 'absolute',
-    width: '150px',
-    height: '150px',
-    borderRadius: '50%',
-    border: '1.5px solid rgba(255, 203, 154, 0.25)',
-  },
-  ring3: {
-    position: 'absolute',
-    width: '90px',
-    height: '90px',
-    borderRadius: '50%',
-    border: '1.5px solid rgba(255, 203, 154, 0.35)',
-  },
-  floatingAvatar: {
-    position: 'absolute',
-    width: '38px',
-    height: '38px',
-    borderRadius: '50%',
-    overflow: 'hidden',
-    border: '2px solid #FFCB9A',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-    zIndex: 3,
-  },
-  avatarImg: {
+  tutorHDImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-  },
-  tutor3DImage: {
-    width: '130px',
-    height: '130px',
-    borderRadius: '50%',
-    border: '3px solid #FFCB9A',
-    resizeMode: 'cover',
-    zIndex: 2,
+    borderRadius: '16px',
     boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
   },
   aiBadge: {
