@@ -102,6 +102,7 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
               <TouchableOpacity 
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeBtn}
+                activeOpacity={0.7}
               >
                 <Text style={styles.eyeText}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
               </TouchableOpacity>
@@ -141,20 +142,20 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   card: {
-    backgroundColor: 'rgba(15, 23, 21, 0.55)', // Sleek translucent glassmorphism effect
+    backgroundColor: 'rgba(15, 23, 21, 0.40)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 203, 154, 0.35)', // Glowing subtle border
+    borderColor: 'rgba(255, 203, 154, 0.25)', 
     borderRadius: 24,
     padding: 32,
     width: '100%',
     maxWidth: 450,
     ...(Platform.OS === 'web' ? {
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
     } : {}),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 8,
   },
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   successBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.25)',
+    backgroundColor: 'rgba(16, 185, 129, 0.20)',
     borderWidth: 1.5,
     borderColor: '#10B981',
     borderRadius: 12,
@@ -191,38 +192,43 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'rgba(18, 30, 26, 0.75)',
-    color: '#E1F2EC',
+    backgroundColor: 'rgba(15, 23, 21, 0.35)',
+    color: '#FFFFFF',
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#116466',
+    borderColor: 'rgba(255, 203, 154, 0.4)',
     fontSize: 16,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(18, 30, 26, 0.75)',
+    backgroundColor: 'rgba(15, 23, 21, 0.35)',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#116466',
+    borderColor: 'rgba(255, 203, 154, 0.4)',
   },
   passwordInput: {
     flex: 1,
-    color: '#E1F2EC',
+    color: '#FFFFFF',
     paddingHorizontal: 18,
     paddingVertical: 14,
     fontSize: 16,
   },
   eyeBtn: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   eyeText: {
     fontSize: 18,
   },
   loginButton: {
-    backgroundColor: '#FFCB9A',
+    backgroundColor: 'rgba(255, 203, 154, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 203, 154, 0.6)',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -230,7 +236,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     shadowColor: '#FFCB9A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 6,
   },
   loginButtonText: {
