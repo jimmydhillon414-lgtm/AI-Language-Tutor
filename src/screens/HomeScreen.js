@@ -5,7 +5,6 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  ImageBackground,
   Image,
   Platform,
 } from 'react-native';
@@ -47,184 +46,170 @@ export default function HomeScreen({ navigation }) {
   }
 
   return (
-    <ImageBackground 
-      source={{ uri: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1920&auto=format&fit=crop' }} 
-      style={styles.backgroundImage}
-      imageStyle={{ opacity: 0.25 }}
-    >
-      <div style={styles.darkOverlay} />
+    <ScrollView contentContainerStyle={styles.container}>
       
-      <ScrollView contentContainerStyle={styles.container}>
+      {/* Play Store Style Trust & Rating Header Banner */}
+      <div style={styles.trustBanner}>
+        <div style={styles.trustBadgeItem}>
+          <span style={styles.trustValue}>4.7 ★</span>
+          <span style={styles.trustLabel}>2.5L+ Reviews</span>
+        </div>
+        <div style={styles.trustDivider} />
+        <div style={styles.trustBadgeItem}>
+          <span style={styles.trustValue}>1Cr+</span>
+          <span style={styles.trustLabel}>Active Learners</span>
+        </div>
+        <div style={styles.trustDivider} />
+        <div style={styles.trustBadgeItem}>
+          <span style={styles.trustValue}>24/7</span>
+          <span style={styles.trustLabel}>Personal AI Tutor</span>
+        </div>
+      </div>
+
+      {/* Main Hero Card with 3D Girl Character & Concentric Rings Background */}
+      <div style={styles.heroCard}>
         
-        {/* Play Store Style Trust & Rating Header Banner */}
-        <div style={styles.trustBanner}>
-          <div style={styles.trustBadgeItem}>
-            <span style={styles.trustValue}>4.7 ★</span>
-            <span style={styles.trustLabel}>2.5L+ Reviews</span>
+        {/* Concentric Dark Rings & 3D AI Tutor Illustration Container */}
+        <div style={styles.aiIllustrationContainer}>
+          <div style={styles.ring3}></div>
+          <div style={styles.ring2}></div>
+          <div style={styles.ring1}></div>
+
+          {/* Floating Learner Avatar Circles */}
+          <div style={{ ...styles.floatingAvatar, top: '15%', left: '18%' }}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop' }} 
+              style={styles.avatarImg} 
+            />
           </div>
-          <div style={styles.trustDivider} />
-          <div style={styles.trustBadgeItem}>
-            <span style={styles.trustValue}>1Cr+</span>
-            <span style={styles.trustLabel}>Active Learners</span>
+          <div style={{ ...styles.floatingAvatar, top: '8%', right: '22%' }}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop' }} 
+              style={styles.avatarImg} 
+            />
           </div>
-          <div style={styles.trustDivider} />
-          <div style={styles.trustBadgeItem}>
-            <span style={styles.trustValue}>24/7</span>
-            <span style={styles.trustLabel}>Personal AI Tutor</span>
+          <div style={{ ...styles.floatingAvatar, top: '45%', left: '8%' }}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=150&auto=format&fit=crop' }} 
+              style={styles.avatarImg} 
+            />
           </div>
+          <div style={{ ...styles.floatingAvatar, top: '40%', right: '12%' }}>
+            <Image 
+              source={{ uri: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop' }} 
+              style={styles.avatarImg} 
+            />
+          </div>
+
+          {/* Center 3D Beautiful AI Tutor Girl Image */}
+          <Image 
+            source={{ uri: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop' }} 
+            style={styles.tutor3DImage} 
+          />
         </div>
 
-        {/* Main Hero Card with Reference-Style Circular Learner Avatars */}
-        <div style={styles.heroCard}>
-          {/* Circular Learner Avatars Row */}
-          <div style={styles.learnerAvatarsContainer}>
-            <div style={styles.circularAvatarWrapper}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop' }} 
-                style={styles.circularAvatarImage} 
-              />
-            </div>
-            <div style={{ ...styles.circularAvatarWrapper, marginLeft: '-15px' }}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop' }} 
-                style={styles.circularAvatarImage} 
-              />
-            </div>
-            <div style={{ ...styles.circularAvatarWrapper, marginLeft: '-15px' }}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=150&auto=format&fit=crop' }} 
-                style={styles.circularAvatarImage} 
-              />
-            </div>
-            <div style={{ ...styles.circularAvatarWrapper, marginLeft: '-15px' }}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop' }} 
-                style={styles.circularAvatarImage} 
-              />
-            </div>
-            <div style={styles.learnerCountBadge}>
-              <span style={styles.learnerCountText}>+1Cr</span>
-            </div>
-          </div>
+        <div style={styles.aiBadge}>
+          <span style={{ fontSize: '12px' }}>⚡</span>
+          <span style={styles.aiBadgeText}>INDIA'S NO.1 SPOKEN AI COACH</span>
+        </div>
+        
+        <h1 style={styles.heroTitle}>
+          Master <span style={{ color: '#FFCB9A' }}>{userProfile.target_language || 'English'}</span> Fast with AI
+        </h1>
+        <p style={styles.heroSubtitle}>
+          Your personal 1-on-1 voice and chat companion engineered for rapid conversational fluency at a <span style={{ color: '#FFCB9A', fontWeight: 'bold' }}>{userProfile.proficiency_level || 'Beginner'}</span> level.
+        </p>
 
-          <div style={styles.aiBadge}>
-            <span style={{ fontSize: '12px' }}>⚡</span>
-            <span style={styles.aiBadgeText}>INDIA'S NO.1 SPOKEN AI COACH</span>
-          </div>
-          
-          <h1 style={styles.heroTitle}>
-            Master <span style={{ color: '#FFCB9A' }}>{userProfile.target_language || 'English'}</span> Fast with AI
-          </h1>
-          <p style={styles.heroSubtitle}>
-            Your personal 1-on-1 voice and chat companion engineered for rapid conversational fluency at a <span style={{ color: '#FFCB9A', fontWeight: 'bold' }}>{userProfile.proficiency_level || 'Beginner'}</span> level.
-          </p>
+        <div style={styles.heroBtnGroup}>
+          <TouchableOpacity 
+            style={styles.primaryButton}
+            onPress={() => navigation.navigate('TutorChat')}
+          >
+            <Text style={styles.primaryButtonText}>Start Practicing Now 🚀</Text>
+          </TouchableOpacity>
+        </div>
+      </div>
 
-          <div style={styles.heroBtnGroup}>
-            <TouchableOpacity 
-              style={styles.primaryButton}
-              onPress={() => navigation.navigate('TutorChat')}
+      {/* Interactive AI Tutor Video Demonstration */}
+      <div style={styles.videoSectionCard}>
+        <div style={styles.videoHeaderRow}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '16px' }}>🤖</span>
+            <span style={styles.videoBadgeTitle}>LIVE AI TUTOR PREVIEW</span>
+          </div>
+          <div style={styles.liveBadgeContainer}>
+            <span style={styles.liveDot}>●</span>
+            <span style={styles.liveIndicator}>READY</span>
+          </div>
+        </div>
+        
+        <div style={styles.videoWrapper}>
+          {Platform.OS === 'web' ? (
+            <video 
+              style={styles.videoPlayer}
+              controls
+              autoPlay
+              muted
+              loop
+              playsInline
+              src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
             >
-              <Text style={styles.primaryButtonText}>Start Practicing Now 🚀</Text>
-            </TouchableOpacity>
-          </div>
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <View style={styles.videoPlaceholder}>
+              <Text style={{ fontSize: 40, marginBottom: 10 }}>▶️</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Interactive AI Preview</Text>
+            </View>
+          )}
+        </div>
+        <p style={styles.videoDescription}>
+          Watch how Solarin analyzes your accent, gives instant grammar feedback, and adapts daily lessons to your pace.
+        </p>
+      </div>
+
+      {/* Dynamic Metric Grid */}
+      <div style={styles.gridContainer}>
+        <div style={styles.statCard} onClick={() => navigation.navigate('Profile')}>
+          <span style={styles.statIcon}>🎯</span>
+          <span style={styles.statTitle}>Target Language</span>
+          <span style={styles.statValue}>{userProfile.target_language || 'English'}</span>
         </div>
 
-        {/* Interactive AI Tutor Video Demonstration */}
-        <div style={styles.videoSectionCard}>
-          <div style={styles.videoHeaderRow}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '16px' }}>🤖</span>
-              <span style={styles.videoBadgeTitle}>LIVE AI TUTOR PREVIEW</span>
-            </div>
-            <div style={styles.liveBadgeContainer}>
-              <span style={styles.liveDot}>●</span>
-              <span style={styles.liveIndicator}>READY</span>
-            </div>
-          </div>
-          
-          <div style={styles.videoWrapper}>
-            {Platform.OS === 'web' ? (
-              <video 
-                style={styles.videoPlayer}
-                controls
-                autoPlay
-                muted
-                loop
-                playsInline
-                src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-              >
-                Your browser does not support the video tag.
-              </video>
-            ) : (
-              <View style={styles.videoPlaceholder}>
-                <Text style={{ fontSize: 40, marginBottom: 10 }}>▶️</Text>
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Interactive AI Preview</Text>
-              </View>
-            )}
-          </div>
-          <p style={styles.videoDescription}>
-            Watch how Solarin analyzes your accent, gives instant grammar feedback, and adapts daily lessons to your pace.
-          </p>
+        <div style={styles.statCard} onClick={() => navigation.navigate('Profile')}>
+          <span style={styles.statIcon}>📈</span>
+          <span style={styles.statTitle}>Proficiency Level</span>
+          <span style={styles.statValue}>{userProfile.proficiency_level || 'Beginner'}</span>
         </div>
+      </div>
 
-        {/* Dynamic Metric Grid */}
-        <div style={styles.gridContainer}>
-          <div style={styles.statCard} onClick={() => navigation.navigate('Profile')}>
-            <span style={styles.statIcon}>🎯</span>
-            <span style={styles.statTitle}>Target Language</span>
-            <span style={styles.statValue}>{userProfile.target_language || 'English'}</span>
-          </div>
+      {/* Action Navigation Deck */}
+      <div style={styles.actionSection}>
+        <TouchableOpacity 
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate('History')}
+        >
+          <Text style={styles.secondaryButtonText}>📊 View Learning History & Analytics</Text>
+        </TouchableOpacity>
 
-          <div style={styles.statCard} onClick={() => navigation.navigate('Profile')}>
-            <span style={styles.statIcon}>📈</span>
-            <span style={styles.statTitle}>Proficiency Level</span>
-            <span style={styles.statValue}>{userProfile.proficiency_level || 'Beginner'}</span>
-          </div>
-        </div>
+        <TouchableOpacity 
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <Text style={styles.secondaryButtonText}>⚙️ Update Tutor Preferences & Goals</Text>
+        </TouchableOpacity>
+      </div>
 
-        {/* Action Navigation Deck */}
-        <div style={styles.actionSection}>
-          <TouchableOpacity 
-            style={styles.secondaryButton}
-            onPress={() => navigation.navigate('History')}
-          >
-            <Text style={styles.secondaryButtonText}>📊 View Learning History & Analytics</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.secondaryButton}
-            onPress={() => navigation.navigate('Profile')}
-          >
-            <Text style={styles.secondaryButtonText}>⚙️ Update Tutor Preferences & Goals</Text>
-          </TouchableOpacity>
-        </div>
-
-      </ScrollView>
-    </ImageBackground>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    minHeight: '100vh',
-    backgroundColor: '#0F1715',
-  },
-  darkOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(15, 23, 21, 0.92)',
-    zIndex: 0,
-  },
   container: {
     padding: '24px 16px',
     alignItems: 'center',
-    zIndex: 1,
-    position: 'relative',
+    backgroundColor: '#0F1715',
+    minHeight: '100vh',
   },
   trustBanner: {
     width: '100%',
@@ -271,37 +256,60 @@ const styles = StyleSheet.create({
     marginBottom: '24px',
     textAlign: 'center',
   },
-  learnerAvatarsContainer: {
+  aiIllustrationContainer: {
+    width: '100%',
+    height: '260px',
+    position: 'relative',
     display: 'flex',
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: '18px',
+    marginBottom: '20px',
+    overflow: 'hidden',
   },
-  circularAvatarWrapper: {
-    width: '42px',
-    height: '42px',
+  ring1: {
+    position: 'absolute',
+    width: '210px',
+    height: '210px',
+    borderRadius: '50%',
+    border: '1.5px solid rgba(255, 203, 154, 0.15)',
+  },
+  ring2: {
+    position: 'absolute',
+    width: '150px',
+    height: '150px',
+    borderRadius: '50%',
+    border: '1.5px solid rgba(255, 203, 154, 0.25)',
+  },
+  ring3: {
+    position: 'absolute',
+    width: '90px',
+    height: '90px',
+    borderRadius: '50%',
+    border: '1.5px solid rgba(255, 203, 154, 0.35)',
+  },
+  floatingAvatar: {
+    position: 'absolute',
+    width: '38px',
+    height: '38px',
     borderRadius: '50%',
     overflow: 'hidden',
     border: '2px solid #FFCB9A',
-    backgroundColor: '#116466',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+    zIndex: 3,
   },
-  circularAvatarImage: {
+  avatarImg: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
-  learnerCountBadge: {
-    backgroundColor: '#FFCB9A',
-    padding: '8px 12px',
-    borderRadius: '16px',
-    marginLeft: '10px',
-    border: '1px solid #116466',
-  },
-  learnerCountText: {
-    color: '#121E1A',
-    fontSize: '12px',
-    fontWeight: '900',
+  tutor3DImage: {
+    width: '130px',
+    height: '130px',
+    borderRadius: '50%',
+    border: '3px solid #FFCB9A',
+    resizeMode: 'cover',
+    zIndex: 2,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
   },
   aiBadge: {
     display: 'inline-flex',
