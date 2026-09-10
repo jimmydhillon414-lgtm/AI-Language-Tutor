@@ -55,7 +55,7 @@ export default function HomeScreen({ navigation }) {
         </div>
       )}
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={true}>
         {/* Play Store Style Trust & Rating Header Banner */}
         <div style={styles.trustBanner}>
           <div style={styles.trustBadgeItem}>
@@ -129,7 +129,7 @@ export default function HomeScreen({ navigation }) {
                 playsInline
                 preload="auto"
               >
-                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             ) : (
@@ -189,11 +189,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F1715',
   },
   bgImageWrapper: {
-    position: 'absolute',
+    position: 'fixed',
     top: 0,
     left: 0,
-    width: '100%',
-    height: '100%',
+    width: '100vw',
+    height: '100vh',
     zIndex: -1,
     overflow: 'hidden',
   },
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 21, 0.82)',
   },
   container: {
-    padding: '24px 16px',
+    padding: '24px 16px 60px 16px', // Extra bottom padding taaki koi button cut na ho
     alignItems: 'center',
     position: 'relative',
     zIndex: 1,
