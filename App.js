@@ -18,7 +18,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121E1A', // Updated to match your uniform theme
+    backgroundColor: '#121E1A',
     ...(Platform.OS === 'web' ? {
       height: '100vh',
       width: '100vw',
