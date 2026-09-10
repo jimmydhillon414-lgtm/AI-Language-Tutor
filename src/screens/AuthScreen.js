@@ -140,7 +140,7 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#111715" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.signupButtonText}>Sign Up</Text>
             )}
@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   card: {
-    backgroundColor: 'rgba(15, 23, 21, 0.40)',
+    backgroundColor: 'rgba(15, 23, 21, 0.45)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 203, 154, 0.25)',
+    borderColor: 'rgba(255, 203, 154, 0.3)',
     borderRadius: 24,
     padding: 32,
     width: '100%',
@@ -217,22 +217,22 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   input: {
-    backgroundColor: 'rgba(15, 23, 21, 0.35)',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)', // Transparent input field
     color: '#FFFFFF',
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 203, 154, 0.4)',
+    borderColor: 'rgba(255, 203, 154, 0.35)',
     fontSize: 16,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 21, 0.35)',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 203, 154, 0.4)',
+    borderColor: 'rgba(255, 203, 154, 0.35)',
   },
   passwordInput: {
     flex: 1,
@@ -251,21 +251,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   signupButton: {
-    backgroundColor: 'rgba(255, 203, 154, 0.85)',
-    borderWidth: 1,
+    backgroundColor: 'rgba(255, 203, 154, 0.2)', // Semi-transparent button
+    borderWidth: 1.5,
     borderColor: 'rgba(255, 203, 154, 0.6)',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 18,
-    shadowColor: '#FFCB9A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
   },
   signupButtonText: {
-    color: '#111715',
+    color: '#FFCB9A',
     fontSize: 18,
     fontWeight: 'bold',
   },
