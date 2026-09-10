@@ -52,11 +52,11 @@ export default function HomeScreen({ navigation }) {
     >
       <div style={styles.darkOverlay} />
       
-      {/* Top Floating Navbar */}
+      {/* Unified Professional Header Bar */}
       <nav style={styles.navBar}>
         <div style={styles.logoContainer}>
           <span style={{ fontSize: '20px' }}>⚡</span>
-          <span style={styles.logoText}>SOLARIN AI</span>
+          <span style={styles.logoText}>SOLARIN AI TUTOR</span>
         </div>
         <div style={styles.navLinks}>
           <button style={styles.navLinkBtn} onClick={() => navigation.navigate('History')}>Analytics</button>
@@ -66,18 +66,36 @@ export default function HomeScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={styles.container}>
         
-        {/* Hero Section with Glowing Neon Border */}
+        {/* Play Store Style Trust & Rating Header Banner */}
+        <div style={styles.trustBanner}>
+          <div style={styles.trustBadgeItem}>
+            <span style={styles.trustValue}>4.7 ★</span>
+            <span style={styles.trustLabel}>2.5L+ Reviews</span>
+          </div>
+          <div style={styles.trustDivider} />
+          <div style={styles.trustBadgeItem}>
+            <span style={styles.trustValue}>1Cr+</span>
+            <span style={styles.trustLabel}>Active Learners</span>
+          </div>
+          <div style={styles.trustDivider} />
+          <div style={styles.trustBadgeItem}>
+            <span style={styles.trustValue}>24/7</span>
+            <span style={styles.trustLabel}>Personal AI Tutor</span>
+          </div>
+        </div>
+
+        {/* Main Hero Card */}
         <div style={styles.heroCard}>
           <div style={styles.aiBadge}>
             <span style={{ fontSize: '12px' }}>⚡</span>
-            <span style={styles.aiBadgeText}>NEXT-GEN NEURAL LANGUAGE COACH</span>
+            <span style={styles.aiBadgeText}>INDIA'S NO.1 SPOKEN AI COACH</span>
           </div>
           
           <h1 style={styles.heroTitle}>
-            Master <span style={{ color: '#FFCB9A' }}>{userProfile.target_language || 'English'}</span> with Real-Time AI
+            Master <span style={{ color: '#FFCB9A' }}>{userProfile.target_language || 'English'}</span> Fast with AI
           </h1>
           <p style={styles.heroSubtitle}>
-            Experience immersive voice interaction, instant grammar corrections, and custom adaptive paths engineered for rapid fluency at a <span style={{ color: '#FFCB9A', fontWeight: 'bold' }}>{userProfile.proficiency_level || 'Beginner'}</span> level.
+            Your personal 1-on-1 voice and chat companion engineered for rapid conversational fluency at a <span style={{ color: '#FFCB9A', fontWeight: 'bold' }}>{userProfile.proficiency_level || 'Beginner'}</span> level.
           </p>
 
           <div style={styles.heroBtnGroup}>
@@ -85,21 +103,21 @@ export default function HomeScreen({ navigation }) {
               style={styles.primaryButton}
               onPress={() => navigation.navigate('TutorChat')}
             >
-              <Text style={styles.primaryButtonText}>Launch Live AI Session 🎙️</Text>
+              <Text style={styles.primaryButtonText}>Start Practicing Now 🚀</Text>
             </TouchableOpacity>
           </div>
         </div>
 
-        {/* Trendy AI Avatar / Video Showcase Section (Fixed & Working MP4 Stream) */}
+        {/* Interactive AI Tutor Video Demonstration */}
         <div style={styles.videoSectionCard}>
           <div style={styles.videoHeaderRow}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '16px' }}>🤖</span>
-              <span style={styles.videoBadgeTitle}>LIVE AI TUTOR DEMONSTRATION</span>
+              <span style={styles.videoBadgeTitle}>LIVE AI TUTOR PREVIEW</span>
             </div>
             <div style={styles.liveBadgeContainer}>
               <span style={styles.liveDot}>●</span>
-              <span style={styles.liveIndicator}>AI ACTIVE</span>
+              <span style={styles.liveIndicator}>READY</span>
             </div>
           </div>
           
@@ -124,7 +142,7 @@ export default function HomeScreen({ navigation }) {
             )}
           </div>
           <p style={styles.videoDescription}>
-            Watch how Solarin listens to your voice input, detects pronunciation accents, and replies instantly with natural neural synthesis.
+            Watch how Solarin analyzes your accent, gives instant grammar feedback, and adapts daily lessons to your pace.
           </p>
         </div>
 
@@ -143,20 +161,20 @@ export default function HomeScreen({ navigation }) {
           </div>
         </div>
 
-        {/* Quick Action Navigation Deck */}
+        {/* Action Navigation Deck */}
         <div style={styles.actionSection}>
           <TouchableOpacity 
             style={styles.secondaryButton}
             onPress={() => navigation.navigate('History')}
           >
-            <Text style={styles.secondaryButtonText}>📊 View Detailed Progress & Session Analytics</Text>
+            <Text style={styles.secondaryButtonText}>📊 View Learning History & Analytics</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.secondaryButton}
             onPress={() => navigation.navigate('Profile')}
           >
-            <Text style={styles.secondaryButtonText}>⚙️ Configure Learning Preferences & Goals</Text>
+            <Text style={styles.secondaryButtonText}>⚙️ Update Tutor Preferences & Goals</Text>
           </TouchableOpacity>
         </div>
 
@@ -188,16 +206,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '18px 32px',
-    borderBottom: '1px solid rgba(17, 100, 102, 0.3)',
-    backgroundColor: 'rgba(24, 44, 37, 0.7)',
-    backdropFilter: 'blur(10px)',
+    padding: '16px 32px',
+    backgroundColor: '#182C25',
+    borderBottom: '2px solid #116466',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
   },
   logoContainer: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: '8px',
+    gap: '10px',
   },
   logoText: {
     color: '#FFFFFF',
@@ -210,10 +228,10 @@ const styles = StyleSheet.create({
     gap: '12px',
   },
   navLinkBtn: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#121E1A',
     color: '#D1E8E2',
     border: '1.5px solid #116466',
-    padding: '6px 14px',
+    padding: '8px 16px',
     borderRadius: '10px',
     fontSize: '13px',
     fontWeight: '600',
@@ -225,6 +243,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
     position: 'relative',
+  },
+  trustBanner: {
+    width: '100%',
+    maxWidth: '720px',
+    backgroundColor: '#182C25',
+    borderRadius: '16px',
+    padding: '14px 20px',
+    border: '1.5px solid #116466',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginBottom: '20px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+  },
+  trustBadgeItem: {
+    alignItems: 'center',
+  },
+  trustValue: {
+    color: '#FFCB9A',
+    fontSize: '16px',
+    fontWeight: '900',
+    marginBottom: '2px',
+  },
+  trustLabel: {
+    color: '#94A3B8',
+    fontSize: '11px',
+    fontWeight: '500',
+  },
+  trustDivider: {
+    width: '1px',
+    height: '24px',
+    backgroundColor: '#116466',
   },
   heroCard: {
     width: '100%',
