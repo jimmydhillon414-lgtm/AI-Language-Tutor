@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'rgba(0, 0, 0, 0.25)', // Yellow background completely removed & made transparent
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
     color: '#FFFFFF',
     paddingHorizontal: 18,
     paddingVertical: 14,
@@ -200,14 +200,20 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'rgba(255, 203, 154, 0.35)',
     fontSize: 16,
+    ...(Platform.OS === 'web' ? {
+      outlineStyle: 'none',
+      boxShadow: 'inset 0 0 0 1000px rgba(0, 0, 0, 0.25)',
+      WebkitTextFillColor: '#FFFFFF',
+    } : {}),
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.25)', // Transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 203, 154, 0.35)',
+    overflow: 'hidden',
   },
   passwordInput: {
     flex: 1,
@@ -215,6 +221,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 14,
     fontSize: 16,
+    ...(Platform.OS === 'web' ? {
+      outlineStyle: 'none',
+      boxShadow: 'inset 0 0 0 1000px rgba(0, 0, 0, 0.25)',
+      WebkitTextFillColor: '#FFFFFF',
+    } : {}),
   },
   eyeBtn: {
     paddingHorizontal: 16,
@@ -226,7 +237,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   loginButton: {
-    backgroundColor: 'rgba(255, 203, 154, 0.2)', // Semi-transparent glass button matching theme
+    backgroundColor: 'rgba(255, 203, 154, 0.2)',
     borderWidth: 1.5,
     borderColor: 'rgba(255, 203, 154, 0.6)',
     paddingVertical: 16,
