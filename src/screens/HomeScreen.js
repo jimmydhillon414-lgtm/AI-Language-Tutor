@@ -5,305 +5,461 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
+  Image,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
 import { supabase } from '../api/supabase';
 
-const LANGUAGES = [
-  { id: 'English', name: 'English', flag: '🇬🇧' },
-  { id: 'Hindi', name: 'Hindi', flag: '🇮🇳' },
-  { id: 'Spanish', name: 'Spanish', flag: '🇪🇸' },
-  { id: 'French', name: 'French', flag: '🇫🇷' },
-  { id: 'German', name: 'German', flag: '🇩🇪' },
-  { id: 'Japanese', name: 'Japanese', flag: '🇯🇵' },
-  { id: 'Mandarin', name: 'Mandarin', flag: '🇨🇳' },
-];
-
-const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
-
-export default function ProfileScreen() {
-  const [targetLanguage, setTargetLanguage] = useState('English');
-  const [proficiencyLevel, setProficiencyLevel] = useState('Beginner');
+export default function HomeScreen({ navigation }) {
+  const [userProfile, setUserProfile] = useState({
+    target_language: 'English',
+    proficiency_level: 'Beginner',
+  });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
 
   useEffect(() => {
-    fetchUserProfile();
+    fetchProfile();
   }, []);
 
-  async function fetchUserProfile() {
+  async function fetchProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
 
       if (data) {
-        if (data.target_language) setTargetLanguage(data.target_language);
-        if (data.proficiency_level) setProficiencyLevel(data.proficiency_level);
+        setUserProfile(data);
       }
     } catch (err) {
-      console.log('Error loading profile:', err);
+      console.log('Error fetching profile:', err);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleSavePreferences() {
-    setSaving(true);
-    setMessage('');
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const updates = {
-        id: user.id,
-        target_language: targetLanguage,
-        proficiency_level: proficiencyLevel,
-        updated_at: new Date(),
-      };
-
-      const { error } = await supabase
-        .from('user_profiles')
-        .upsert(updates);
-
-      if (error) throw error;
-      setMessage('Preferences saved successfully! 🎉');
-    } catch (err) {
-      console.log('Error saving profile:', err);
-      setMessage('Failed to save preferences.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.centerLoader}>
-        <ActivityIndicator size="large" color="#FFCB9A" />
-      </View>
-    );
-  }
-
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.headerRow}>
-          <Text style={styles.headerIcon}>⚙️</Text>
-          <Text style={styles.headerTitle}>TUTOR PREFERENCES & GOALS</Text>
-        </View>
+    <View style={styles.mainWrapper}>
+      {/* Background Image Layer */}
+      {Platform.OS === 'web' && (
+        <div style={styles.bgImageWrapper}>
+          <img src={require('../../assets/tutor_girl.png.png')} style={styles.bgImageStyle} alt="Background" />
+          <div style={styles.bgOverlay} />
+        </div>
+      )}
 
-        <Text style={styles.sectionSubtitle}>
-          Choose the language you want to master and your current proficiency level to personalize your AI sessions.
-        </Text>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Play Store Style Trust & Rating Header Banner */}
+        <div style={styles.trustBanner}>
+          <div style={styles.trustBadgeItem}>
+            <span style={styles.trustValue}>4.7 ★</span>
+            <span style={styles.trustLabel}>2.5L+ Reviews</span>
+          </div>
+          <div style={styles.trustDivider} />
+          <div style={styles.trustBadgeItem}>
+            <span style={styles.trustValue}>1Cr+</span>
+            <span style={styles.trustLabel}>Active Learners</span>
+          </div>
+          <div style={styles.trustDivider} />
+          <div style={styles.trustBadgeItem}>
+            <span style={styles.trustValue}>24/7</span>
+            <span style={styles.trustLabel}>Personal AI Tutor</span>
+          </div>
+        </div>
 
-        {/* Target Languages Grid (7 Languages) */}
-        <Text style={styles.label}>Select Target Language</Text>
-        <View style={styles.gridContainer}>
-          {LANGUAGES.map((lang) => {
-            const isSelected = targetLanguage === lang.id;
-            return (
-              <TouchableOpacity
-                key={lang.id}
-                style={[styles.optionCard, isSelected && styles.selectedOptionCard]}
-                onPress={() => setTargetLanguage(lang.id)}
-                activeOpacity={0.8}
+        {/* Main Hero Card */}
+        <div style={styles.heroCard}>
+          <div style={styles.aiIllustrationContainer}>
+            <Image 
+              source={require('../../assets/tutor_girl.png.png')} 
+              style={styles.tutorHDImage} 
+            />
+          </div>
+
+          <div style={styles.aiBadge}>
+            <span style={{ fontSize: '12px' }}>⚡</span>
+            <span style={styles.aiBadgeText}>INDIA'S NO.1 SPOKEN AI COACH</span>
+          </div>
+          
+          <h1 style={styles.heroTitle}>
+            Master <span style={{ color: '#FFCB9A' }}>{userProfile.target_language || 'English'}</span> Fast with AI
+          </h1>
+          <p style={styles.heroSubtitle}>
+            Your personal 1-on-1 voice and chat companion engineered for rapid conversational fluency at a <span style={{ color: '#FFCB9A', fontWeight: 'bold' }}>{userProfile.proficiency_level || 'Beginner'}</span> level.
+          </p>
+
+          <div style={styles.heroBtnGroup}>
+            <TouchableOpacity 
+              style={styles.primaryButton}
+              onPress={() => navigation.navigate('TutorChat')}
+            >
+              <Text style={styles.primaryButtonText}>Start Practicing Now 🚀</Text>
+            </TouchableOpacity>
+          </div>
+        </div>
+
+        {/* Interactive AI Tutor Video Demonstration */}
+        <div style={styles.videoSectionCard}>
+          <div style={styles.videoHeaderRow}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '16px' }}>🤖</span>
+              <span style={styles.videoBadgeTitle}>LIVE AI TUTOR PREVIEW</span>
+            </div>
+            <div style={styles.liveBadgeContainer}>
+              <span style={styles.liveDot}>●</span>
+              <span style={styles.liveIndicator}>READY</span>
+            </div>
+          </div>
+          
+          <div style={styles.videoWrapper}>
+            {Platform.OS === 'web' ? (
+              <video 
+                style={styles.videoPlayer}
+                controls
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
               >
-                <Text style={styles.flagEmoji}>{lang.flag}</Text>
-                <Text style={[styles.optionText, isSelected && styles.selectedOptionText]}>
-                  {lang.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <View style={styles.videoPlaceholder}>
+                <Text style={{ fontSize: 40, marginBottom: 10 }}>▶️</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Interactive AI Preview</Text>
+              </View>
+            )}
+          </div>
+          <p style={styles.videoDescription}>
+            Watch how Solarin analyzes your accent, gives instant grammar feedback, and adapts daily lessons to your pace.
+          </p>
+        </div>
 
-        {/* Proficiency Levels */}
-        <Text style={styles.label}>Select Proficiency Level</Text>
-        <View style={styles.levelRow}>
-          {LEVELS.map((lvl) => {
-            const isSelected = proficiencyLevel === lvl;
-            return (
-              <TouchableOpacity
-                key={lvl}
-                style={[styles.levelCard, isSelected && styles.selectedLevelCard]}
-                onPress={() => setProficiencyLevel(lvl)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.levelText, isSelected && styles.selectedLevelText]}>
-                  {lvl}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {/* Dynamic Metric Grid */}
+        <div style={styles.gridContainer}>
+          <div style={styles.statCard} onClick={() => navigation.navigate('Profile')}>
+            <span style={styles.statIcon}>🎯</span>
+            <span style={styles.statTitle}>Target Language</span>
+            <span style={styles.statValue}>{userProfile.target_language || 'English'}</span>
+          </div>
 
-        {message ? (
-          <Text style={styles.messageText}>{message}</Text>
-        ) : null}
+          <div style={styles.statCard} onClick={() => navigation.navigate('Profile')}>
+            <span style={styles.statIcon}>📈</span>
+            <span style={styles.statTitle}>Proficiency Level</span>
+            <span style={styles.statValue}>{userProfile.proficiency_level || 'Beginner'}</span>
+          </div>
+        </div>
 
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSavePreferences}
-          disabled={saving}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.saveButtonText}>
-            {saving ? 'Saving...' : 'Save Preferences 🚀'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        {/* Action Navigation Deck */}
+        <div style={styles.actionSection}>
+          <TouchableOpacity 
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate('History')}
+          >
+            <Text style={styles.secondaryButtonText}>📊 View Learning History & Analytics</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Text style={styles.secondaryButtonText}>⚙️ Update Tutor Preferences & Goals</Text>
+          </TouchableOpacity>
+        </div>
+
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  centerLoader: {
+  mainWrapper: {
     flex: 1,
+    position: 'relative',
+    minHeight: '100vh',
     backgroundColor: '#0F1715',
-    justifyContent: 'center',
-    alignItems: 'center',
+  },
+  bgImageWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: -1,
+    overflow: 'hidden',
+  },
+  bgImageStyle: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    filter: 'blur(3px)', 
+    transform: 'scale(1.05)',
+  },
+  bgOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(15, 23, 21, 0.82)',
   },
   container: {
-    padding: 20,
+    padding: '24px 16px',
     alignItems: 'center',
-    backgroundColor: '#0F1715',
-    minHeight: '100vh',
+    position: 'relative',
+    zIndex: 1,
   },
-  card: {
+  trustBanner: {
     width: '100%',
-    maxWidth: 720,
+    maxWidth: '720px',
     backgroundColor: '#182C25',
-    borderRadius: 24,
-    padding: 30,
-    borderWidth: 2,
-    borderColor: '#116466',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  headerRow: {
+    borderRadius: '16px',
+    padding: '14px 20px',
+    border: '1.5px solid #116466',
+    display: 'flex',
     flexDirection: 'row',
+    justifyContent: 'space-around',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
+    marginBottom: '20px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
   },
-  headerIcon: {
-    fontSize: 20,
-  },
-  headerTitle: {
-    color: '#FFCB9A',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-  },
-  sectionSubtitle: {
-    color: '#D1E8E2',
-    fontSize: 13,
-    marginBottom: 24,
-    lineHeight: 18,
-  },
-  label: {
-    color: '#FFCB9A',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  optionCard: {
-    flexBasis: '30%',
-    flexGrow: 1,
-    backgroundColor: '#0A1411',
-    borderWidth: 1.5,
-    borderColor: '#116466',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
+  trustBadgeItem: {
     alignItems: 'center',
-    gap: 6,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
   },
-  selectedOptionCard: {
-    backgroundColor: 'rgba(255, 203, 154, 0.15)',
-    borderColor: '#FFCB9A',
+  trustValue: {
+    color: '#FFCB9A',
+    fontSize: '16px',
+    fontWeight: '900',
+    marginBottom: '2px',
   },
-  flagEmoji: {
-    fontSize: 22,
-  },
-  optionText: {
+  trustLabel: {
     color: '#94A3B8',
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: '11px',
+    fontWeight: '500',
   },
-  selectedOptionText: {
-    color: '#FFCB9A',
-    fontWeight: 'bold',
+  trustDivider: {
+    width: '1px',
+    height: '24px',
+    backgroundColor: '#116466',
   },
-  levelRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  levelCard: {
-    flex: 1,
-    backgroundColor: '#0A1411',
-    borderWidth: 1.5,
-    borderColor: '#116466',
-    borderRadius: 14,
-    paddingVertical: 14,
+  heroCard: {
+    width: '100%',
+    maxWidth: '720px',
+    backgroundColor: '#182C25',
+    borderRadius: '24px',
+    padding: '36px 30px',
+    border: '2px solid #116466',
+    boxShadow: '0 16px 48px rgba(0, 0, 0, 0.7), 0 0 20px rgba(17, 100, 102, 0.2)',
     alignItems: 'center',
-    ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
-  },
-  selectedLevelCard: {
-    backgroundColor: 'rgba(255, 203, 154, 0.15)',
-    borderColor: '#FFCB9A',
-  },
-  levelText: {
-    color: '#94A3B8',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  selectedLevelText: {
-    color: '#FFCB9A',
-    fontWeight: 'bold',
-  },
-  messageText: {
-    color: '#4ADE80',
-    fontSize: 13,
+    marginBottom: '24px',
     textAlign: 'center',
-    marginBottom: 16,
-    fontWeight: '600',
   },
-  saveButton: {
+  aiIllustrationContainer: {
+    width: '100%',
+    height: '320px',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '20px',
+    overflow: 'hidden',
+    borderRadius: '16px',
+    backgroundColor: '#0A1411',
+  },
+  tutorHDImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    borderRadius: '16px',
+  },
+  aiBadge: {
+    display: 'inline-flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: '6px',
+    backgroundColor: '#116466',
+    padding: '6px 14px',
+    borderRadius: '14px',
+    border: '1px solid #FFCB9A',
+    marginBottom: '18px',
+  },
+  aiBadgeText: {
+    color: '#FFCB9A',
+    fontSize: '11px',
+    fontWeight: 'bold',
+    letterSpacing: '1.5px',
+  },
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: '32px',
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: '12px',
+    lineHeight: '1.2',
+  },
+  heroSubtitle: {
+    color: '#D1E8E2',
+    fontSize: '15px',
+    textAlign: 'center',
+    lineHeight: '22px',
+    marginBottom: '28px',
+    maxWidth: '600px',
+  },
+  heroBtnGroup: {
+    width: '100%',
+    maxWidth: '380px',
+  },
+  primaryButton: {
+    width: '100%',
     backgroundColor: '#FFCB9A',
-    paddingVertical: 16,
-    borderRadius: 14,
+    paddingVertical: '16px',
+    borderRadius: '14px',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#FFCB9A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
+    cursor: 'pointer',
+    border: 'none',
   },
-  saveButtonText: {
+  primaryButtonText: {
     color: '#121E1A',
-    fontSize: 15,
+    fontSize: '16px',
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: '0.5px',
+  },
+  videoSectionCard: {
+    width: '100%',
+    maxWidth: '720px',
+    backgroundColor: '#182C25',
+    borderRadius: '24px',
+    padding: '24px',
+    border: '2px solid #116466',
+    marginBottom: '24px',
+    boxShadow: '0 12px 36px rgba(0,0,0,0.5)',
+  },
+  videoHeaderRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '14px',
+  },
+  videoBadgeTitle: {
+    color: '#FFCB9A',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    letterSpacing: '1.2px',
+  },
+  liveBadgeContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: '4px',
+    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+    padding: '4px 10px',
+    borderRadius: '8px',
+    border: '1px solid rgba(74, 222, 128, 0.3)',
+  },
+  liveDot: {
+    color: '#4ADE80',
+    fontSize: '10px',
+  },
+  liveIndicator: {
+    color: '#4ADE80',
+    fontSize: '10px',
+    fontWeight: 'bold',
+    letterSpacing: '1px',
+  },
+  videoWrapper: {
+    width: '100%',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    backgroundColor: '#0A1411',
+    border: '1.5px solid #116466',
+  },
+  videoPlayer: {
+    width: '100%',
+    height: '280px',
+    objectFit: 'cover',
+    display: 'block',
+    outlineStyle: 'none',
+  },
+  videoPlaceholder: {
+    height: '240px',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoDescription: {
+    color: '#D1E8E2',
+    fontSize: '13px',
+    marginTop: '12px',
+    textAlign: 'center',
+    lineHeight: '18px',
+  },
+  gridContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    maxWidth: '720px',
+    gap: '16px',
+    marginBottom: '20px',
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#182C25',
+    borderRadius: '18px',
+    padding: '20px',
+    border: '1.5px solid #116466',
+    alignItems: 'center',
+    cursor: 'pointer',
+    transition: 'transform 0.2s',
+    boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
+  },
+  statIcon: {
+    fontSize: '28px',
+    marginBottom: '8px',
+  },
+  statTitle: {
+    color: '#94A3B8',
+    fontSize: '12px',
+    marginBottom: '4px',
+    fontWeight: '500',
+  },
+  statValue: {
+    color: '#FFCB9A',
+    fontSize: '16px',
+    fontWeight: 'bold',
+  },
+  actionSection: {
+    width: '100%',
+    maxWidth: '720px',
+  },
+  secondaryButton: {
+    backgroundColor: '#182C25',
+    paddingVertical: '16px',
+    paddingHorizontal: '20px',
+    borderRadius: '16px',
+    border: '1.5px solid #116466',
+    alignItems: 'center',
+    marginBottom: '14px',
+    cursor: 'pointer',
+    boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
+  },
+  secondaryButtonText: {
+    color: '#D1E8E2',
+    fontSize: '14px',
+    fontWeight: '600',
   },
 });
