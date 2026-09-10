@@ -1,4 +1,3 @@
-```javascript
 import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
@@ -25,7 +24,7 @@ export default function TutorChatScreen({ navigation }) {
       timestamp: '09:30 AM',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: `Hi Sarah! Today we're learning common greetings.`,
+        reply: "Hi Sarah! Today we're learning common greetings.",
         isVoiceNote: false,
       }),
     },
@@ -41,7 +40,7 @@ export default function TutorChatScreen({ navigation }) {
       timestamp: '09:31 AM',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: `Great start! How are you today?`,
+        reply: "Great start! How are you today?",
         isVoiceNote: true,
         duration: '0:03',
       }),
@@ -339,7 +338,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
   return (
     <View style={styles.container}>
-      {/* Top AI Character Header & Progress Bar */}
       <View style={styles.headerContainer}>
         <View style={styles.aiAvatarHeader}>
           <Text style={{ fontSize: 24 }}>🤖</Text>
@@ -356,7 +354,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
       </View>
 
-      {/* Message Stream */}
       <ImageBackground 
         source={{ uri: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop' }} 
         style={styles.chatArea}
@@ -373,7 +370,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
       </ImageBackground>
 
-      {/* Bottom WhatsApp-Style Input Bar */}
       <View style={styles.inputBar}>
         <TouchableOpacity style={styles.plusButton}>
           <Text style={{ color: '#888', fontSize: 20 }}>+</Text>
