@@ -47,7 +47,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.mainWrapper}>
-      {/* Background Image Layer (Absolute) */}
+      {/* Background Image Layer */}
       {Platform.OS === 'web' && (
         <div style={styles.bgImageWrapper}>
           <img src={require('../../assets/tutor_girl.png.png')} style={styles.bgImageStyle} alt="Background" />
@@ -187,22 +187,21 @@ const styles = StyleSheet.create({
     minHeight: '100vh',
     backgroundColor: '#0F1715',
   },
-  // Header ko wapis lane ke liye fixed ki jagah absolute aur zIndex adjust kiya hai
   bgImageWrapper: {
-    position: 'absolute', 
+    position: 'absolute',
     top: 0,
     left: 0,
     width: '100%',
     height: '100%',
-    zIndex: -1, // Content ke peeche rakhne ke liye negative zIndex
+    zIndex: -1,
     overflow: 'hidden',
   },
   bgImageStyle: {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    filter: 'blur(2px)', // Blur kam kar diya hai
-    transform: 'scale(1.1)',
+    filter: 'blur(3px)', 
+    transform: 'scale(1.05)',
   },
   bgOverlay: {
     position: 'absolute',
@@ -210,13 +209,13 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(15, 23, 21, 0.88)', // Dark overlay opacity
+    backgroundColor: 'rgba(15, 23, 21, 0.82)',
   },
   container: {
     padding: '24px 16px',
     alignItems: 'center',
     position: 'relative',
-    zIndex: 1, // Scroll view content overlay se upar rahega
+    zIndex: 1,
   },
   trustBanner: {
     width: '100%',
@@ -449,4 +448,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#182C25',
     paddingVertical: '16px',
     paddingHorizontal: '20px',
-    borderRadius
+    borderRadius: '16px',
+    border: '1.5px solid #116466',
+    alignItems: 'center',
+    marginBottom: '14px',
+    cursor: 'pointer',
+    boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
+  },
+  secondaryButtonText: {
+    color: '#D1E8E2',
+    fontSize: '14px',
+    fontWeight: '600',
+  },
+});
