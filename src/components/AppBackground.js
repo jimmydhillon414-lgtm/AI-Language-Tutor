@@ -5,14 +5,16 @@ export default function AppBackground({ children }) {
   if (Platform.OS === 'web') {
     return (
       <div style={{
-        height: 'calc(100vh - 56px)', // Top navigation bar ko minus karke exact fit karega
-        width: '100%',
+        height: 'calc(100vh - 56px)',
+        width: '100vw', // 100vw ki jagah 100% karne se extra horizontal scrollbar khatam ho jayega
+        maxWidth: '100%',
         backgroundImage: `linear-gradient(rgba(15, 23, 21, 0.75), rgba(15, 23, 21, 0.75)), url(${require('../../assets/tutor_girl.png.png')})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        boxSizing: 'border-box',
       }}>
         {children}
       </div>
