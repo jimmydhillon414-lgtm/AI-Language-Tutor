@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ImageBackground,
+  Image,
   Platform,
 } from 'react-native';
 import { supabase } from '../api/supabase';
@@ -47,23 +48,12 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <ImageBackground 
-      source={{ uri: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop' }} 
+      source={{ uri: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1920&auto=format&fit=crop' }} 
       style={styles.backgroundImage}
+      imageStyle={{ opacity: 0.25 }}
     >
       <div style={styles.darkOverlay} />
       
-      {/* Unified Professional Header Bar */}
-      <nav style={styles.navBar}>
-        <div style={styles.logoContainer}>
-          <span style={{ fontSize: '20px' }}>⚡</span>
-          <span style={styles.logoText}>SOLARIN AI TUTOR</span>
-        </div>
-        <div style={styles.navLinks}>
-          <button style={styles.navLinkBtn} onClick={() => navigation.navigate('History')}>Analytics</button>
-          <button style={styles.navLinkBtn} onClick={() => navigation.navigate('Profile')}>Settings</button>
-        </div>
-      </nav>
-
       <ScrollView contentContainerStyle={styles.container}>
         
         {/* Play Store Style Trust & Rating Header Banner */}
@@ -84,8 +74,39 @@ export default function HomeScreen({ navigation }) {
           </div>
         </div>
 
-        {/* Main Hero Card */}
+        {/* Main Hero Card with Reference-Style Circular Learner Avatars */}
         <div style={styles.heroCard}>
+          {/* Circular Learner Avatars Row */}
+          <div style={styles.learnerAvatarsContainer}>
+            <div style={styles.circularAvatarWrapper}>
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop' }} 
+                style={styles.circularAvatarImage} 
+              />
+            </div>
+            <div style={{ ...styles.circularAvatarWrapper, marginLeft: '-15px' }}>
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop' }} 
+                style={styles.circularAvatarImage} 
+              />
+            </div>
+            <div style={{ ...styles.circularAvatarWrapper, marginLeft: '-15px' }}>
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=150&auto=format&fit=crop' }} 
+                style={styles.circularAvatarImage} 
+              />
+            </div>
+            <div style={{ ...styles.circularAvatarWrapper, marginLeft: '-15px' }}>
+              <Image 
+                source={{ uri: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop' }} 
+                style={styles.circularAvatarImage} 
+              />
+            </div>
+            <div style={styles.learnerCountBadge}>
+              <span style={styles.learnerCountText}>+1Cr</span>
+            </div>
+          </div>
+
           <div style={styles.aiBadge}>
             <span style={{ fontSize: '12px' }}>⚡</span>
             <span style={styles.aiBadgeText}>INDIA'S NO.1 SPOKEN AI COACH</span>
@@ -188,7 +209,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     minHeight: '100vh',
-    backgroundColor: '#121E1A',
+    backgroundColor: '#0F1715',
   },
   darkOverlay: {
     position: 'absolute',
@@ -196,47 +217,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(18, 30, 26, 0.93)',
+    backgroundColor: 'rgba(15, 23, 21, 0.92)',
     zIndex: 0,
-  },
-  navBar: {
-    position: 'relative',
-    zIndex: 10,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px 32px',
-    backgroundColor: '#182C25',
-    borderBottom: '2px solid #116466',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-  },
-  logoContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  logoText: {
-    color: '#FFFFFF',
-    fontSize: '18px',
-    fontWeight: '900',
-    letterSpacing: '1.5px',
-  },
-  navLinks: {
-    display: 'flex',
-    gap: '12px',
-  },
-  navLinkBtn: {
-    backgroundColor: '#121E1A',
-    color: '#D1E8E2',
-    border: '1.5px solid #116466',
-    padding: '8px 16px',
-    borderRadius: '10px',
-    fontSize: '13px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
   },
   container: {
     padding: '24px 16px',
@@ -288,6 +270,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: '24px',
     textAlign: 'center',
+  },
+  learnerAvatarsContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '18px',
+  },
+  circularAvatarWrapper: {
+    width: '42px',
+    height: '42px',
+    borderRadius: '50%',
+    overflow: 'hidden',
+    border: '2px solid #FFCB9A',
+    backgroundColor: '#116466',
+  },
+  circularAvatarImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  learnerCountBadge: {
+    backgroundColor: '#FFCB9A',
+    padding: '8px 12px',
+    borderRadius: '16px',
+    marginLeft: '10px',
+    border: '1px solid #116466',
+  },
+  learnerCountText: {
+    color: '#121E1A',
+    fontSize: '12px',
+    fontWeight: '900',
   },
   aiBadge: {
     display: 'inline-flex',
@@ -470,3 +484,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+```eof
