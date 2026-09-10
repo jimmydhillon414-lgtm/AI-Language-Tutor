@@ -22,7 +22,7 @@ export default function TutorChatScreen({ navigation }) {
       timestamp: '09:30 AM',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: "Hello! I'm Buddy. Welcome to your elite AI language journey.",
+        reply: "Hello! I'm Buddy. Welcome to your elite AI language session.",
         isVoiceNote: false,
       }),
     },
@@ -38,7 +38,7 @@ export default function TutorChatScreen({ navigation }) {
       timestamp: '09:31 AM',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: "Splendid! Let's begin with your personalized session today.",
+        reply: "Splendid! Let's begin building your vocabulary today.",
         isVoiceNote: true,
         duration: '0:03',
       }),
@@ -308,7 +308,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       <View style={styles.aiBubbleRow}>
         <View style={styles.aiBubble}>
           <View style={styles.aiSenderHeader}>
-            <Text style={styles.buddyLabel}>BUDDY AI</Text>
+            <Text style={styles.buddyLabel}>⚡ BUDDY AI TUTOR</Text>
             <TouchableOpacity onPress={() => speakText(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>🔊</Text>
             </TouchableOpacity>
@@ -336,20 +336,20 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
   return (
     <View style={styles.container}>
-      {/* Top Elite AI Header & Progress Bar */}
+      {/* Sharp & Vibrant Top AI Header */}
       <View style={styles.headerContainer}>
         <View style={styles.aiAvatarHeader}>
           <View style={styles.avatarGlowWrapper}>
-            <Text style={{ fontSize: 22 }}>🌐</Text>
+            <Text style={{ fontSize: 22 }}>🧠</Text>
           </View>
           <View style={styles.aiHeaderBubble}>
-            <Text style={styles.aiHeaderTitle}>SOLARIN AI BUDDY</Text>
-            <Text style={styles.aiHeaderSubtitle}>Active Session • 60-Day Mastery Plan</Text>
+            <Text style={styles.aiHeaderTitle}>SOLARIN NEURAL TUTOR</Text>
+            <Text style={styles.aiHeaderSubtitle}>Active Session • High-Frequency Fluency Mode</Text>
           </View>
         </View>
         <View style={styles.progressSection}>
           <View style={styles.progressLabelRow}>
-            <Text style={styles.progressText}>Lesson Progress</Text>
+            <Text style={styles.progressText}>Mastery Progress</Text>
             <Text style={styles.progressPercentage}>45%</Text>
           </View>
           <View style={styles.progressBarTrack}>
@@ -358,9 +358,9 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
       </View>
 
-      {/* Futuristic Background Area */}
+      {/* High-Impact Sharp Neural Background */}
       <ImageBackground 
-        source={{ uri: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop' }} 
+        source={{ uri: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop' }} 
         style={styles.chatArea}
       >
         <View style={styles.chatOverlay}>
@@ -375,31 +375,31 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
       </ImageBackground>
 
-      {/* Elite Bottom Input Bar */}
+      {/* Sleek Bottom Input Bar */}
       <View style={styles.inputBar}>
         <TouchableOpacity style={styles.plusButton}>
-          <Text style={{ color: '#D1E8E2', fontSize: 20, fontWeight: 'bold' }}>+</Text>
+          <Text style={{ color: '#FFCB9A', fontSize: 20, fontWeight: 'bold' }}>+</Text>
         </TouchableOpacity>
         
         <TextInput
           style={styles.textInput}
           value={input}
           onChangeText={setInput}
-          placeholder="Type or use voice note..."
-          placeholderTextColor="#8A9E96"
+          placeholder="Ask your AI tutor or speak..."
+          placeholderTextColor="#A3B8B0"
           onSubmitEditing={() => handleSendDirect(input)}
           returnKeyType="send"
         />
 
         <TouchableOpacity 
-          style={[styles.micButton, listening && { backgroundColor: '#FFCB9A' }]} 
+          style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
           onPress={toggleVoiceInput}
         >
           <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
-          <Text style={{ fontSize: 16, color: '#2C3531', fontWeight: 'bold' }}>➤</Text>
+          <Text style={{ fontSize: 16, color: '#1B2A26', fontWeight: 'bold' }}>➤</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -409,20 +409,20 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2C3531',
+    backgroundColor: '#121E1A',
   },
   headerContainer: {
-    backgroundColor: '#1b2320',
+    backgroundColor: '#182C25',
     paddingTop: 16,
     paddingHorizontal: 20,
     paddingBottom: 14,
-    borderBottomWidth: 1.5,
+    borderBottomWidth: 2,
     borderBottomColor: '#116466',
-    shadowColor: '#116466',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowColor: '#FFCB9A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
   },
   aiAvatarHeader: {
     flexDirection: 'row',
@@ -430,33 +430,34 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   avatarGlowWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: '#116466',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#D9B08C',
+    borderWidth: 2,
+    borderColor: '#FFCB9A',
   },
   aiHeaderBubble: {
     backgroundColor: '#116466',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderRadius: 14,
     marginLeft: 12,
-    borderWidth: 1,
-    borderColor: '#D9B08C',
+    borderWidth: 1.5,
+    borderColor: '#FFCB9A',
   },
   aiHeaderTitle: {
     color: '#FFCB9A',
     fontWeight: 'bold',
     fontSize: 13,
-    letterSpacing: 1,
+    letterSpacing: 1.2,
   },
   aiHeaderSubtitle: {
-    color: '#D1E8E2',
+    color: '#E0F2FE',
     fontSize: 11,
+    fontWeight: '500',
   },
   progressSection: {
     marginTop: 4,
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
   progressText: {
     color: '#D1E8E2',
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   progressPercentage: {
     color: '#FFCB9A',
@@ -477,8 +478,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   progressBarTrack: {
-    height: 7,
-    backgroundColor: '#2C3531',
+    height: 8,
+    backgroundColor: '#0E1714',
     borderRadius: 4,
     overflow: 'hidden',
     borderWidth: 1,
@@ -486,14 +487,14 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#D9B08C',
+    backgroundColor: '#FFCB9A',
   },
   chatArea: {
     flex: 1,
   },
   chatOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(44, 53, 49, 0.92)',
+    backgroundColor: 'rgba(18, 30, 26, 0.88)',
   },
   messageListContainer: {
     padding: 16,
@@ -501,34 +502,38 @@ const styles = StyleSheet.create({
   },
   aiBubbleRow: {
     flexDirection: 'row',
-    marginBottom: 14,
+    marginBottom: 16,
     justifyContent: 'flex-start',
   },
   userBubbleRow: {
     flexDirection: 'row',
-    marginBottom: 14,
+    marginBottom: 16,
     justifyContent: 'flex-end',
   },
   aiBubble: {
     backgroundColor: '#116466',
-    padding: 14,
+    padding: 15,
     borderRadius: 16,
     borderTopLeftRadius: 4,
     maxWidth: '78%',
-    borderWidth: 1,
-    borderColor: '#D9B08C',
-    shadowColor: '#D9B08C',
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#FFCB9A',
+    shadowColor: '#FFCB9A',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   userBubble: {
-    backgroundColor: '#2C3531',
-    padding: 14,
+    backgroundColor: '#1C312B',
+    padding: 15,
     borderRadius: 16,
     borderTopRightRadius: 4,
     maxWidth: '78%',
     borderWidth: 1.5,
-    borderColor: '#FFCB9A',
+    borderColor: '#116466',
+    shadowColor: '#116466',
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   aiSenderHeader: {
     flexDirection: 'row',
@@ -539,17 +544,19 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontSize: 11,
     fontWeight: 'bold',
-    letterSpacing: 0.8,
+    letterSpacing: 1,
   },
   aiText: {
-    color: '#D1E8E2',
+    color: '#FFFFFF',
     fontSize: 14,
-    lineHeight: 21,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   userText: {
-    color: '#D1E8E2',
+    color: '#FFFFFF',
     fontSize: 14,
-    lineHeight: 21,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   timeAndAvatarRowUser: {
     flexDirection: 'row',
@@ -564,7 +571,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   timestampText: {
-    color: '#8A9E96',
+    color: '#94A3B8',
     fontSize: 10,
     marginHorizontal: 4,
   },
@@ -576,13 +583,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#D9B08C',
+    borderColor: '#FFCB9A',
   },
   miniAvatarContainerAi: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#2C3531',
+    backgroundColor: '#182C25',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -592,7 +599,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.25)',
     padding: 6,
     borderRadius: 8,
   },
@@ -605,35 +612,35 @@ const styles = StyleSheet.create({
   waveformMock: {
     flex: 1,
     height: 4,
-    backgroundColor: '#D9B08C',
+    backgroundColor: '#FFCB9A',
     borderRadius: 2,
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1b2320',
+    backgroundColor: '#182C25',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderTopWidth: 1.5,
+    borderTopWidth: 2,
     borderTopColor: '#116466',
   },
-    plusButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  plusButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#116466',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#D9B08C',
+    borderColor: '#FFCB9A',
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#2C3531',
-    color: '#D1E8E2',
+    backgroundColor: '#121E1A',
+    color: '#FFFFFF',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 11,
     borderRadius: 22,
     fontSize: 14,
     marginHorizontal: 6,
@@ -649,13 +656,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginHorizontal: 6,
     borderWidth: 1,
-    borderColor: '#D9B08C',
+    borderColor: '#FFCB9A',
   },
   sendPlaneButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#D9B08C',
+    backgroundColor: '#FFCB9A',
     alignItems: 'center',
     justifyContent: 'center',
   },
