@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
@@ -15,6 +16,7 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [successBanner, setSuccessBanner] = useState('');
 
@@ -69,7 +71,7 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
     <AppBackground>
       <View style={styles.container}>
         <View style={styles.card}>
-          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.title}>CREATE ACCOUNT</Text>
 
           {successBanner ? (
             <View style={styles.successBox}>
@@ -104,6 +106,7 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
               <TouchableOpacity 
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeBtn}
+                activeOpacity={0.7}
               >
                 <Text style={styles.eyeText}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
               </TouchableOpacity>
@@ -112,14 +115,23 @@ export default function AuthScreen({ onAuthSuccess, onSwitchToLogin }) {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Confirm Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm your password"
-              placeholderTextColor="#8FA39D"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={!showPassword}
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Confirm your password"
+                placeholderTextColor="#8FA39D"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+              />
+              <TouchableOpacity 
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={styles.eyeBtn}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.eyeText}>{showConfirmPassword ? '👁️' : '👁️‍🗨️'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity 
@@ -155,17 +167,22 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   card: {
-    backgroundColor: 'rgba(17, 23, 21, 0.92)',
+    backgroundColor: 'rgba(15, 23, 21, 0.40)',
     borderWidth: 1.5,
-    borderColor: '#0A3B3D',
+    borderColor: 'rgba(255, 203, 154, 0.25)',
     borderRadius: 24,
     padding: 32,
     width: '100%',
     maxWidth: 450,
+    ...(Platform.OS === 'web' ? {
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+    } : {}),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.6,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   },
   title: {
     color: '#FFCB9A',
@@ -176,7 +193,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   successBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    backgroundColor: 'rgba(16, 185, 129, 0.20)',
     borderWidth: 1.5,
     borderColor: '#10B981',
     borderRadius: 12,
@@ -200,43 +217,52 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   input: {
-    backgroundColor: 'rgba(23, 33, 30, 0.9)',
-    color: '#E1F2EC',
+    backgroundColor: 'rgba(15, 23, 21, 0.35)',
+    color: '#FFFFFF',
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#0A3B3D',
+    borderColor: 'rgba(255, 203, 154, 0.4)',
     fontSize: 16,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(23, 33, 30, 0.9)',
+    backgroundColor: 'rgba(15, 23, 21, 0.35)',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#0A3B3D',
+    borderColor: 'rgba(255, 203, 154, 0.4)',
   },
   passwordInput: {
     flex: 1,
-    color: '#E1F2EC',
+    color: '#FFFFFF',
     paddingHorizontal: 18,
     paddingVertical: 14,
     fontSize: 16,
   },
   eyeBtn: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   eyeText: {
     fontSize: 18,
   },
   signupButton: {
-    backgroundColor: '#C29B72',
+    backgroundColor: 'rgba(255, 203, 154, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 203, 154, 0.6)',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 18,
+    shadowColor: '#FFCB9A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
   signupButtonText: {
     color: '#111715',
@@ -249,7 +275,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    color: '#8FA39D',
+    color: '#A3B8B0',
     fontSize: 14,
   },
   loginLink: {
