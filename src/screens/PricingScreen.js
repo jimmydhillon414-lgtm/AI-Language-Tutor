@@ -18,7 +18,7 @@ export default function PricingScreen({ onSelectPlan, onSignOut }) {
         style={styles.bgImage} 
       />
       
-      <View style={styles.darkOverlay} />
+      <div style={styles.bgOverlayStyle} />
 
       {/* Top Bar with Sign Out button */}
       <View style={styles.topBar}>
@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
     minHeight: '100vh',
     backgroundColor: '#070D10',
     position: 'relative',
+    overflowX: 'hidden',
   },
   bgImage: {
     position: 'fixed',
@@ -132,14 +133,15 @@ const styles = StyleSheet.create({
     height: '100vh',
     resizeMode: 'cover',
     pointerEvents: 'none',
+    zIndex: 0,
   },
-  darkOverlay: {
+  bgOverlayStyle: {
     position: 'fixed',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.45)',
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: 'rgba(7, 13, 16, 0.55)',
     zIndex: 1,
     pointerEvents: 'none',
   },
@@ -223,7 +225,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 260,
     maxWidth: 340,
-    backgroundColor: '#12221D', // Changed to solid opaque dark green for sharp look
+    backgroundColor: '#12221D', // Solid sharp dark green look
     borderRadius: 20,
     padding: 22,
     borderWidth: 1.5,
@@ -233,7 +235,7 @@ const styles = StyleSheet.create({
   },
   popularCard: {
     borderColor: '#FFCB9A',
-    backgroundColor: '#162C24', // Slightly distinct solid shade for popular card
+    backgroundColor: '#162C24',
   },
   popularBadge: {
     alignSelf: 'center',
