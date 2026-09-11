@@ -1,239 +1,244 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+} from 'react-native';
 
-export default function PricingScreen({ onSelectPlan }) {
+export default function PricingScreen({ navigation }) {
+  const [selectedPlan, setSelectedPlan] = useState('base');
+
   return (
-    <div style={styles.pageWrapper}>
-      {/* Background Image Layer with pointer-events disabled */}
-      <div style={styles.bgImageLayer} />
-      <div style={styles.darkOverlay} />
+    <View style={styles.mainWrapper}>
+      {/* Background Image Layer */}
+      {Platform.OS === 'web' && (
+        <div style={styles.bgImageWrapper}>
+          <img src="/assets/tutor_girl.png.png" style={styles.bgImageStyle} alt="Background" />
+          <div style={styles.bgOverlay} />
+        </div>
+      )}
 
       <ScrollView contentContainerStyle={styles.container}>
-        <div style={styles.headerBox}>
-          <span style={styles.badge}>⚡ CHOOSE YOUR MASTERY PATH</span>
-          <h1 style={styles.title}>Unlock Your Fluent Future with AI</h1>
-          <p style={styles.subtitle}>Select a plan tailored to your goals. Master English with 60 days of structured daily AI coaching.</p>
-        </div>
+        <View style={styles.headerBox}>
+          <Text style={styles.badge}>⚡ CHOOSE YOUR MASTERY PATH</Text>
+          <Text style={styles.title}>Unlock Your Fluent Future with AI</Text>
+          <Text style={styles.subtitle}>
+            Select a plan tailored to your goals. Master English with 60 days of structured daily AI coaching.
+          </Text>
+        </View>
 
-        <div style={styles.cardsGrid}>
-          {/* Free Demo Plan */}
-          <div style={styles.card}>
-            <div style={styles.planName}>Free Demo</div>
-            <div style={styles.price}>₹0 <span style={styles.duration}>/ trial</span></div>
-            <p style={styles.planDesc}>Perfect for testing out our AI voice intelligence.</p>
-            <ul style={styles.featureList}>
-              <li>✨ 1 Interactive Demo Class</li>
-              <li>🤖 Basic AI Accent Analysis</li>
-              <li>💬 Community Support</li>
-            </ul>
-            <TouchableOpacity style={styles.outlineButton} onPress={() => onSelectPlan('Free')}>
+        <View style={styles.pricingGrid}>
+          {/* Free Demo Card */}
+          <View style={styles.card}>
+            <View>
+              <Text style={styles.planTitle}>Free Demo</Text>
+              <Text style={styles.planPrice}>₹0 <Text style={styles.planSub}>/ trial</Text></Text>
+              <Text style={styles.planDesc}>Perfect for testing out our AI voice intelligence.</Text>
+              
+              <View style={styles.featureList}>
+                <Text style={styles.featureItem}>✨ 1 Interactive Demo Class</Text>
+                <Text style={styles.featureItem}>🛡️ Basic AI Accent Analysis</Text>
+                <Text style={styles.featureItem}>💬 Community Support</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.outlineButton}
+              onPress={() => navigation.navigate('Roadmap')}
+              activeOpacity={0.8}
+            >
               <Text style={styles.outlineButtonText}>Start Free Demo</Text>
             </TouchableOpacity>
-          </div>
+          </View>
 
-          {/* Base Plan - 30 Days */}
-          <div style={styles.card}>
-            <div style={styles.planName}>Base Starter</div>
-            <div style={styles.price}>₹999 <span style={styles.duration}>/ 30 days</span></div>
-            <p style={styles.planDesc}>Ideal for casual learners building daily habits.</p>
-            <ul style={styles.featureList}>
-              <li>📚 30 Days Structured Lessons</li>
-              <li>🎙️ Real-time Voice Correction</li>
-              <li>📊 Basic Progress Dashboard</li>
-            </ul>
-            <TouchableOpacity style={styles.primaryButton} onPress={() => onSelectPlan('Base')}>
-              <Text style={styles.primaryButtonText}>Get Base Plan</Text>
-            </TouchableOpacity>
-          </div>
+          {/* Base Starter Card */}
+          <View style={[styles.card, styles.popularCard]}>
+            <View style={styles.popularBadge}>MOST POPULAR 🔥</View>
+            <View>
+              <Text style={styles.planTitle}>Base Starter</Text>
+              <Text style={styles.planPrice}>₹999 <Text style={styles.planSub}>/ 30 days</Text></Text>
+              <Text style={styles.planDesc}>Ideal for casual learners building daily habits.</Text>
+              
+              <View style={styles.featureList}>
+                <Text style={styles.featureItem}>📚 30 Days Structured Lessons</Text>
+                <Text style={styles.featureItem}>🎤 Real-time Voice Correction</Text>
+                <Text style={styles.featureItem}>📊 Basic Progress Dashboard</Text>
+              </View>
+            </View>
 
-          {/* Advance Plan - 60 Days (Flagship) */}
-          <div style={{ ...styles.card, ...styles.featuredCard }}>
-            <div style={styles.popularBadge}>MOST POPULAR 🔥</div>
-            <div style={styles.planName}>Advance 60-Day Pro</div>
-            <div style={styles.price}>₹1,999 <span style={styles.duration}>/ 60 days</span></div>
-            <p style={styles.planDesc}>Complete transformation path for career & fluency.</p>
-            <ul style={styles.featureList}>
-              <li>🚀 Full 60-Day Masterclass Roadmap</li>
-              <li>🧠 Advanced Grammar & Vocabulary AI</li>
-              <li>📈 Detailed Analytics & Certification</li>
-              <li>⚡ Priority 24/7 Voice Companion</li>
-            </ul>
-            <TouchableOpacity style={styles.primaryButton} onPress={() => onSelectPlan('Advance')}>
-              <Text style={styles.primaryButtonText}>Unlock 60-Day Pro</Text>
+            <TouchableOpacity 
+              style={styles.solidButton}
+              onPress={() => alert('Base Plan Selected!')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.solidButtonText}>Get Base Plan</Text>
             </TouchableOpacity>
-          </div>
-        </div>
+          </View>
+        </View>
       </ScrollView>
-    </div>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pageWrapper: {
+  mainWrapper: {
+    flex: 1,
     position: 'relative',
     minHeight: '100vh',
-    width: '100%',
     backgroundColor: '#070D10',
-    overflowY: 'auto',
-    overflowX: 'hidden',
   },
-  bgImageLayer: {
+  bgImageWrapper: {
     position: 'fixed',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundImage: 'url(/assets/tutor_girl.png.png)',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
+    width: '100vw',
+    height: '100vh',
+    zIndex: -1,
+    overflow: 'hidden',
+  },
+  bgImageStyle: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
     filter: 'blur(6px)',
     transform: 'scale(1.05)',
-    zIndex: 0,
-    pointerEvents: 'none', // Crucial: allows clicks to pass through to elements below
   },
-  darkOverlay: {
-    position: 'fixed',
+  bgOverlay: {
+    position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.75)', // Balanced darkness so background image is visible
-    zIndex: 1,
-    pointerEvents: 'none', // Crucial: prevents blocking clicks
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(7, 13, 16, 0.75)',
   },
   container: {
-    position: 'relative',
-    zIndex: 2,
     padding: '40px 20px',
     alignItems: 'center',
-    minHeight: '100vh',
+    position: 'relative',
+    zIndex: 1,
   },
   headerBox: {
-    textAlign: 'center',
-    marginBottom: '40px',
-    maxWidth: '700px',
+    alignItems: 'center',
+    marginBottom: 40,
+    maxWidth: 700,
   },
   badge: {
     color: '#FFCB9A',
     backgroundColor: 'rgba(255, 203, 154, 0.15)',
-    padding: '6px 14px',
-    borderRadius: '20px',
-    fontSize: '11px',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    fontSize: 11,
     fontWeight: 'bold',
-    letterSpacing: '1px',
-    border: '1px solid rgba(255, 203, 154, 0.3)',
+    letterSpacing: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 203, 154, 0.3)',
+    marginBottom: 16,
   },
   title: {
     color: '#FFFFFF',
-    fontSize: '32px',
+    fontSize: 32,
     fontWeight: '900',
-    marginTop: '16px',
-    marginBottom: '10px',
+    textAlign: 'center',
+    marginBottom: 10,
   },
   subtitle: {
     color: '#D1E8E2',
-    fontSize: '15px',
-    lineHeight: '22px',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
   },
-  cardsGrid: {
-    display: 'flex',
+  pricingGrid: {
     flexDirection: 'row',
-    gap: '24px',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    maxWidth: '1100px',
+    gap: 24,
+    maxWidth: 900,
     width: '100%',
   },
   card: {
+    flex: 1,
+    minWidth: 280,
+    maxWidth: 400,
     backgroundColor: 'rgba(24, 44, 37, 0.88)',
-    backdropFilter: 'blur(12px)',
-    borderRadius: '20px',
-    padding: '30px',
-    width: '320px',
-    border: '1.5px solid #116466',
-    display: 'flex',
-    flexDirection: 'column',
-    position: 'relative',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+    borderRadius: 24,
+    padding: 30,
+    borderWidth: 2,
+    borderColor: '#116466',
+    justifyContent: 'space-between',
+    boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
   },
-  featuredCard: {
+  popularCard: {
     borderColor: '#FFCB9A',
-    backgroundColor: 'rgba(19, 36, 31, 0.92)',
-    boxShadow: '0 15px 40px rgba(255, 203, 154, 0.2)',
   },
   popularBadge: {
-    position: 'absolute',
-    top: '-12px',
-    right: '24px',
+    alignSelf: 'center',
     backgroundColor: '#FFCB9A',
-    color: '#0F1715',
-    fontSize: '10px',
-    fontWeight: '900',
-    padding: '4px 10px',
-    borderRadius: '6px',
-    letterSpacing: '0.5px',
+    color: '#121E1A',
+    fontSize: 10,
+    fontWeight: '800',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginBottom: 15,
   },
-  planName: {
+  planTitle: {
     color: '#FFFFFF',
-    fontSize: '18px',
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: '8px',
+    marginBottom: 8,
   },
-  price: {
+  planPrice: {
     color: '#FFCB9A',
-    fontSize: '28px',
+    fontSize: 32,
     fontWeight: '900',
-    marginBottom: '12px',
+    marginBottom: 12,
   },
-  duration: {
-    fontSize: '13px',
+  planSub: {
+    fontSize: 14,
     color: '#D1E8E2',
     fontWeight: 'normal',
   },
   planDesc: {
     color: '#D1E8E2',
-    fontSize: '13px',
-    marginBottom: '20px',
-    lineHeight: '18px',
+    fontSize: 13,
+    marginBottom: 24,
+    lineHeight: 18,
   },
   featureList: {
-    listStyle: 'none',
-    padding: 0,
-    margin: '0 0 24px 0',
-    color: '#D1E8E2',
-    fontSize: '13px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
+    gap: 12,
+    marginBottom: 30,
   },
-  primaryButton: {
-    backgroundColor: '#FFCB9A',
-    paddingVertical: '14px',
-    borderRadius: '12px',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    marginTop: 'auto',
-    border: 'none',
-  },
-  primaryButtonText: {
-    color: '#0F1715',
-    fontSize: '14px',
-    fontWeight: 'bold',
+  featureItem: {
+    color: '#FFFFFF',
+    fontSize: 13,
   },
   outlineButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: '14px',
-    borderRadius: '12px',
+    borderWidth: 2,
+    borderColor: '#116466',
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    marginTop: 'auto',
-    border: '1.5px solid #116466',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   outlineButtonText: {
-    color: '#FFCB9A',
-    fontSize: '14px',
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: 'bold',
+  },
+  solidButton: {
+    backgroundColor: '#FFCB9A',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer', border: 'none' } : {}),
+  },
+  solidButtonText: {
+    color: '#121E1A',
+    fontSize: 14,
+    fontWeight: '800',
   },
 });
