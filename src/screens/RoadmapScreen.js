@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 
 export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
-  // Correct plan mapping: Free Demo = 1 day, Base Starter = 30 days, Pro = 60 days
   const totalDays = selectedPlan === 'Base Starter' ? 30 : (selectedPlan?.includes('Pro') ? 60 : 1);
 
   const daysList = Array.from({ length: totalDays }, (_, i) => ({
@@ -18,7 +17,7 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
         source={require('../../assets/tutor_girl.png.png')} 
         style={styles.bgImage} 
       />
-      {/* Semi-transparent dark overlay so background is visible but text pops */}
+      {/* Lightened overlay with pointerEvents none so clicks pass through seamlessly */}
       <View style={styles.darkOverlay} />
 
       {/* Modern Sleek Top Bar */}
@@ -73,7 +72,7 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
     minHeight: '100vh',
-    backgroundColor: '#070D10',
+    backgroundColor: '#050B0E',
   },
   bgImage: {
     position: 'absolute',
@@ -84,7 +83,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-    opacity: 0.35, // Perfectly balanced background visibility
+    opacity: 0.6, // Increased opacity so the background girl/tutor image is vividly visible!
   },
   darkOverlay: {
     position: 'absolute',
@@ -92,8 +91,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.85)', // Rich dark tone letting the background peek through
+    backgroundColor: 'rgba(5, 11, 14, 0.45)', // Much lighter tint so it's not pitch black
     zIndex: 1,
+    ...(Platform.OS === 'web' ? { pointerEvents: 'none' } : {}),
   },
   topBar: {
     flexDirection: 'row',
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
     borderBottomWidth: 1.5,
     borderBottomColor: '#116466',
-    backgroundColor: 'rgba(11, 25, 23, 0.9)',
+    backgroundColor: 'rgba(11, 25, 23, 0.95)',
   },
   backButton: {
     backgroundColor: '#116466',
@@ -152,11 +152,11 @@ const styles = StyleSheet.create({
     maxWidth: 750,
   },
   glowBadge: {
-    backgroundColor: 'rgba(255, 203, 154, 0.15)',
+    backgroundColor: 'rgba(17, 100, 102, 0.85)',
     paddingHorizontal: 16,
     paddingVertical: 7,
     borderRadius: 30,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#FFCB9A',
     marginBottom: 16,
   },
@@ -172,12 +172,18 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     textAlign: 'center',
     marginBottom: 12,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
     color: '#D1E8E2',
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   grid: {
     flexDirection: 'row',
@@ -189,7 +195,7 @@ const styles = StyleSheet.create({
   },
   dayCard: {
     width: 240,
-    backgroundColor: '#0F2522',
+    backgroundColor: 'rgba(11, 29, 27, 0.95)', // Solid yet slightly translucent card background for readability
     borderRadius: 16,
     padding: 22,
     borderWidth: 2,
@@ -198,7 +204,7 @@ const styles = StyleSheet.create({
     minHeight: 150,
     ...(Platform.OS === 'web' ? { 
       cursor: 'pointer', 
-      boxShadow: '0 10px 30px rgba(0,0,0,0.6)'
+      boxShadow: '0 10px 30px rgba(0,0,0,0.8)'
     } : {}),
   },
   cardHeader: {
