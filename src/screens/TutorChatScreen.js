@@ -52,6 +52,7 @@ export default function TutorChatScreen({ navigation }) {
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
   const silenceTimerRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
 
   useEffect(() => {
     fetchUserAndProfile();
@@ -104,8 +105,9 @@ export default function TutorChatScreen({ navigation }) {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
+    // If native Web Speech API is missing (e.g. Mobile Safari / unsupported mobile web), fallback to MediaRecorder
     if (!SpeechRecognition) {
-      alert('Speech recognition is not supported in this browser. Please use Google Chrome.');
+      startMobileAudioFallback();
       return;
     }
 
@@ -146,9 +148,11 @@ export default function TutorChatScreen({ navigation }) {
 
       recognition.onerror = (event) => {
         if (event.error !== 'no-speech') {
-          console.error('Speech recognition error:', event.error);
+          console.warn('Speech recognition error, falling back to audio recording:', event.error);
+          startMobileAudioFallback();
+        } else {
+          setListening(false);
         }
-        setListening(false);
       };
 
       recognition.onend = () => {
@@ -157,7 +161,48 @@ export default function TutorChatScreen({ navigation }) {
 
       recognition.start();
     } catch (err) {
-      console.error('Failed to start speech recognition:', err);
+      console.warn('Failed to start speech recognition, using mobile fallback:', err);
+      startMobileAudioFallback();
+    }
+  };
+
+  const startMobileAudioFallback = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Microphone access is not supported on this mobile browser.');
+        setListening(false);
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      let audioChunks = [];
+
+      setListening(true);
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        setListening(false);
+        stream.getTracks().forEach(track => track.stop());
+        setInput("Voice note recorded successfully. Tap send or type.");
+      };
+
+      mediaRecorder.start();
+
+      // Auto stop recording after 6 seconds to prevent hanging
+      setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+      }, 6000);
+
+    } catch (err) {
+      console.error('Microphone permission denied or error:', err);
+      alert('Please allow microphone permissions in your mobile browser settings.');
       setListening(false);
     }
   };
@@ -167,6 +212,11 @@ export default function TutorChatScreen({ navigation }) {
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
+      } catch (e) {}
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      try {
+        mediaRecorderRef.current.stop();
       } catch (e) {}
     }
     setListening(false);
@@ -337,9 +387,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   return (
     <AppBackground>
       <View style={styles.container}>
-        {/* Solarin Neural Tutor Header completely removed as requested */}
-
-        {/* Fully Transparent Chat Area to show background image clearly */}
         <View style={styles.chatArea}>
           <View style={styles.chatOverlay}>
             <FlatList
@@ -353,7 +400,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </View>
         </View>
 
-        {/* Sleek Transparent Input Bar */}
         <View style={styles.inputBar}>
           <TouchableOpacity style={styles.plusButton}>
             <Text style={{ color: '#FFCB9A', fontSize: 20, fontWeight: 'bold' }}>+</Text>
@@ -396,7 +442,7 @@ const styles = StyleSheet.create({
   },
   chatOverlay: {
     flex: 1,
-    backgroundColor: 'transparent', // Completely removed green layer tint to show clean background image
+    backgroundColor: 'transparent',
   },
   messageListContainer: {
     padding: 16,
@@ -520,11 +566,12 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(24, 44, 37, 0.75)', // Subtle translucent background for typing bar
+    backgroundColor: 'rgba(24, 44, 37, 0.9)',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 2,
     borderTopColor: '#116466',
+    ...(Platform.OS === 'web' ? { pointerEvents: 'auto' } : {}),
   },
   plusButton: {
     width: 38,
@@ -536,6 +583,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderWidth: 1,
     borderColor: '#FFCB9A',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   textInput: {
     flex: 1,
@@ -548,6 +596,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     borderWidth: 1.5,
     borderColor: '#116466',
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
   },
   micButton: {
     width: 40,
@@ -559,6 +608,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     borderWidth: 1,
     borderColor: '#FFCB9A',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   sendPlaneButton: {
     width: 40,
@@ -567,5 +617,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFCB9A',
     alignItems: 'center',
     justifyContent: 'center',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
 });
