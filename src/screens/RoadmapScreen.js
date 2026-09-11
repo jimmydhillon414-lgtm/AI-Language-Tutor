@@ -10,7 +10,7 @@ export default function RoadmapScreen({ onSelectDay }) {
 
   return (
     <div style={styles.pageWrapper}>
-      {/* Background Image Layer matching the rest of the project */}
+      {/* Background Image Layer with pointer-events disabled */}
       <div style={styles.bgImageLayer} />
       <div style={styles.darkOverlay} />
 
@@ -28,7 +28,8 @@ export default function RoadmapScreen({ onSelectDay }) {
               style={{ 
                 ...styles.dayCard, 
                 opacity: item.unlocked ? 1 : 0.6,
-                borderColor: item.unlocked ? '#116466' : 'rgba(255,255,255,0.05)' 
+                borderColor: item.unlocked ? '#116466' : 'rgba(255,255,255,0.05)',
+                cursor: item.unlocked ? 'pointer' : 'not-allowed'
               }}
               onClick={() => item.unlocked && onSelectDay(item.day)}
             >
@@ -50,29 +51,33 @@ const styles = StyleSheet.create({
     position: 'relative',
     minHeight: '100vh',
     width: '100%',
-    overflow: 'hidden',
+    backgroundColor: '#070D10',
+    overflowY: 'auto',
+    overflowX: 'hidden',
   },
   bgImageLayer: {
-    position: 'absolute',
+    position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundImage: 'url(/assets/tutor_girl.png.png)', // Project's main background image
+    backgroundImage: 'url(/assets/tutor_girl.png.png)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    filter: 'blur(4px)',
+    filter: 'blur(6px)',
     transform: 'scale(1.05)',
     zIndex: 0,
+    pointerEvents: 'none', // Crucial: allows clicks to pass through to cards
   },
   darkOverlay: {
-    position: 'absolute',
+    position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.88)', // Deep immersive tint
+    backgroundColor: 'rgba(7, 13, 16, 0.75)', // Consistent dimming for clarity
     zIndex: 1,
+    pointerEvents: 'none', // Crucial: prevents blocking clicks
   },
   container: {
     position: 'relative',
@@ -88,7 +93,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     color: '#FFCB9A',
-    backgroundColor: 'rgba(255, 203, 154, 0.1)',
+    backgroundColor: 'rgba(255, 203, 154, 0.15)',
     padding: '6px 14px',
     borderRadius: '20px',
     fontSize: '11px',
@@ -104,7 +109,7 @@ const styles = StyleSheet.create({
     marginBottom: '10px',
   },
   subtitle: {
-    color: '#8FA39D',
+    color: '#D1E8E2',
     fontSize: '14px',
   },
   grid: {
@@ -115,13 +120,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   dayCard: {
-    backgroundColor: 'rgba(24, 44, 37, 0.85)',
+    backgroundColor: 'rgba(24, 44, 37, 0.88)',
     backdropFilter: 'blur(12px)',
     borderRadius: '16px',
     padding: '20px',
     border: '1.5px solid #116466',
-    cursor: 'pointer',
     transition: 'transform 0.2s ease',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.4)',
   },
   dayBadge: {
     color: '#FFCB9A',
