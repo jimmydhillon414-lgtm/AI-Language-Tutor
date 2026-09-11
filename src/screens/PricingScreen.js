@@ -12,7 +12,6 @@ import {
 
 export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSuccess }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [selectedMethod, setSelectedMethod] = useState('upi');
   const [processing, setProcessing] = useState(false);
 
   const handleOpenCheckout = (plan) => {
@@ -36,7 +35,7 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
       if (onSelectPlan) {
         onSelectPlan(purchasedPlan);
       }
-    }, 2000);
+    }, 1500);
   };
 
   return (
@@ -141,7 +140,7 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
         </View>
       </ScrollView>
 
-      {/* SECURE CHECKOUT MODAL WITH PAYMENT METHODS */}
+      {/* SINGLE-STEP SECURE CHECKOUT MODAL */}
       {selectedPlan && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -152,30 +151,9 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
               {selectedPlan === 'Base Starter' ? '₹999' : '₹1,799'}
             </Text>
 
-            <Text style={styles.sectionLabel}>Select Payment Method:</Text>
-            
-            <View style={styles.paymentMethodsContainer}>
-              <TouchableOpacity 
-                style={[styles.payOption, selectedMethod === 'upi' && styles.payOptionActive]}
-                onPress={() => setSelectedMethod('upi')}
-              >
-                <Text style={styles.payOptionText}>📱 UPI / GPay / PhonePe</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.payOption, selectedMethod === 'card' && styles.payOptionActive]}
-                onPress={() => setSelectedMethod('card')}
-              >
-                <Text style={styles.payOptionText}>💳 Credit / Debit Card</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.payOption, selectedMethod === 'netbanking' && styles.payOptionActive]}
-                onPress={() => setSelectedMethod('netbanking')}
-              >
-                <Text style={styles.payOptionText}>🏦 NetBanking</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.modalSubText}>
+              Complete payment via UPI / Card / NetBanking to unlock your curriculum.
+            </Text>
 
             <TouchableOpacity 
               style={styles.payNowButton} 
@@ -313,7 +291,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 260,
     maxWidth: 340,
-    backgroundColor: '#12221D', // Solid sharp dark green look
+    backgroundColor: '#12221D',
     borderRadius: 20,
     padding: 22,
     borderWidth: 1.5,
@@ -393,7 +371,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
-  // Modal & Payment Option Styles added cleanly
+  // Single-Window Modal Styling
   modalOverlay: {
     position: 'fixed',
     top: 0,
@@ -426,43 +404,20 @@ const styles = StyleSheet.create({
   modalPlanTitle: {
     color: '#D1E8E2',
     fontSize: 14,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   modalPrice: {
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: '900',
-    marginBottom: 16,
+    marginBottom: 10,
   },
-  sectionLabel: {
-    color: '#D1E8E2',
+  modalSubText: {
+    color: '#A3C1AD',
     fontSize: 12,
-    fontWeight: '600',
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  paymentMethodsContainer: {
-    width: '100%',
-    gap: 8,
-    marginBottom: 20,
-  },
-  payOption: {
-    backgroundColor: 'rgba(17, 100, 102, 0.2)',
-    borderWidth: 1.5,
-    borderColor: '#116466',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
-  },
-  payOptionActive: {
-    borderColor: '#FFCB9A',
-    backgroundColor: 'rgba(255, 203, 154, 0.15)',
-  },
-  payOptionText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 22,
+    lineHeight: 18,
   },
   payNowButton: {
     backgroundColor: '#FFCB9A',
