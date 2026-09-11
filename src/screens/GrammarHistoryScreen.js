@@ -80,8 +80,11 @@ export default function GrammarHistoryScreen() {
 
   return (
     <div style={styles.backgroundImage}>
-      {/* Dark Circuit Board Overlay / Vignette */}
-      <div style={styles.darkOverlay} />
+      {/* Sharp Background Image Layer */}
+      <div style={styles.bgImageWrapper}>
+        <img src={require('../../assets/tutor_girl.png.png')} style={styles.bgImageStyle} alt="Background" />
+        <div style={styles.bgOverlay} />
+      </div>
 
       <div style={styles.container}>
         <h1 style={styles.headerTitle}>Grammar & Learning History</h1>
@@ -139,30 +142,40 @@ export default function GrammarHistoryScreen() {
 const styles = {
   backgroundImage: {
     minHeight: '100vh',
-    // Exact motherboard / circuit board hardware texture matching your image
-    backgroundImage: 'url("https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1920&auto=format&fit=crop")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundColor: '#121619',
+    backgroundColor: '#0F1715',
     position: 'relative',
     overflowX: 'hidden',
     padding: '24px 16px',
     boxSizing: 'border-box',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   },
-  darkOverlay: {
+  bgImageWrapper: {
     position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(14, 18, 22, 0.86)', // Dark professional tint to make cards readable like your screenshot
-    pointerEvents: 'none',
+    width: '100%',
+    height: '100%',
     zIndex: 0,
+    overflow: 'hidden',
+  },
+  bgImageStyle: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    filter: 'none',
+    transform: 'scale(1)',
+  },
+  bgOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(15, 23, 21, 0.45)',
   },
   loaderContainer: {
     minHeight: '100vh',
-    backgroundColor: '#121619',
+    backgroundColor: '#0F1715',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -170,8 +183,8 @@ const styles = {
   spinner: {
     width: '40px',
     height: '40px',
-    border: '4px solid rgba(224, 180, 134, 0.2)',
-    borderTop: '4px solid #E0B486',
+    border: '4px solid rgba(255, 203, 154, 0.2)',
+    borderTop: '4px solid #FFCB9A',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
   },
@@ -195,31 +208,31 @@ const styles = {
     flexWrap: 'wrap',
   },
   filterChip: {
-    backgroundColor: 'rgba(15, 23, 26, 0.9)',
+    backgroundColor: 'rgba(11, 29, 27, 0.9)',
     padding: '8px 18px',
     borderRadius: '12px',
-    border: '1.5px solid #1a3536',
+    border: '1.5px solid #116466',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
   },
   activeFilterChip: {
-    backgroundColor: '#163838',
-    borderColor: '#225d5f',
+    backgroundColor: '#116466',
+    borderColor: '#FFCB9A',
   },
   filterText: {
-    color: '#9fb4ad',
+    color: '#D1E8E2',
     fontSize: '14px',
     fontWeight: '600',
   },
   activeFilterText: {
-    color: '#ffffff',
+    color: '#FFCB9A',
   },
   emptyContainer: {
     textAlign: 'center',
     marginTop: '60px',
   },
   emptyText: {
-    color: '#9fb4ad',
+    color: '#D1E8E2',
     fontSize: '15px',
   },
   listContainer: {
@@ -228,10 +241,10 @@ const styles = {
     gap: '16px',
   },
   card: {
-    backgroundColor: 'rgba(15, 23, 26, 0.92)',
+    backgroundColor: 'rgba(24, 44, 37, 0.95)',
     borderRadius: '16px',
     padding: '20px',
-    border: '1.5px solid #1a3536',
+    border: '1.5px solid #116466',
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
   },
   cardHeader: {
@@ -241,7 +254,7 @@ const styles = {
     marginBottom: '12px',
   },
   cardBadge: {
-    color: '#E0B486',
+    color: '#FFCB9A',
     fontSize: '12px',
     fontWeight: '700',
     letterSpacing: '0.5px',
@@ -259,19 +272,18 @@ const styles = {
     fontSize: '15px',
     marginBottom: '8px',
     lineHeight: '22px',
+    fontWeight: '600',
   },
   fixedText: {
     color: '#4ade80',
     fontSize: '15px',
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: '10px',
     lineHeight: '22px',
   },
   explanationText: {
-    color: '#c2d4cd',
+    color: '#FFFFFF',
     fontSize: '14px',
-    fontStyle: 'italic',
     lineHeight: '20px',
-    opacity: 0.9,
   },
 };
