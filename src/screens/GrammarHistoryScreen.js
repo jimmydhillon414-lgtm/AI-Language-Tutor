@@ -80,7 +80,7 @@ export default function GrammarHistoryScreen() {
 
   return (
     <div style={styles.backgroundImage}>
-      {/* Sharp Background Image Layer */}
+      {/* Fixed Background Image Layer so it stays in place while scrolling */}
       <div style={styles.bgImageWrapper}>
         <img src={require('../../assets/tutor_girl.png.png')} style={styles.bgImageStyle} alt="Background" />
         <div style={styles.bgOverlay} />
@@ -150,12 +150,13 @@ const styles = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   },
   bgImageWrapper: {
-    position: 'absolute',
+    position: 'fixed', // Changed from absolute to fixed so background stays locked on screen
     top: 0,
     left: 0,
-    width: '100%',
-    height: '100%',
+    width: '100vw',
+    height: '100vh',
     zIndex: 0,
+    pointerEvents: 'none',
     overflow: 'hidden',
   },
   bgImageStyle: {
