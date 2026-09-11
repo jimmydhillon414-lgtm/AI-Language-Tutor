@@ -13,17 +13,8 @@ import GrammarHistoryScreen from '../screens/GrammarHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 export default function AppNavigator() {
-  const [user, setUser] = useState(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      try {
-        const savedUser = localStorage.getItem('ai_tutor_user');
-        return savedUser ? JSON.parse(savedUser) : null;
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  });
+  // By default user ko null rakha hai taaki fresh open karne par hamesha HomeScreen khule
+  const [user, setUser] = useState(null);
 
   const [currentStep, setCurrentStep] = useState('pricing'); // 'pricing', 'roadmap', 'chat'
   const [selectedPlan, setSelectedPlan] = useState(null);
