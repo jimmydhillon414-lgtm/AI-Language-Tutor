@@ -9,24 +9,18 @@ import {
 } from 'react-native';
 
 export default function PricingScreen({ navigation }) {
-  const [selectedPlan, setSelectedPlan] = useState('base');
-
   return (
     <View style={styles.mainWrapper}>
-      {/* Background Image Layer */}
-      {Platform.OS === 'web' && (
-        <div style={styles.bgImageWrapper}>
-          <img src="/assets/tutor_girl.png.png" style={styles.bgImageStyle} alt="Background" />
-          <div style={styles.bgOverlay} />
-        </div>
-      )}
+      {/* Background Image Layer (Using direct CSS background-image for Vercel compatibility) */}
+      {Platform.OS === 'web' && <div style={styles.bgImageLayer} />}
+      {Platform.OS === 'web' && <div style={styles.darkOverlay} />}
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerBox}>
           <Text style={styles.badge}>⚡ CHOOSE YOUR MASTERY PATH</Text>
           <Text style={styles.title}>Unlock Your Fluent Future with AI</Text>
           <Text style={styles.subtitle}>
-            Select a plan tailored to your goals. Master English with 60 days of structured daily AI coaching.
+            Select a plan tailored to your goals with 60 days of structured daily AI coaching.
           </Text>
         </View>
 
@@ -36,12 +30,11 @@ export default function PricingScreen({ navigation }) {
             <View>
               <Text style={styles.planTitle}>Free Demo</Text>
               <Text style={styles.planPrice}>₹0 <Text style={styles.planSub}>/ trial</Text></Text>
-              <Text style={styles.planDesc}>Perfect for testing out our AI voice intelligence.</Text>
+              <Text style={styles.planDesc}>Test out our AI voice intelligence.</Text>
               
               <View style={styles.featureList}>
                 <Text style={styles.featureItem}>✨ 1 Interactive Demo Class</Text>
                 <Text style={styles.featureItem}>🛡️ Basic AI Accent Analysis</Text>
-                <Text style={styles.featureItem}>💬 Community Support</Text>
               </View>
             </View>
 
@@ -55,26 +48,48 @@ export default function PricingScreen({ navigation }) {
           </View>
 
           {/* Base Starter Card */}
-          <View style={[styles.card, styles.popularCard]}>
-            <View style={styles.popularBadge}>MOST POPULAR 🔥</View>
+          <View style={styles.card}>
             <View>
               <Text style={styles.planTitle}>Base Starter</Text>
               <Text style={styles.planPrice}>₹999 <Text style={styles.planSub}>/ 30 days</Text></Text>
-              <Text style={styles.planDesc}>Ideal for casual learners building daily habits.</Text>
+              <Text style={styles.planDesc}>Ideal for casual learners building habits.</Text>
               
               <View style={styles.featureList}>
                 <Text style={styles.featureItem}>📚 30 Days Structured Lessons</Text>
                 <Text style={styles.featureItem}>🎤 Real-time Voice Correction</Text>
-                <Text style={styles.featureItem}>📊 Basic Progress Dashboard</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.outlineButton}
+              onPress={() => alert('Base Plan Selected!')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.outlineButtonText}>Get Base Plan</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 60-Day Pro Master Plan (Added) */}
+          <View style={[styles.card, styles.popularCard]}>
+            <View style={styles.popularBadge}>MOST POPULAR 🔥</View>
+            <View>
+              <Text style={styles.planTitle}>60-Day Pro Master</Text>
+              <Text style={styles.planPrice}>₹1,799 <Text style={styles.planSub}>/ 60 days</Text></Text>
+              <Text style={styles.planDesc}>Complete 60-day roadmap for true fluency.</Text>
+              
+              <View style={styles.featureList}>
+                <Text style={styles.featureItem}>🚀 Full 60 Days Masterclass Curriculum</Text>
+                <Text style={styles.featureItem}>🎙️ Advanced AI Voice & Accent Coaching</Text>
+                <Text style={styles.featureItem}>📊 Detailed Progress Analytics Dashboard</Text>
               </View>
             </View>
 
             <TouchableOpacity 
               style={styles.solidButton}
-              onPress={() => alert('Base Plan Selected!')}
+              onPress={() => alert('60-Day Pro Plan Selected!')}
               activeOpacity={0.8}
             >
-              <Text style={styles.solidButtonText}>Get Base Plan</Text>
+              <Text style={styles.solidButtonText}>Get Pro Plan</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -90,155 +105,155 @@ const styles = StyleSheet.create({
     minHeight: '100vh',
     backgroundColor: '#070D10',
   },
-  bgImageWrapper: {
+  bgImageLayer: {
     position: 'fixed',
     top: 0,
     left: 0,
-    width: '100vw',
-    height: '100vh',
-    zIndex: -1,
-    overflow: 'hidden',
-  },
-  bgImageStyle: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
+    right: 0,
+    bottom: 0,
+    backgroundImage: 'url("/assets/tutor_girl.png.png")',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
     filter: 'blur(6px)',
     transform: 'scale(1.05)',
+    zIndex: 0,
+    pointerEvents: 'none',
   },
-  bgOverlay: {
-    position: 'absolute',
+  darkOverlay: {
+    position: 'fixed',
     top: 0,
     left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(7, 13, 16, 0.75)',
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(7, 13, 16, 0.78)',
+    zIndex: 1,
+    pointerEvents: 'none',
   },
   container: {
-    padding: '40px 20px',
+    padding: '30px 15px',
     alignItems: 'center',
     position: 'relative',
-    zIndex: 1,
+    zIndex: 2,
   },
   headerBox: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 25,
     maxWidth: 700,
   },
   badge: {
     color: '#FFCB9A',
     backgroundColor: 'rgba(255, 203, 154, 0.15)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 20,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
     letterSpacing: 1,
     borderWidth: 1,
     borderColor: 'rgba(255, 203, 154, 0.3)',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   subtitle: {
     color: '#D1E8E2',
-    fontSize: 14,
+    fontSize: 13,
     textAlign: 'center',
-    lineHeight: 20,
   },
   pricingGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 24,
-    maxWidth: 900,
+    gap: 16,
+    maxWidth: 1100,
     width: '100%',
   },
   card: {
     flex: 1,
-    minWidth: 280,
-    maxWidth: 400,
-    backgroundColor: 'rgba(24, 44, 37, 0.88)',
-    borderRadius: 24,
-    padding: 30,
-    borderWidth: 2,
+    minWidth: 260,
+    maxWidth: 340,
+    backgroundColor: 'rgba(24, 44, 37, 0.9)',
+    borderRadius: 20,
+    padding: 22,
+    borderWidth: 1.5,
     borderColor: '#116466',
     justifyContent: 'space-between',
-    boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+    boxShadow: '0 12px 36px rgba(0,0,0,0.6)',
   },
   popularCard: {
     borderColor: '#FFCB9A',
+    backgroundColor: 'rgba(24, 44, 37, 0.95)',
   },
   popularBadge: {
     alignSelf: 'center',
     backgroundColor: '#FFCB9A',
     color: '#121E1A',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-    marginBottom: 15,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 10,
   },
   planTitle: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   planPrice: {
     color: '#FFCB9A',
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '900',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   planSub: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#D1E8E2',
     fontWeight: 'normal',
   },
   planDesc: {
     color: '#D1E8E2',
-    fontSize: 13,
-    marginBottom: 24,
-    lineHeight: 18,
+    fontSize: 12,
+    marginBottom: 16,
+    lineHeight: 16,
   },
   featureList: {
-    gap: 12,
-    marginBottom: 30,
+    gap: 8,
+    marginBottom: 20,
   },
   featureItem: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
   },
   outlineButton: {
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#116466',
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   outlineButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
   },
   solidButton: {
     backgroundColor: '#FFCB9A',
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
     ...(Platform.OS === 'web' ? { cursor: 'pointer', border: 'none' } : {}),
   },
   solidButtonText: {
     color: '#121E1A',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
   },
 });
