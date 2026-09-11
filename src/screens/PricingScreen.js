@@ -12,16 +12,16 @@ import {
 export default function PricingScreen({ onSelectPlan, onSignOut }) {
   return (
     <View style={styles.mainWrapper}>
-      {/* Sharp Background Image without blur */}
+      {/* Sharp Background Image */}
       <Image 
         source={require('../../assets/tutor_girl.png.png')} 
         style={styles.bgImage} 
       />
       
-      {/* Light dark overlay so cards stay readable */}
+      {/* Very light overlay so image is fully clear and sharp */}
       <View style={styles.darkOverlay} />
 
-      {/* Top Header with only Sign Out if needed */}
+      {/* Top Header with only Sign Out */}
       <View style={styles.topBar}>
         <View style={styles.logoArea}>
           <Text style={styles.logoText}>🧠 AI Tutor</Text>
@@ -132,7 +132,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-    // No blur filter here so image remains completely sharp!
   },
   darkOverlay: {
     position: 'absolute',
@@ -140,7 +139,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.75)',
+    backgroundColor: 'rgba(7, 13, 16, 0.35)', // Light overlay so image looks sharp and bright
     zIndex: 1,
   },
   topBar: {
