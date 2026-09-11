@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 
 export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
-  const totalDays = selectedPlan === 'Free Demo' ? 1 : selectedPlan === 'Base Starter' ? 30 : 60;
+  // Ensure Free Demo shows at least 5 days so the screen isn't empty, Base Starter 30, Pro 60
+  const totalDays = selectedPlan === 'Free Demo' ? 5 : selectedPlan === 'Base Starter' ? 30 : 60;
 
   const daysList = Array.from({ length: totalDays }, (_, i) => ({
     day: i + 1,
@@ -17,7 +18,6 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
         source={require('../../assets/tutor_girl.png.png')} 
         style={styles.bgImage} 
       />
-      {/* Heavy solid dark overlay so text & cards pop out cleanly */}
       <View style={styles.darkOverlay} />
 
       {/* Modern Sleek Top Bar */}
@@ -83,8 +83,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-    pointerEvents: 'none',
-    opacity: 0.35, // Keeps background subtle so it never blocks content
+    opacity: 0.25,
   },
   darkOverlay: {
     position: 'absolute',
@@ -92,9 +91,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#070D10', // Solid background base for absolute readability
+    backgroundColor: '#070D10',
     zIndex: 1,
-    pointerEvents: 'none',
   },
   topBar: {
     flexDirection: 'row',
@@ -190,7 +188,7 @@ const styles = StyleSheet.create({
   },
   dayCard: {
     width: 240,
-    backgroundColor: '#0F2522', // High contrast solid card background
+    backgroundColor: '#0F2522',
     borderRadius: 16,
     padding: 22,
     borderWidth: 2,
@@ -221,7 +219,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2ECC71',
   },
   dayTitle: {
-    color: '#FFFFFF', // Bright white text for absolute visibility
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 16,
