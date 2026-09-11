@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 
 export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
   const totalDays = selectedPlan === 'Free Demo' ? 1 : selectedPlan === 'Base Starter' ? 30 : 60;
@@ -12,13 +12,12 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
 
   return (
     <View style={styles.mainWrapper}>
-      {/* Background Image Layer with Blur & Dark Overlay */}
-      {Platform.OS === 'web' && (
-        <div style={styles.bgImageWrapper}>
-          <img src="/assets/tutor_girl.png.png" style={styles.bgImageStyle} alt="Background" />
-          <div style={styles.bgOverlay} />
-        </div>
-      )}
+      {/* Sharp Background Image Layer using React Native Image */}
+      <Image 
+        source={require('../../assets/tutor_girl.png.png')} 
+        style={styles.bgImage} 
+      />
+      <View style={styles.darkOverlay} />
 
       {/* Modern Floating Top Bar */}
       <View style={styles.topBar}>
@@ -74,29 +73,26 @@ const styles = StyleSheet.create({
     minHeight: '100vh',
     backgroundColor: '#070D10',
   },
-  bgImageWrapper: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    zIndex: -1,
-    overflow: 'hidden',
-  },
-  bgImageStyle: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    filter: 'blur(8px)',
-    transform: 'scale(1.06)',
-  },
-  bgOverlay: {
+  bgImage: {
     position: 'absolute',
     top: 0,
     left: 0,
+    right: 0,
+    bottom: 0,
     width: '100%',
     height: '100%',
+    resizeMode: 'cover',
+    pointerEvents: 'none',
+  },
+  darkOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(7, 13, 16, 0.82)',
+    zIndex: 1,
+    pointerEvents: 'none',
   },
   topBar: {
     flexDirection: 'row',
@@ -117,7 +113,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
-    ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   backButtonText: {
     color: '#FFFFFF',
@@ -148,7 +144,7 @@ const styles = StyleSheet.create({
     padding: '40px 20px',
     alignItems: 'center',
     position: 'relative',
-    zIndex: 1,
+    zIndex: 2,
   },
   headerBox: {
     alignItems: 'center',
@@ -203,9 +199,7 @@ const styles = StyleSheet.create({
     minHeight: 150,
     ...(Platform.OS === 'web' ? { 
       cursor: 'pointer', 
-      boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-      transition: 'transform 0.2s ease, borderColor 0.2s ease',
-      ':hover': { transform: 'translateY(-4px)', borderColor: '#FFCB9A' }
+      boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
     } : {}),
   },
   cardHeader: {
