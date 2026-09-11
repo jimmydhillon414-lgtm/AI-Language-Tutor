@@ -25,7 +25,6 @@ export default function AppNavigator() {
     return null;
   });
 
-  // Funnel steps for logged-in user: 'pricing' -> 'roadmap' -> 'chat'
   const [currentStep, setCurrentStep] = useState('pricing');
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -41,7 +40,7 @@ export default function AppNavigator() {
       localStorage.setItem('ai_tutor_user', JSON.stringify(userData));
     }
     setShowAuthModal(false);
-    setCurrentStep('pricing'); // Direct user to pricing plans post-login
+    setCurrentStep('pricing');
   };
 
   const handleSignOut = () => {
@@ -55,17 +54,16 @@ export default function AppNavigator() {
 
   const handleSelectPlan = (planName) => {
     setSelectedPlan(planName);
-    setCurrentStep('roadmap'); // Move to 60-day roadmap after plan choice
+    setCurrentStep('roadmap');
   };
 
   const handleSelectDay = (dayNumber) => {
     setSelectedDay(dayNumber);
-    setCurrentStep('chat'); // Jump into the specific day's chat session
+    setCurrentStep('chat');
     setActiveTab('AI Tutor');
   };
 
   const renderContent = () => {
-    // If login or signup screen is active
     if (showAuthModal) {
       if (authMode === 'signup') {
         return (
@@ -83,7 +81,6 @@ export default function AppNavigator() {
       );
     }
 
-    // If user is NOT logged in, show HomeScreen
     if (!user) {
       return (
         <HomeScreen 
@@ -93,7 +90,6 @@ export default function AppNavigator() {
       );
     }
 
-    // Step-based flow for logged-in users before reaching main tabs
     if (currentStep === 'pricing') {
       return <PricingScreen onSelectPlan={handleSelectPlan} onSignOut={handleSignOut} />;
     }
@@ -102,7 +98,6 @@ export default function AppNavigator() {
       return <RoadmapScreen onSelectDay={handleSelectDay} />;
     }
 
-    // Main Tab Navigation when inside the app
     switch (activeTab) {
       case 'AI Tutor':
         return <TutorChatScreen selectedDay={selectedDay} />;
@@ -115,10 +110,12 @@ export default function AppNavigator() {
     }
   };
 
+  // Navbar will show everywhere EXCEPT on the PricingScreen and Auth modals
+  const showNavbar = !(user && currentStep === 'pricing' && !showAuthModal);
+
   return (
     <View style={styles.container}>
-      {/* Navbar will ONLY show when user is logged in and NOT on pricing/auth screens */}
-      {user && currentStep !== 'pricing' && !showAuthModal && (
+      {showNavbar && (
         <Navbar 
           user={user} 
           activeTab={activeTab} 
