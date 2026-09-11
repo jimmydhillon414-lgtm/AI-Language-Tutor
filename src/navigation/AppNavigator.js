@@ -117,17 +117,20 @@ export default function AppNavigator() {
 
   return (
     <View style={styles.container}>
-      <Navbar 
-        user={user} 
-        activeTab={activeTab} 
-        setActiveTab={(tab) => {
-          setActiveTab(tab);
-          if (tab === 'AI Tutor') setCurrentStep('roadmap'); // Return to roadmap when clicking AI Tutor tab
-        }} 
-        onOpenLogin={() => { setAuthMode('login'); setShowAuthModal(true); }}
-        onOpenSignup={() => { setAuthMode('signup'); setShowAuthModal(true); }}
-        onSignOut={handleSignOut}
-      />
+      {/* Navbar will ONLY show when user is logged in and NOT on pricing/auth screens */}
+      {user && currentStep !== 'pricing' && !showAuthModal && (
+        <Navbar 
+          user={user} 
+          activeTab={activeTab} 
+          setActiveTab={(tab) => {
+            setActiveTab(tab);
+            if (tab === 'AI Tutor') setCurrentStep('roadmap');
+          }} 
+          onOpenLogin={() => { setAuthMode('login'); setShowAuthModal(true); }}
+          onOpenSignup={() => { setAuthMode('signup'); setShowAuthModal(true); }}
+          onSignOut={handleSignOut}
+        />
+      )}
       <View style={styles.content}>
         {renderContent()}
       </View>
