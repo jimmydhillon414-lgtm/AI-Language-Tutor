@@ -6,6 +6,8 @@ import AuthScreen from '../screens/AuthScreen';
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
+import PricingScreen from '../screens/PricingScreen';
+import RoadmapScreen from '../screens/RoadmapScreen';
 import TutorChatScreen from '../screens/TutorChatScreen';
 import GrammarHistoryScreen from '../screens/GrammarHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -23,6 +25,11 @@ export default function AppNavigator() {
     return null;
   });
 
+  // Funnel steps for logged-in user: 'pricing' -> 'roadmap' -> 'chat'
+  const [currentStep, setCurrentStep] = useState('pricing');
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(null);
+
   const [activeTab, setActiveTab] = useState('AI Tutor');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
@@ -34,14 +41,27 @@ export default function AppNavigator() {
       localStorage.setItem('ai_tutor_user', JSON.stringify(userData));
     }
     setShowAuthModal(false);
-    setActiveTab('AI Tutor'); // Default open tab after login
+    setCurrentStep('pricing'); // Direct user to pricing plans post-login
   };
 
   const handleSignOut = () => {
     setUser(null);
+    setCurrentStep('pricing');
+    setSelectedPlan(null);
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       localStorage.removeItem('ai_tutor_user');
     }
+  };
+
+  const handleSelectPlan = (planName) => {
+    setSelectedPlan(planName);
+    setCurrentStep('roadmap'); // Move to 60-day roadmap after plan choice
+  };
+
+  const handleSelectDay = (dayNumber) => {
+    setSelectedDay(dayNumber);
+    setCurrentStep('chat'); // Jump into the specific day's chat session
+    setActiveTab('AI Tutor');
   };
 
   const renderContent = () => {
@@ -63,7 +83,7 @@ export default function AppNavigator() {
       );
     }
 
-    // If user is NOT logged in, always show HomeScreen
+    // If user is NOT logged in, show HomeScreen
     if (!user) {
       return (
         <HomeScreen 
@@ -73,16 +93,25 @@ export default function AppNavigator() {
       );
     }
 
-    // If user IS logged in, show respective tabs
+    // Step-based flow for logged-in users before reaching main tabs
+    if (currentStep === 'pricing') {
+      return <PricingScreen onSelectPlan={handleSelectPlan} />;
+    }
+
+    if (currentStep === 'roadmap') {
+      return <RoadmapScreen onSelectDay={handleSelectDay} />;
+    }
+
+    // Main Tab Navigation when inside the app
     switch (activeTab) {
       case 'AI Tutor':
-        return <TutorChatScreen />;
+        return <TutorChatScreen selectedDay={selectedDay} />;
       case 'Grammar History':
         return <GrammarHistoryScreen />;
       case 'Profile Settings':
-        return <ProfileScreen user={user} />;
+        return <ProfileScreen user={user} selectedPlan={selectedPlan} />;
       default:
-        return <TutorChatScreen />;
+        return <TutorChatScreen selectedDay={selectedDay} />;
     }
   };
 
@@ -91,7 +120,10 @@ export default function AppNavigator() {
       <Navbar 
         user={user} 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+        setActiveTab={(tab) => {
+          setActiveTab(tab);
+          if (tab === 'AI Tutor') setCurrentStep('roadmap'); // Return to roadmap when clicking AI Tutor tab
+        }} 
         onOpenLogin={() => { setAuthMode('login'); setShowAuthModal(true); }}
         onOpenSignup={() => { setAuthMode('signup'); setShowAuthModal(true); }}
         onSignOut={handleSignOut}
