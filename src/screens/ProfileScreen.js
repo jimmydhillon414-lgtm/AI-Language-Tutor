@@ -93,7 +93,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.mainWrapper}>
-      {/* Background Image Layer */}
+      {/* Background Image Layer - Made Sharp and Clear */}
       {Platform.OS === 'web' && (
         <div style={styles.bgImageWrapper}>
           <img src={require('../../assets/tutor_girl.png.png')} style={styles.bgImageStyle} alt="Background" />
@@ -193,8 +193,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    filter: 'blur(3px)',
-    transform: 'scale(1.05)',
+    filter: 'none', // Removed blur so background is sharp and clear
+    transform: 'scale(1)',
   },
   bgOverlay: {
     position: 'absolute',
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(15, 23, 21, 0.82)',
+    backgroundColor: 'rgba(15, 23, 21, 0.45)', // Lighter overlay so background and text are vividly sharp
   },
   centerLoader: {
     flex: 1,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 720,
-    backgroundColor: '#182C25',
+    backgroundColor: 'rgba(24, 44, 37, 0.95)', // Solid sharp background for high readability
     borderRadius: 24,
     padding: 30,
     borderWidth: 2,
@@ -274,16 +274,16 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
   },
   selectedOptionCard: {
-    backgroundColor: 'rgba(255, 203, 154, 0.15)',
+    backgroundColor: 'rgba(255, 203, 154, 0.2)',
     borderColor: '#FFCB9A',
   },
   flagEmoji: {
     fontSize: 22,
   },
   optionText: {
-    color: '#94A3B8',
+    color: '#FFFFFF', // High contrast bright white for sharp readability
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   selectedOptionText: {
     color: '#FFCB9A',
@@ -305,13 +305,13 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
   },
   selectedLevelCard: {
-    backgroundColor: 'rgba(255, 203, 154, 0.15)',
+    backgroundColor: 'rgba(255, 203, 154, 0.2)',
     borderColor: '#FFCB9A',
   },
   levelText: {
-    color: '#94A3B8',
+    color: '#FFFFFF', // High contrast bright white for sharp readability
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   selectedLevelText: {
     color: '#FFCB9A',
