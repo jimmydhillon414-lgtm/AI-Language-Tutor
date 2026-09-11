@@ -5,14 +5,21 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
+  Image,
   Platform,
 } from 'react-native';
 
 export default function PricingScreen({ onSelectPlan }) {
   return (
     <View style={styles.mainWrapper}>
-      {/* Fallback Clean Gradient & Pattern Wrapper for Web */}
-      {Platform.OS === 'web' && <div style={styles.bgGradientLayer} />}
+      {/* Standard Image tag just like your other files */}
+      <Image 
+        source={require('../../assets/tutor_girl.png.png')} 
+        style={styles.bgImage} 
+      />
+      
+      {/* Dark overlay for text readability */}
+      <View style={styles.darkOverlay} />
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerBox}>
@@ -100,19 +107,32 @@ export default function PricingScreen({ onSelectPlan }) {
 const styles = StyleSheet.create({
   mainWrapper: {
     flex: 1,
-    position: 'relative',
     minHeight: '100vh',
     backgroundColor: '#070D10',
+    position: 'relative',
   },
-  bgGradientLayer: {
-    position: 'fixed',
+  bgImage: {
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'radial-gradient(circle at 50% 20%, #11322C 0%, #070D10 70%)',
-    zIndex: 0,
-    pointerEvents: 'none',
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    ...(Platform.OS === 'web' ? {
+      filter: 'blur(6px)',
+      transform: 'scale(1.05)',
+    } : {}),
+  },
+  darkOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(7, 13, 16, 0.78)',
+    zIndex: 1,
   },
   container: {
     padding: '30px 15px',
@@ -168,7 +188,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#116466',
     justifyContent: 'space-between',
-    boxShadow: '0 12px 36px rgba(0,0,0,0.6)',
+    ...(Platform.OS === 'web' ? { boxShadow: '0 12px 36px rgba(0,0,0,0.6)' } : {}),
   },
   popularCard: {
     borderColor: '#FFCB9A',
