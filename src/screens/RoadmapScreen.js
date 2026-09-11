@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 
 export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
-  // Ensure Free Demo shows at least 5 days so the screen isn't empty, Base Starter 30, Pro 60
+  // Ensure we show an appropriate number of days based on the selected plan
   const totalDays = selectedPlan === 'Free Demo' ? 5 : selectedPlan === 'Base Starter' ? 30 : 60;
 
   const daysList = Array.from({ length: totalDays }, (_, i) => ({
@@ -13,13 +13,6 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
 
   return (
     <View style={styles.mainWrapper}>
-      {/* Background Image Layer */}
-      <Image 
-        source={require('../../assets/tutor_girl.png.png')} 
-        style={styles.bgImage} 
-      />
-      <View style={styles.darkOverlay} />
-
       {/* Modern Sleek Top Bar */}
       <View style={styles.topBar}>
         {onBack && (
@@ -29,7 +22,7 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
         )}
         <View style={styles.planPill}>
           <Text style={styles.planLabel}>Active Plan:</Text>
-          <Text style={styles.planValue}>{selectedPlan || '60-Day Pro Master'}</Text>
+          <Text style={styles.planValue}>{selectedPlan || 'Free Demo'}</Text>
         </View>
       </View>
 
@@ -70,29 +63,9 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
 const styles = StyleSheet.create({
   mainWrapper: {
     flex: 1,
-    position: 'relative',
-    minHeight: '100vh',
     backgroundColor: '#070D10',
-  },
-  bgImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
     width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-    opacity: 0.25,
-  },
-  darkOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#070D10',
-    zIndex: 1,
+    minHeight: '100vh',
   },
   topBar: {
     flexDirection: 'row',
@@ -100,7 +73,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 35,
     paddingVertical: 16,
-    zIndex: 10,
     borderBottomWidth: 1.5,
     borderBottomColor: '#116466',
     backgroundColor: '#0B1917',
@@ -140,10 +112,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   container: {
-    padding: '40px 20px',
+    padding: 30,
     alignItems: 'center',
-    position: 'relative',
-    zIndex: 2,
   },
   headerBox: {
     alignItems: 'center',
