@@ -17,10 +17,10 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
         source={require('../../assets/tutor_girl.png.png')} 
         style={styles.bgImage} 
       />
-      {/* Slightly deeper overlay so background doesn't interfere with cards */}
+      {/* Heavy solid dark overlay so text & cards pop out cleanly */}
       <View style={styles.darkOverlay} />
 
-      {/* Modern Floating Top Bar */}
+      {/* Modern Sleek Top Bar */}
       <View style={styles.topBar}>
         {onBack && (
           <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.8}>
@@ -84,6 +84,7 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
     pointerEvents: 'none',
+    opacity: 0.35, // Keeps background subtle so it never blocks content
   },
   darkOverlay: {
     position: 'absolute',
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.88)', // Slightly darker overlay for absolute clarity
+    backgroundColor: '#070D10', // Solid background base for absolute readability
     zIndex: 1,
     pointerEvents: 'none',
   },
@@ -99,47 +100,46 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 30,
-    paddingVertical: 18,
+    paddingHorizontal: 35,
+    paddingVertical: 16,
     zIndex: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-    backgroundColor: 'rgba(7, 13, 16, 0.8)',
-    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(12px)' } : {}),
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#116466',
+    backgroundColor: '#0B1917',
   },
   backButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#116466',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: '#FFCB9A',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   backButtonText: {
-    color: '#FFFFFF',
+    color: '#FFCB9A',
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   planPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(17, 100, 102, 0.4)',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    backgroundColor: '#122322',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#116466',
+    borderWidth: 1.5,
+    borderColor: '#FFCB9A',
   },
   planLabel: {
     color: '#D1E8E2',
-    fontSize: 12,
+    fontSize: 13,
     marginRight: 6,
   },
   planValue: {
     color: '#FFCB9A',
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
   },
   container: {
     padding: '40px 20px',
@@ -158,14 +158,13 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: 'rgba(255, 203, 154, 0.4)',
+    borderColor: '#FFCB9A',
     marginBottom: 16,
-    ...(Platform.OS === 'web' ? { boxShadow: '0 0 20px rgba(255,203,154,0.2)' } : {}),
   },
   badgeText: {
     color: '#FFCB9A',
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 12,
+    fontWeight: '900',
     letterSpacing: 1.2,
   },
   title: {
@@ -191,16 +190,16 @@ const styles = StyleSheet.create({
   },
   dayCard: {
     width: 240,
-    backgroundColor: '#0B1917', // Solid, non-transparent dark background for absolute sharpness
-    borderRadius: 18,
+    backgroundColor: '#0F2522', // High contrast solid card background
+    borderRadius: 16,
     padding: 22,
-    borderWidth: 1.8,
+    borderWidth: 2,
     borderColor: '#116466',
     justifyContent: 'space-between',
     minHeight: 150,
     ...(Platform.OS === 'web' ? { 
       cursor: 'pointer', 
-      boxShadow: '0 12px 35px rgba(0,0,0,0.8)'
+      boxShadow: '0 10px 30px rgba(0,0,0,0.6)'
     } : {}),
   },
   cardHeader: {
@@ -211,21 +210,20 @@ const styles = StyleSheet.create({
   },
   dayBadge: {
     color: '#FFCB9A',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '900',
     letterSpacing: 1,
   },
   liveIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
     backgroundColor: '#2ECC71',
-    ...(Platform.OS === 'web' ? { boxShadow: '0 0 8px #2ECC71' } : {}),
   },
   dayTitle: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
+    color: '#FFFFFF', // Bright white text for absolute visibility
+    fontSize: 16,
+    fontWeight: 'bold',
     marginBottom: 16,
     lineHeight: 22,
   },
@@ -234,17 +232,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: 'rgba(255,255,255,0.15)',
     paddingTop: 12,
   },
   statusText: {
-    color: '#D1E8E2',
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#FFCB9A',
+    fontSize: 13,
+    fontWeight: '700',
   },
   arrowIcon: {
     color: '#FFCB9A',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 'bold',
   },
 });
