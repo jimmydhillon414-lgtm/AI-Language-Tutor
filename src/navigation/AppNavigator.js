@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import Navbar from '../components/Navbar';
 import LoginScreen from '../screens/LoginScreen';
 import AuthScreen from '../screens/AuthScreen';
@@ -11,19 +11,37 @@ import GrammarHistoryScreen from '../screens/GrammarHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 export default function AppNavigator() {
-  const [user, setUser] = useState(null); // null means user is on public home page
+  const [user, setUser] = useState(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      try {
+        const savedUser = localStorage.getItem('ai_tutor_user');
+        return savedUser ? JSON.parse(savedUser) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
+
   const [activeTab, setActiveTab] = useState('AI Tutor');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
 
   const handleLoginSuccess = (email) => {
-    setUser({ email: email || 'Creatorstack9@gmail.com' });
+    const userData = { email: email || 'Creatorstack9@gmail.com' };
+    setUser(userData);
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      localStorage.setItem('ai_tutor_user', JSON.stringify(userData));
+    }
     setShowAuthModal(false);
     setActiveTab('AI Tutor'); // Default open tab after login
   };
 
   const handleSignOut = () => {
     setUser(null);
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      localStorage.removeItem('ai_tutor_user');
+    }
   };
 
   const renderContent = () => {
