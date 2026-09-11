@@ -12,11 +12,12 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
 
   return (
     <View style={styles.mainWrapper}>
-      {/* Sharp Background Image Layer using React Native Image */}
+      {/* Background Image Layer */}
       <Image 
         source={require('../../assets/tutor_girl.png.png')} 
         style={styles.bgImage} 
       />
+      {/* Slightly deeper overlay so background doesn't interfere with cards */}
       <View style={styles.darkOverlay} />
 
       {/* Modern Floating Top Bar */}
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.82)',
+    backgroundColor: 'rgba(7, 13, 16, 0.88)', // Slightly darker overlay for absolute clarity
     zIndex: 1,
     pointerEvents: 'none',
   },
@@ -102,17 +103,17 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     zIndex: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
-    backgroundColor: 'rgba(7, 13, 16, 0.6)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(7, 13, 16, 0.8)',
     ...(Platform.OS === 'web' ? { backdropFilter: 'blur(12px)' } : {}),
   },
   backButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   backButtonText: {
@@ -123,7 +124,7 @@ const styles = StyleSheet.create({
   planPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(17, 100, 102, 0.25)',
+    backgroundColor: 'rgba(17, 100, 102, 0.4)',
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
@@ -152,14 +153,14 @@ const styles = StyleSheet.create({
     maxWidth: 750,
   },
   glowBadge: {
-    backgroundColor: 'rgba(255, 203, 154, 0.12)',
+    backgroundColor: 'rgba(255, 203, 154, 0.15)',
     paddingHorizontal: 16,
     paddingVertical: 7,
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: 'rgba(255, 203, 154, 0.35)',
+    borderColor: 'rgba(255, 203, 154, 0.4)',
     marginBottom: 16,
-    ...(Platform.OS === 'web' ? { boxShadow: '0 0 20px rgba(255,203,154,0.15)' } : {}),
+    ...(Platform.OS === 'web' ? { boxShadow: '0 0 20px rgba(255,203,154,0.2)' } : {}),
   },
   badgeText: {
     color: '#FFCB9A',
@@ -190,16 +191,16 @@ const styles = StyleSheet.create({
   },
   dayCard: {
     width: 240,
-    backgroundColor: 'rgba(18, 35, 30, 0.85)',
+    backgroundColor: '#0B1917', // Solid, non-transparent dark background for absolute sharpness
     borderRadius: 18,
     padding: 22,
-    borderWidth: 1.5,
+    borderWidth: 1.8,
     borderColor: '#116466',
     justifyContent: 'space-between',
     minHeight: 150,
     ...(Platform.OS === 'web' ? { 
       cursor: 'pointer', 
-      boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+      boxShadow: '0 12px 35px rgba(0,0,0,0.8)'
     } : {}),
   },
   cardHeader: {
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: 'rgba(255,255,255,0.1)',
     paddingTop: 12,
   },
   statusText: {
