@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 
 export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
-  // Ensure we show an appropriate number of days based on the selected plan
-  const totalDays = selectedPlan === 'Free Demo' ? 5 : selectedPlan === 'Base Starter' ? 30 : 60;
+  // Correct plan mapping: Free Demo = 1 day, Base Starter = 30 days, Pro = 60 days
+  const totalDays = selectedPlan === 'Base Starter' ? 30 : (selectedPlan?.includes('Pro') ? 60 : 1);
 
   const daysList = Array.from({ length: totalDays }, (_, i) => ({
     day: i + 1,
@@ -13,6 +13,14 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
 
   return (
     <View style={styles.mainWrapper}>
+      {/* Background Image Layer */}
+      <Image 
+        source={require('../../assets/tutor_girl.png.png')} 
+        style={styles.bgImage} 
+      />
+      {/* Semi-transparent dark overlay so background is visible but text pops */}
+      <View style={styles.darkOverlay} />
+
       {/* Modern Sleek Top Bar */}
       <View style={styles.topBar}>
         {onBack && (
@@ -63,9 +71,29 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
 const styles = StyleSheet.create({
   mainWrapper: {
     flex: 1,
-    backgroundColor: '#070D10',
-    width: '100%',
+    position: 'relative',
     minHeight: '100vh',
+    backgroundColor: '#070D10',
+  },
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    opacity: 0.35, // Perfectly balanced background visibility
+  },
+  darkOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(7, 13, 16, 0.85)', // Rich dark tone letting the background peek through
+    zIndex: 1,
   },
   topBar: {
     flexDirection: 'row',
@@ -73,9 +101,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 35,
     paddingVertical: 16,
+    zIndex: 10,
     borderBottomWidth: 1.5,
     borderBottomColor: '#116466',
-    backgroundColor: '#0B1917',
+    backgroundColor: 'rgba(11, 25, 23, 0.9)',
   },
   backButton: {
     backgroundColor: '#116466',
@@ -112,8 +141,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   container: {
-    padding: 30,
+    padding: '40px 20px',
     alignItems: 'center',
+    position: 'relative',
+    zIndex: 2,
   },
   headerBox: {
     alignItems: 'center',
