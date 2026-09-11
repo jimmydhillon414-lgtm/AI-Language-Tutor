@@ -9,17 +9,29 @@ import {
   Platform,
 } from 'react-native';
 
-export default function PricingScreen({ onSelectPlan }) {
+export default function PricingScreen({ onSelectPlan, onSignOut }) {
   return (
     <View style={styles.mainWrapper}>
-      {/* Standard Image tag just like your other files */}
+      {/* Sharp Background Image without blur */}
       <Image 
         source={require('../../assets/tutor_girl.png.png')} 
         style={styles.bgImage} 
       />
       
-      {/* Dark overlay for text readability */}
+      {/* Light dark overlay so cards stay readable */}
       <View style={styles.darkOverlay} />
+
+      {/* Top Header with only Sign Out if needed */}
+      <View style={styles.topBar}>
+        <View style={styles.logoArea}>
+          <Text style={styles.logoText}>🧠 AI Tutor</Text>
+        </View>
+        {onSignOut && (
+          <TouchableOpacity onPress={onSignOut} style={styles.signOutBtn}>
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerBox}>
@@ -120,10 +132,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-    ...(Platform.OS === 'web' ? {
-      filter: 'blur(6px)',
-      transform: 'scale(1.05)',
-    } : {}),
+    // No blur filter here so image remains completely sharp!
   },
   darkOverlay: {
     position: 'absolute',
@@ -131,11 +140,43 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.78)',
+    backgroundColor: 'rgba(7, 13, 16, 0.75)',
     zIndex: 1,
   },
+  topBar: {
+    position: 'relative',
+    zIndex: 3,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 25,
+    paddingVertical: 15,
+  },
+  logoArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  signOutBtn: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+  },
+  signOutText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   container: {
-    padding: '30px 15px',
+    padding: '20px 15px 40px 15px',
     alignItems: 'center',
     position: 'relative',
     zIndex: 2,
