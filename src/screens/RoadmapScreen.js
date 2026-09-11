@@ -1,11 +1,14 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 
-export default function RoadmapScreen({ onSelectDay }) {
-  const daysList = Array.from({ length: 60 }, (_, i) => ({
+export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
+  // Determine total days based on the selected plan
+  const totalDays = selectedPlan === 'Free Demo' ? 1 : selectedPlan === 'Base Starter' ? 30 : 60;
+
+  const daysList = Array.from({ length: totalDays }, (_, i) => ({
     day: i + 1,
     title: i === 0 ? 'Introduction & Basic Greetings' : i === 1 ? 'Daily Conversational Phrases' : `Masterclass Module ${i + 1}`,
-    unlocked: i < 5, // First 5 days preview unlocked
+    unlocked: true, // All days under the purchased/selected plan are unlocked
   }));
 
   return (
@@ -18,9 +21,19 @@ export default function RoadmapScreen({ onSelectDay }) {
         </div>
       )}
 
+      {/* Top Navigation Bar with Back Button */}
+      <View style={styles.topBar}>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.8}>
+            <Text style={styles.backButtonText}>← Back to Plans</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.planIndicator}>Active Plan: <Text style={{color: '#FFCB9A'}}>{selectedPlan || '60-Day Pro Master'}</Text></Text>
+      </View>
+
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerBox}>
-          <Text style={styles.badge}>🎯 YOUR 60-DAY FLUENCY ROADMAP</Text>
+          <Text style={styles.badge}>🎯 YOUR FLUENCY ROADMAP ({totalDays} Days)</Text>
           <Text style={styles.title}>Your Daily Masterclass Curriculum</Text>
           <Text style={styles.subtitle}>Complete each daily session with your AI Tutor to unlock rapid conversational fluency.</Text>
         </View>
@@ -84,8 +97,37 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: 'rgba(7, 13, 16, 0.75)',
   },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 25,
+    paddingVertical: 15,
+    zIndex: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  backButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  planIndicator: {
+    color: '#D1E8E2',
+    fontSize: 13,
+    fontWeight: '600',
+  },
   container: {
-    padding: '40px 20px',
+    padding: '30px 20px',
     alignItems: 'center',
     position: 'relative',
     zIndex: 1,
