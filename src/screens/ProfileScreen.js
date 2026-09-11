@@ -11,13 +11,13 @@ import {
 import { supabase } from '../api/supabase';
 
 const LANGUAGES = [
-  { id: 'English', name: 'English', flag: '🇬🇧' },
+  { id: 'English', name: 'English', flag: 'ENG' },
   { id: 'Hindi', name: 'Hindi', flag: '🇮🇳' },
-  { id: 'Spanish', name: 'Spanish', flag: '🇪🇸' },
-  { id: 'French', name: 'French', flag: '🇫🇷' },
-  { id: 'German', name: 'German', flag: '🇩🇪' },
+  { id: 'Spanish', name: 'Spanish', flag: 'SP' },
+  { id: 'French', name: 'French', flag: 'FH' },
+  { id: 'German', name: 'German', flag: 'GM' },
   { id: 'Japanese', name: 'Japanese', flag: '🇯🇵' },
-  { id: 'Mandarin', name: 'Mandarin', flag: '🇨🇳' },
+  { id: 'Mandarin', name: 'Mandarin', flag: 'MD' },
 ];
 
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
