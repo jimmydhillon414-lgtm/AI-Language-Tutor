@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 
 export default function RoadmapScreen({ onSelectDay }) {
   const daysList = Array.from({ length: 60 }, (_, i) => ({
@@ -9,141 +9,151 @@ export default function RoadmapScreen({ onSelectDay }) {
   }));
 
   return (
-    <div style={styles.pageWrapper}>
-      {/* Background Image Layer with pointer-events disabled */}
-      <div style={styles.bgImageLayer} />
-      <div style={styles.darkOverlay} />
+    <View style={styles.mainWrapper}>
+      {/* Background Image Layer */}
+      {Platform.OS === 'web' && (
+        <div style={styles.bgImageWrapper}>
+          <img src="/assets/tutor_girl.png.png" style={styles.bgImageStyle} alt="Background" />
+          <div style={styles.bgOverlay} />
+        </div>
+      )}
 
       <ScrollView contentContainerStyle={styles.container}>
-        <div style={styles.headerBox}>
-          <span style={styles.badge}>🎯 YOUR 60-DAY FLUENCY ROADMAP</span>
-          <h1 style={styles.title}>Your Daily Masterclass Curriculum</h1>
-          <p style={styles.subtitle}>Complete each daily session with your AI Tutor to unlock rapid conversational fluency.</p>
-        </div>
+        <View style={styles.headerBox}>
+          <Text style={styles.badge}>🎯 YOUR 60-DAY FLUENCY ROADMAP</Text>
+          <Text style={styles.title}>Your Daily Masterclass Curriculum</Text>
+          <Text style={styles.subtitle}>Complete each daily session with your AI Tutor to unlock rapid conversational fluency.</Text>
+        </View>
 
-        <div style={styles.grid}>
+        <View style={styles.grid}>
           {daysList.map((item) => (
-            <div 
+            <TouchableOpacity 
               key={item.day} 
-              style={{ 
-                ...styles.dayCard, 
-                opacity: item.unlocked ? 1 : 0.6,
-                borderColor: item.unlocked ? '#116466' : 'rgba(255,255,255,0.05)',
-                cursor: item.unlocked ? 'pointer' : 'not-allowed'
-              }}
-              onClick={() => item.unlocked && onSelectDay(item.day)}
+              style={[
+                styles.dayCard, 
+                { 
+                  opacity: item.unlocked ? 1 : 0.6,
+                  borderColor: item.unlocked ? '#116466' : 'rgba(255,255,255,0.05)',
+                }
+              ]}
+              disabled={!item.unlocked}
+              onPress={() => item.unlocked && onSelectDay(item.day)}
+              activeOpacity={0.8}
             >
-              <div style={styles.dayBadge}>Day {item.day}</div>
-              <div style={styles.dayTitle}>{item.title}</div>
-              <div style={styles.statusText}>
+              <Text style={styles.dayBadge}>Day {item.day}</Text>
+              <Text style={styles.dayTitle}>{item.title}</Text>
+              <Text style={styles.statusText}>
                 {item.unlocked ? '🟢 Start Session' : '🔒 Locked'}
-              </div>
-            </div>
+              </Text>
+            </TouchableOpacity>
           ))}
-        </div>
+        </View>
       </ScrollView>
-    </div>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pageWrapper: {
+  mainWrapper: {
+    flex: 1,
     position: 'relative',
     minHeight: '100vh',
-    width: '100%',
     backgroundColor: '#070D10',
-    overflowY: 'auto',
-    overflowX: 'hidden',
   },
-  bgImageLayer: {
+  bgImageWrapper: {
     position: 'fixed',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundImage: 'url(/assets/tutor_girl.png.png)',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
+    width: '100vw',
+    height: '100vh',
+    zIndex: -1,
+    overflow: 'hidden',
+  },
+  bgImageStyle: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
     filter: 'blur(6px)',
     transform: 'scale(1.05)',
-    zIndex: 0,
-    pointerEvents: 'none', // Crucial: allows clicks to pass through to cards
   },
-  darkOverlay: {
-    position: 'fixed',
+  bgOverlay: {
+    position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.75)', // Consistent dimming for clarity
-    zIndex: 1,
-    pointerEvents: 'none', // Crucial: prevents blocking clicks
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(7, 13, 16, 0.75)',
   },
   container: {
-    position: 'relative',
-    zIndex: 2,
     padding: '40px 20px',
     alignItems: 'center',
-    minHeight: '100vh',
+    position: 'relative',
+    zIndex: 1,
   },
   headerBox: {
-    textAlign: 'center',
-    marginBottom: '30px',
-    maxWidth: '700px',
+    alignItems: 'center',
+    marginBottom: 30,
+    maxWidth: 700,
   },
   badge: {
     color: '#FFCB9A',
     backgroundColor: 'rgba(255, 203, 154, 0.15)',
-    padding: '6px 14px',
-    borderRadius: '20px',
-    fontSize: '11px',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    fontSize: 11,
     fontWeight: 'bold',
-    letterSpacing: '1px',
-    border: '1px solid rgba(255, 203, 154, 0.3)',
+    letterSpacing: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 203, 154, 0.3)',
+    marginBottom: 16,
   },
   title: {
     color: '#FFFFFF',
-    fontSize: '28px',
+    fontSize: 28,
     fontWeight: '900',
-    marginTop: '16px',
-    marginBottom: '10px',
+    textAlign: 'center',
+    marginBottom: 10,
   },
   subtitle: {
     color: '#D1E8E2',
-    fontSize: '14px',
+    fontSize: 14,
+    textAlign: 'center',
   },
   grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-    gap: '16px',
-    maxWidth: '1000px',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    maxWidth: 1000,
     width: '100%',
+    justifyContent: 'center',
   },
   dayCard: {
+    width: 220,
     backgroundColor: 'rgba(24, 44, 37, 0.88)',
-    backdropFilter: 'blur(12px)',
-    borderRadius: '16px',
-    padding: '20px',
-    border: '1.5px solid #116466',
-    transition: 'transform 0.2s ease',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: '#116466',
     boxShadow: '0 8px 25px rgba(0,0,0,0.4)',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   dayBadge: {
     color: '#FFCB9A',
-    fontSize: '12px',
+    fontSize: 12,
     fontWeight: 'bold',
-    marginBottom: '6px',
+    marginBottom: 6,
   },
   dayTitle: {
     color: '#FFFFFF',
-    fontSize: '15px',
+    fontSize: 15,
     fontWeight: 'bold',
-    marginBottom: '14px',
-    lineHeight: '20px',
+    marginBottom: 14,
+    lineHeight: 20,
   },
   statusText: {
     color: '#D1E8E2',
-    fontSize: '12px',
+    fontSize: 12,
     fontWeight: '600',
   },
 });
