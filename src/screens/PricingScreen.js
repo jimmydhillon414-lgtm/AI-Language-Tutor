@@ -11,9 +11,8 @@ import {
 export default function PricingScreen({ onSelectPlan }) {
   return (
     <View style={styles.mainWrapper}>
-      {/* Background Image Layer */}
-      {Platform.OS === 'web' && <div style={styles.bgImageLayer} />}
-      {Platform.OS === 'web' && <div style={styles.darkOverlay} />}
+      {/* Fallback Clean Gradient & Pattern Wrapper for Web */}
+      {Platform.OS === 'web' && <div style={styles.bgGradientLayer} />}
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerBox}>
@@ -105,28 +104,14 @@ const styles = StyleSheet.create({
     minHeight: '100vh',
     backgroundColor: '#070D10',
   },
-  bgImageLayer: {
+  bgGradientLayer: {
     position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundImage: 'url("/assets/tutor_girl.png.png")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    filter: 'blur(6px)',
-    transform: 'scale(1.05)',
+    background: 'radial-gradient(circle at 50% 20%, #11322C 0%, #070D10 70%)',
     zIndex: 0,
-    pointerEvents: 'none',
-  },
-  darkOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.78)',
-    zIndex: 1,
     pointerEvents: 'none',
   },
   container: {
