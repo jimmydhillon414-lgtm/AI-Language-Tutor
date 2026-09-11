@@ -7,16 +7,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  Image,
 } from 'react-native';
 import { supabase } from '../api/supabase';
-import AppBackground from '../components/AppBackground';
 
 export default function LoginScreen({ onLogin, onSwitchToSignup }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [successBanner, setSuccessBanner] = useState('');
 
   const handlePressLogin = async () => {
     if (!email.trim() || !password) {
@@ -49,12 +48,9 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
         console.log('Session log insert note:', dbErr);
       }
 
-      setSuccessBanner(' Login Successful');
-      setTimeout(() => {
-        if (onLogin) {
-          onLogin(user.email);
-        }
-      }, 1000);
+      if (onLogin) {
+        onLogin(user.email);
+      }
 
     } catch (err) {
       console.log('Login error:', err);
@@ -64,7 +60,13 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
   };
 
   return (
-    <AppBackground>
+    <View style={styles.backgroundImage}>
+      {/* Sharp Background Image Layer */}
+      <div style={styles.bgImageWrapperStyle}>
+        <img src={require('../../assets/tutor_girl.png.png')} style={styles.bgImageStyle} alt="Background" />
+        <div style={styles.bgOverlayStyle} />
+      </div>
+
       {Platform.OS === 'web' && (
         <style type="text/css">{`
           input:-webkit-autofill,
@@ -80,12 +82,6 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
       <View style={styles.container}>
         <View style={styles.card}>
           <Text style={styles.title}>AI TUTOR</Text>
-
-          {successBanner ? (
-            <View style={styles.successBox}>
-              <Text style={styles.successText}>{successBanner}</Text>
-            </View>
-          ) : null}
           
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email Address</Text>
@@ -141,33 +137,64 @@ export default function LoginScreen({ onLogin, onSwitchToSignup }) {
           </View>
         </View>
       </View>
-    </AppBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    minHeight: '100vh',
+    backgroundColor: '#0F1715',
+    position: 'relative',
+    overflowX: 'hidden',
+    boxSizing: 'border-box',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  },
+  bgImageWrapperStyle: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    zIndex: 0,
+    pointerEvents: 'none',
+    overflow: 'hidden',
+  },
+  bgImageStyle: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    filter: 'none',
+  },
+  bgOverlayStyle: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(15, 23, 21, 0.45)',
+  },
   container: { 
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
     width: '100%',
+    minHeight: '100vh',
+    position: 'relative',
+    zIndex: 1,
   },
   card: {
-    backgroundColor: 'rgba(15, 23, 21, 0.45)',
+    backgroundColor: 'rgba(24, 44, 37, 0.95)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 203, 154, 0.3)', 
+    borderColor: '#116466', 
     borderRadius: 24,
     padding: 32,
     width: '100%',
     maxWidth: 450,
-    ...(Platform.OS === 'web' ? {
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-    } : {}),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.5,
     shadowRadius: 16,
     elevation: 8,
   },
@@ -179,38 +206,23 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     letterSpacing: 1,
   },
-  successBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.20)',
-    borderWidth: 1.5,
-    borderColor: '#10B981',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  successText: {
-    color: '#34D399',
-    fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
   inputGroup: {
     marginBottom: 20,
   },
   label: {
-    color: '#E8B486',
+    color: '#FFCB9A',
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(11, 29, 27, 0.9)',
     color: '#FFFFFF',
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 203, 154, 0.35)',
+    borderColor: '#116466',
     fontSize: 16,
     ...(Platform.OS === 'web' ? {
       outlineStyle: 'none',
@@ -219,10 +231,10 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(11, 29, 27, 0.9)',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 203, 154, 0.35)',
+    borderColor: '#116466',
     overflow: 'hidden',
   },
   passwordInput: {
@@ -247,9 +259,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   loginButton: {
-    backgroundColor: 'rgba(255, 203, 154, 0.2)',
+    backgroundColor: '#116466',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 203, 154, 0.6)',
+    borderColor: '#FFCB9A',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -267,7 +279,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    color: '#A3B8B0',
+    color: '#D1E8E2',
     fontSize: 14,
   },
   signupLink: {
