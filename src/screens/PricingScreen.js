@@ -18,16 +18,15 @@ export default function PricingScreen({ onSelectPlan, onSignOut }) {
         style={styles.bgImage} 
       />
       
-      {/* Very light overlay so image is fully clear and sharp */}
       <View style={styles.darkOverlay} />
 
-      {/* Top Header with only Sign Out */}
+      {/* Top Bar with Sign Out button */}
       <View style={styles.topBar}>
         <View style={styles.logoArea}>
           <Text style={styles.logoText}>🧠 AI Tutor</Text>
         </View>
         {onSignOut && (
-          <TouchableOpacity onPress={onSignOut} style={styles.signOutBtn}>
+          <TouchableOpacity onPress={onSignOut} style={styles.signOutBtn} activeOpacity={0.8}>
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
         )}
@@ -139,7 +138,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.35)', // Light overlay so image looks sharp and bright
+    backgroundColor: 'rgba(7, 13, 16, 0.4)',
     zIndex: 1,
   },
   topBar: {
@@ -161,18 +160,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   signOutBtn: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   signOutText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   container: {
     padding: '20px 15px 40px 15px',
