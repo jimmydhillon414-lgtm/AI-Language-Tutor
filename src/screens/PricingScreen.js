@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,9 +7,38 @@ import {
   ScrollView,
   Image,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 
-export default function PricingScreen({ onSelectPlan, onSignOut }) {
+export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSuccess }) {
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedMethod, setSelectedMethod] = useState('upi');
+  const [processing, setProcessing] = useState(false);
+
+  const handleOpenCheckout = (plan) => {
+    if (plan === 'Free Demo') {
+      if (onPaymentSuccess) onPaymentSuccess(plan);
+      if (onSelectPlan) onSelectPlan(plan);
+      return;
+    }
+    setSelectedPlan(plan);
+  };
+
+  const handleConfirmPayment = () => {
+    setProcessing(true);
+    setTimeout(() => {
+      setProcessing(false);
+      const purchasedPlan = selectedPlan;
+      setSelectedPlan(null);
+      if (onPaymentSuccess) {
+        onPaymentSuccess(purchasedPlan);
+      }
+      if (onSelectPlan) {
+        onSelectPlan(purchasedPlan);
+      }
+    }, 2000);
+  };
+
   return (
     <View style={styles.mainWrapper}>
       {/* Sharp Background Image */}
@@ -57,7 +86,7 @@ export default function PricingScreen({ onSelectPlan, onSignOut }) {
 
             <TouchableOpacity 
               style={styles.outlineButton}
-              onPress={() => onSelectPlan && onSelectPlan('Free Demo')}
+              onPress={() => handleOpenCheckout('Free Demo')}
               activeOpacity={0.8}
             >
               <Text style={styles.outlineButtonText}>Start Free Demo</Text>
@@ -79,7 +108,7 @@ export default function PricingScreen({ onSelectPlan, onSignOut }) {
 
             <TouchableOpacity 
               style={styles.outlineButton}
-              onPress={() => onSelectPlan && onSelectPlan('Base Starter')}
+              onPress={() => handleOpenCheckout('Base Starter')}
               activeOpacity={0.8}
             >
               <Text style={styles.outlineButtonText}>Get Base Plan</Text>
@@ -103,7 +132,7 @@ export default function PricingScreen({ onSelectPlan, onSignOut }) {
 
             <TouchableOpacity 
               style={styles.solidButton}
-              onPress={() => onSelectPlan && onSelectPlan('60-Day Pro Master')}
+              onPress={() => handleOpenCheckout('60-Day Pro Master')}
               activeOpacity={0.8}
             >
               <Text style={styles.solidButtonText}>Get Pro Plan</Text>
@@ -111,6 +140,65 @@ export default function PricingScreen({ onSelectPlan, onSignOut }) {
           </View>
         </View>
       </ScrollView>
+
+      {/* SECURE CHECKOUT MODAL WITH PAYMENT METHODS */}
+      {selectedPlan && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalLock}>🔒 Secure Checkout</Text>
+            <Text style={styles.modalPlanTitle}>Plan: {selectedPlan}</Text>
+            
+            <Text style={styles.modalPrice}>
+              {selectedPlan === 'Base Starter' ? '₹999' : '₹1,799'}
+            </Text>
+
+            <Text style={styles.sectionLabel}>Select Payment Method:</Text>
+            
+            <View style={styles.paymentMethodsContainer}>
+              <TouchableOpacity 
+                style={[styles.payOption, selectedMethod === 'upi' && styles.payOptionActive]}
+                onPress={() => setSelectedMethod('upi')}
+              >
+                <Text style={styles.payOptionText}>📱 UPI / GPay / PhonePe</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.payOption, selectedMethod === 'card' && styles.payOptionActive]}
+                onPress={() => setSelectedMethod('card')}
+              >
+                <Text style={styles.payOptionText}>💳 Credit / Debit Card</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.payOption, selectedMethod === 'netbanking' && styles.payOptionActive]}
+                onPress={() => setSelectedMethod('netbanking')}
+              >
+                <Text style={styles.payOptionText}>🏦 NetBanking</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.payNowButton} 
+              onPress={handleConfirmPayment}
+              disabled={processing}
+            >
+              {processing ? (
+                <ActivityIndicator color="#121E1A" />
+              ) : (
+                <Text style={styles.payNowText}>Pay & Unlock Now 🚀</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => setSelectedPlan(null)} 
+              disabled={processing}
+              style={styles.cancelTouch}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -304,5 +392,99 @@ const styles = StyleSheet.create({
     color: '#121E1A',
     fontSize: 13,
     fontWeight: '800',
+  },
+  // Modal & Payment Option Styles added cleanly
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#12221D',
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#116466',
+    padding: 28,
+    width: '100%',
+    maxWidth: 420,
+    alignItems: 'center',
+    ...(Platform.OS === 'web' ? { boxShadow: '0 20px 50px rgba(0,0,0,0.9)' } : {}),
+  },
+  modalLock: {
+    color: '#FFCB9A',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  modalPlanTitle: {
+    color: '#D1E8E2',
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  modalPrice: {
+    color: '#FFFFFF',
+    fontSize: 32,
+    fontWeight: '900',
+    marginBottom: 16,
+  },
+  sectionLabel: {
+    color: '#D1E8E2',
+    fontSize: 12,
+    fontWeight: '600',
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  paymentMethodsContainer: {
+    width: '100%',
+    gap: 8,
+    marginBottom: 20,
+  },
+  payOption: {
+    backgroundColor: 'rgba(17, 100, 102, 0.2)',
+    borderWidth: 1.5,
+    borderColor: '#116466',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+  },
+  payOptionActive: {
+    borderColor: '#FFCB9A',
+    backgroundColor: 'rgba(255, 203, 154, 0.15)',
+  },
+  payOptionText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  payNowButton: {
+    backgroundColor: '#FFCB9A',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+  },
+  payNowText: {
+    color: '#121E1A',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  cancelTouch: {
+    padding: 6,
+  },
+  cancelText: {
+    color: '#8FA39D',
+    fontSize: 13,
+    fontWeight: '600',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
 });
