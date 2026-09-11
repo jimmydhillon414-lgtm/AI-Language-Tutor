@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 export default function PricingScreen({ onSelectPlan }) {
   return (
     <div style={styles.pageWrapper}>
-      {/* Background Image Layer matching the rest of the project */}
+      {/* Background Image Layer with pointer-events disabled */}
       <div style={styles.bgImageLayer} />
       <div style={styles.darkOverlay} />
 
@@ -73,29 +73,33 @@ const styles = StyleSheet.create({
     position: 'relative',
     minHeight: '100vh',
     width: '100%',
-    overflow: 'hidden',
+    backgroundColor: '#070D10',
+    overflowY: 'auto',
+    overflowX: 'hidden',
   },
   bgImageLayer: {
-    position: 'absolute',
+    position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundImage: 'url(/assets/tutor_girl.png.png)', // Project's main background image
+    backgroundImage: 'url(/assets/tutor_girl.png.png)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    filter: 'blur(4px)',
+    filter: 'blur(6px)',
     transform: 'scale(1.05)',
     zIndex: 0,
+    pointerEvents: 'none', // Crucial: allows clicks to pass through to elements below
   },
   darkOverlay: {
-    position: 'absolute',
+    position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(7, 13, 16, 0.88)', // Deep immersive tint
+    backgroundColor: 'rgba(7, 13, 16, 0.75)', // Balanced darkness so background image is visible
     zIndex: 1,
+    pointerEvents: 'none', // Crucial: prevents blocking clicks
   },
   container: {
     position: 'relative',
@@ -111,7 +115,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     color: '#FFCB9A',
-    backgroundColor: 'rgba(255, 203, 154, 0.1)',
+    backgroundColor: 'rgba(255, 203, 154, 0.15)',
     padding: '6px 14px',
     borderRadius: '20px',
     fontSize: '11px',
@@ -127,7 +131,7 @@ const styles = StyleSheet.create({
     marginBottom: '10px',
   },
   subtitle: {
-    color: '#8FA39D',
+    color: '#D1E8E2',
     fontSize: '15px',
     lineHeight: '22px',
   },
@@ -141,7 +145,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   card: {
-    backgroundColor: 'rgba(24, 44, 37, 0.85)',
+    backgroundColor: 'rgba(24, 44, 37, 0.88)',
     backdropFilter: 'blur(12px)',
     borderRadius: '20px',
     padding: '30px',
@@ -154,7 +158,7 @@ const styles = StyleSheet.create({
   },
   featuredCard: {
     borderColor: '#FFCB9A',
-    backgroundColor: 'rgba(19, 36, 31, 0.9)',
+    backgroundColor: 'rgba(19, 36, 31, 0.92)',
     boxShadow: '0 15px 40px rgba(255, 203, 154, 0.2)',
   },
   popularBadge: {
@@ -183,7 +187,7 @@ const styles = StyleSheet.create({
   },
   duration: {
     fontSize: '13px',
-    color: '#8FA39D',
+    color: '#D1E8E2',
     fontWeight: 'normal',
   },
   planDesc: {
