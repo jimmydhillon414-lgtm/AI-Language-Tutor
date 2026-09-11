@@ -95,7 +95,7 @@ export default function AppNavigator() {
 
     // Step-based flow for logged-in users before reaching main tabs
     if (currentStep === 'pricing') {
-      return <PricingScreen onSelectPlan={handleSelectPlan} />;
+      return <PricingScreen onSelectPlan={handleSelectPlan} onSignOut={handleSignOut} />;
     }
 
     if (currentStep === 'roadmap') {
