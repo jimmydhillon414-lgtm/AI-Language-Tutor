@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,10 +8,10 @@ import {
   Platform,
 } from 'react-native';
 
-export default function PricingScreen({ navigation }) {
+export default function PricingScreen({ onSelectPlan }) {
   return (
     <View style={styles.mainWrapper}>
-      {/* Background Image Layer (Using direct CSS background-image for Vercel compatibility) */}
+      {/* Background Image Layer */}
       {Platform.OS === 'web' && <div style={styles.bgImageLayer} />}
       {Platform.OS === 'web' && <div style={styles.darkOverlay} />}
 
@@ -40,7 +40,7 @@ export default function PricingScreen({ navigation }) {
 
             <TouchableOpacity 
               style={styles.outlineButton}
-              onPress={() => navigation.navigate('Roadmap')}
+              onPress={() => onSelectPlan && onSelectPlan('Free Demo')}
               activeOpacity={0.8}
             >
               <Text style={styles.outlineButtonText}>Start Free Demo</Text>
@@ -62,14 +62,14 @@ export default function PricingScreen({ navigation }) {
 
             <TouchableOpacity 
               style={styles.outlineButton}
-              onPress={() => alert('Base Plan Selected!')}
+              onPress={() => onSelectPlan && onSelectPlan('Base Starter')}
               activeOpacity={0.8}
             >
               <Text style={styles.outlineButtonText}>Get Base Plan</Text>
             </TouchableOpacity>
           </View>
 
-          {/* 60-Day Pro Master Plan (Added) */}
+          {/* 60-Day Pro Master Plan */}
           <View style={[styles.card, styles.popularCard]}>
             <View style={styles.popularBadge}>MOST POPULAR 🔥</View>
             <View>
@@ -86,7 +86,7 @@ export default function PricingScreen({ navigation }) {
 
             <TouchableOpacity 
               style={styles.solidButton}
-              onPress={() => alert('60-Day Pro Plan Selected!')}
+              onPress={() => onSelectPlan && onSelectPlan('60-Day Pro Master')}
               activeOpacity={0.8}
             >
               <Text style={styles.solidButtonText}>Get Pro Plan</Text>
