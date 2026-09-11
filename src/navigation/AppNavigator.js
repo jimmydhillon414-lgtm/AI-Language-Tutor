@@ -13,8 +13,18 @@ import GrammarHistoryScreen from '../screens/GrammarHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 export default function AppNavigator() {
-  // Session save nahi hoga, app hamesha fresh state (null) se start hogi
-  const [user, setUser] = useState(null);
+  // SessionStorage: Page refresh karne par session rahega, par browser band karne par clear ho jayega
+  const [user, setUser] = useState(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      try {
+        const savedUser = sessionStorage.getItem('ai_tutor_user');
+        return savedUser ? JSON.parse(savedUser) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
 
   const [currentStep, setCurrentStep] = useState('pricing'); // 'pricing', 'roadmap', 'chat'
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -29,6 +39,9 @@ export default function AppNavigator() {
   const handleLoginSuccess = (email) => {
     const userData = { email: email || 'Creatorstack9@gmail.com' };
     setUser(userData);
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      sessionStorage.setItem('ai_tutor_user', JSON.stringify(userData));
+    }
     setShowAuthModal(false);
     setCurrentStep('pricing');
   };
@@ -38,6 +51,9 @@ export default function AppNavigator() {
     setCurrentStep('pricing');
     setSelectedPlan(null);
     setIsPaid(false);
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      sessionStorage.removeItem('ai_tutor_user');
+    }
   };
 
   const handleSelectPlan = (planName) => {
