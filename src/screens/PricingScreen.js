@@ -12,6 +12,7 @@ import {
 
 export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSuccess }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedMethod, setSelectedMethod] = useState('upi'); // 'upi', 'qr', 'card'
   const [processing, setProcessing] = useState(false);
 
   const handleOpenCheckout = (plan) => {
@@ -21,6 +22,7 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
       return;
     }
     setSelectedPlan(plan);
+    setSelectedMethod('upi'); // default selection
   };
 
   const handleConfirmPayment = () => {
@@ -140,20 +142,60 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
         </View>
       </ScrollView>
 
-      {/* SINGLE-STEP SECURE CHECKOUT MODAL */}
+      {/* SINGLE-WINDOW CHECKOUT MODAL WITH PAYMENT METHODS */}
       {selectedPlan && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalLock}>🔒 Secure Checkout</Text>
-            <Text style={styles.modalPlanTitle}>Plan: {selectedPlan}</Text>
-            
-            <Text style={styles.modalPrice}>
-              {selectedPlan === 'Base Starter' ? '₹999' : '₹1,799'}
+            <Text style={styles.modalPlanTitle}>
+              Plan: {selectedPlan} ({selectedPlan === 'Base Starter' ? '₹999' : '₹1,799'})
             </Text>
 
-            <Text style={styles.modalSubText}>
-              Complete payment via UPI / Card / NetBanking to unlock your curriculum.
-            </Text>
+            <Text style={styles.sectionLabel}>Select Payment Method:</Text>
+
+            {/* Payment Options Selection */}
+            <View style={styles.optionsContainer}>
+              <TouchableOpacity 
+                style={[styles.optionCard, selectedMethod === 'upi' && styles.selectedOptionCard]}
+                onPress={() => setSelectedMethod('upi')}
+              >
+                <Text style={styles.optionEmoji}>📱</Text>
+                <View>
+                  <Text style={styles.optionTitle}>UPI Apps</Text>
+                  <Text style={styles.optionSub}>GPay, PhonePe, Paytm</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.optionCard, selectedMethod === 'qr' && styles.selectedOptionCard]}
+                onPress={() => setSelectedMethod('qr')}
+              >
+                <Text style={styles.optionEmoji}>📷</Text>
+                <View>
+                  <Text style={styles.optionTitle}>Scan QR Code</Text>
+                  <Text style={styles.optionSub}>Scan via Scanner App</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.optionCard, selectedMethod === 'card' && styles.selectedOptionCard]}
+                onPress={() => setSelectedMethod('card')}
+              >
+                <Text style={styles.optionEmoji}>💳</Text>
+                <View>
+                  <Text style={styles.optionTitle}>Card / NetBanking</Text>
+                  <Text style={styles.optionSub}>Credit, Debit, NetBanking</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* QR Code box if QR is selected */}
+            {selectedMethod === 'qr' && (
+              <View style={styles.qrBox}>
+                <Text style={styles.qrTitle}>[ Scan QR to Pay ]</Text>
+                <Text style={styles.qrSub}>Use GPay, PhonePe or Paytm to scan</Text>
+              </View>
+            )}
 
             <TouchableOpacity 
               style={styles.payNowButton} 
@@ -163,7 +205,9 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
               {processing ? (
                 <ActivityIndicator color="#121E1A" />
               ) : (
-                <Text style={styles.payNowText}>Pay & Unlock Now 🚀</Text>
+                <Text style={styles.payNowText}>
+                  {selectedMethod === 'qr' ? 'I Have Paid 🚀' : `Pay ${selectedPlan === 'Base Starter' ? '₹999' : '₹1,799'} Now 🚀`}
+                </Text>
               )}
             </TouchableOpacity>
 
@@ -371,7 +415,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
-  // Single-Window Modal Styling
+  // Modal Styling with Payment Options
   modalOverlay: {
     position: 'fixed',
     top: 0,
@@ -389,7 +433,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 2,
     borderColor: '#116466',
-    padding: 28,
+    padding: 24,
     width: '100%',
     maxWidth: 420,
     alignItems: 'center',
@@ -399,46 +443,92 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   modalPlanTitle: {
     color: '#D1E8E2',
-    fontSize: 14,
+    fontSize: 13,
+    marginBottom: 14,
+  },
+  sectionLabel: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+    alignSelf: 'flex-start',
     marginBottom: 8,
   },
-  modalPrice: {
-    color: '#FFFFFF',
-    fontSize: 36,
-    fontWeight: '900',
-    marginBottom: 10,
+  optionsContainer: {
+    width: '100%',
+    marginBottom: 12,
   },
-  modalSubText: {
-    color: '#A3C1AD',
-    fontSize: 12,
-    textAlign: 'center',
-    marginBottom: 22,
-    lineHeight: 18,
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#182C25',
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#116466',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+  },
+  selectedOptionCard: {
+    borderColor: '#FFCB9A',
+    backgroundColor: '#1C312B',
+  },
+  optionEmoji: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  optionTitle: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  optionSub: {
+    color: '#8EA89D',
+    fontSize: 10,
+  },
+  qrBox: {
+    width: '100%',
+    alignItems: 'center',
+    backgroundColor: '#182C25',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#116466',
+  },
+  qrTitle: {
+    color: '#FFCB9A',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  qrSub: {
+    color: '#8EA89D',
+    fontSize: 10,
   },
   payNowButton: {
     backgroundColor: '#FFCB9A',
     width: '100%',
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 13,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   payNowText: {
     color: '#121E1A',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
   },
   cancelTouch: {
-    padding: 6,
+    padding: 4,
   },
   cancelText: {
     color: '#8FA39D',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
