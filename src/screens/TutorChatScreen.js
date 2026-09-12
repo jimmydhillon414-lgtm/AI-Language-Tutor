@@ -175,55 +175,36 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = true;
+      // Non-continuous mode prevents mobile browsers from duplicating/looping past transcripts
+      recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = speechLang;
 
       recognitionRef.current = recognition;
       setListening(true);
 
-      let finalSpokenText = '';
-
       recognition.onresult = (event) => {
         let interimTranscript = '';
-        let currentBatchFinal = '';
+        let finalTranscript = '';
 
-        // Loop through results cleanly to avoid duplication bugs
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           const transcriptPiece = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            currentBatchFinal += transcriptPiece;
+            finalTranscript += transcriptPiece;
           } else {
             interimTranscript += transcriptPiece;
           }
         }
 
-        if (currentBatchFinal) {
-          // Cleanly append without leaving duplicated repeating segments
-          const trimmedBatch = currentBatchFinal.trim();
-          if (!finalSpokenText.endsWith(trimmedBatch)) {
-            finalSpokenText = (finalSpokenText ? finalSpokenText + ' ' : '') + trimmedBatch;
-          }
+        const currentText = finalTranscript || interimTranscript;
+        if (currentText.trim()) {
+          setInput(currentText.trim());
         }
 
-        const displayText = finalSpokenText ? (finalSpokenText + (interimTranscript ? ' ' + interimTranscript : '')) : interimTranscript;
-        
-        if (displayText.trim()) {
-          setInput(displayText.trim());
+        if (finalTranscript.trim()) {
+          stopVoiceInput();
+          handleSendDirect(finalTranscript.trim());
         }
-
-        if (silenceTimerRef.current) {
-          clearTimeout(silenceTimerRef.current);
-        }
-
-        // Automatically send after 1.8 seconds of pause/silence
-        silenceTimerRef.current = setTimeout(() => {
-          const textToSend = (finalSpokenText || displayText).trim();
-          if (textToSend) {
-            stopVoiceInput();
-            handleSendDirect(textToSend);
-          }
-        }, 1800);
       };
 
       recognition.onerror = (event) => {
