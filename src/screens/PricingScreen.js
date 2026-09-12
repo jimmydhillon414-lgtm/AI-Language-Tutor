@@ -83,7 +83,7 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
               {processing ? (
                 <ActivityIndicator color="#121E1A" />
               ) : (
-                <Text style={styles.solidButtonText}>Get Pro Plan (FREE FOR DEMO)</Text>
+                <Text style={styles.solidButtonText}>Get Pro Plan (NOW FREE DEMO)</Text>
               )}
             </TouchableOpacity>
           </View>
