@@ -16,11 +16,6 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
   const [processing, setProcessing] = useState(false);
 
   const handleOpenCheckout = (plan) => {
-    if (plan === 'Free Demo') {
-      if (onPaymentSuccess) onPaymentSuccess(plan);
-      if (onSelectPlan) onSelectPlan(plan);
-      return;
-    }
     setSelectedPlan(plan);
     setSelectedMethod('upi'); // default selection
   };
@@ -72,52 +67,8 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
         </View>
 
         <View style={styles.pricingGrid}>
-          {/* Free Demo Card */}
-          <View style={styles.card}>
-            <View>
-              <Text style={styles.planTitle}>Free Demo</Text>
-              <Text style={styles.planPrice}>₹0 <Text style={styles.planSub}>/ trial</Text></Text>
-              <Text style={styles.planDesc}>Test out our AI voice intelligence.</Text>
-              
-              <View style={styles.featureList}>
-                <Text style={styles.featureItem}>✨ 1 Interactive Demo Class</Text>
-                <Text style={styles.featureItem}>🛡️ Basic AI Accent Analysis</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={styles.outlineButton}
-              onPress={() => handleOpenCheckout('Free Demo')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.outlineButtonText}>Start Free Demo</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Base Starter Card */}
-          <View style={styles.card}>
-            <View>
-              <Text style={styles.planTitle}>Base Starter</Text>
-              <Text style={styles.planPrice}>₹999 <Text style={styles.planSub}>/ 30 days</Text></Text>
-              <Text style={styles.planDesc}>Ideal for casual learners building habits.</Text>
-              
-              <View style={styles.featureList}>
-                <Text style={styles.featureItem}>📚 30 Days Structured Lessons</Text>
-                <Text style={styles.featureItem}>🎤 Real-time Voice Correction</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={styles.outlineButton}
-              onPress={() => handleOpenCheckout('Base Starter')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.outlineButtonText}>Get Base Plan</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* 60-Day Pro Master Card */}
-          <View style={[styles.card, styles.popularCard]}>
+          {/* 60-Day Pro Master Card (Single Plan) */}
+          <View style={[styles.card, styles.popularCard]} style={[styles.card, styles.popularCard, { maxWidth: 400, width: '100%' }]}>
             <View style={styles.popularBadge}>MOST POPULAR 🔥</View>
             <View>
               <Text style={styles.planTitle}>60-Day Pro Master</Text>
@@ -149,7 +100,7 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
             <View style={styles.modalContent}>
               <Text style={styles.modalLock}>🔒 Secure Checkout</Text>
               <Text style={styles.modalPlanTitle}>
-                Plan: {selectedPlan} ({selectedPlan === 'Base Starter' ? '₹999' : '₹1,799'})
+                Plan: {selectedPlan} (₹1,799)
               </Text>
 
               <Text style={styles.sectionLabel}>Select Payment Method:</Text>
@@ -207,7 +158,7 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
                   <ActivityIndicator color="#121E1A" />
                 ) : (
                   <Text style={styles.payNowText}>
-                    {selectedMethod === 'qr' ? 'I Have Paid 🚀' : `Pay ${selectedPlan === 'Base Starter' ? '₹999' : '₹1,799'} Now 🚀`}
+                    {selectedMethod === 'qr' ? 'I Have Paid 🚀' : 'Pay ₹1,799 Now 🚀'}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -396,20 +347,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
   },
-  outlineButton: {
-    borderWidth: 1.5,
-    borderColor: '#116466',
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: 'rgba(17, 100, 102, 0.2)',
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
-  },
-  outlineButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
   solidButton: {
     backgroundColor: '#FFCB9A',
     paddingVertical: 12,
@@ -422,7 +359,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
-  // Modal Styling with Payment Options & Mobile Scroll Support
   modalOverlay: {
     position: 'absolute',
     top: 0,
