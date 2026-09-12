@@ -65,7 +65,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     };
   }, [currentDayNum]);
 
-  // Synchronize speechLang with user's target language profile initially if available
   useEffect(() => {
     if (userProfile?.target_language) {
       setSpeechLang(getLanguageCode(userProfile.target_language));
@@ -176,20 +175,49 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false; // Fixed: Disabled interim results to eliminate ghost typing and delayed rendering
-      recognition.lang = speechLang; // Uses active locale selector (EN, HI, PA)
+      recognition.continuous = true;
+      recognition.interimResults = true; // Live typing dikhegi
+      recognition.lang = speechLang;
 
       recognitionRef.current = recognition;
       setListening(true);
 
+      let finalSpokenText = '';
+
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setInput(transcript);
-          stopVoiceInput();
-          handleSendDirect(transcript.trim());
+        let interimTranscript = '';
+        let currentBatchFinal = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            currentBatchFinal += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
         }
+
+        if (currentBatchFinal) {
+          finalSpokenText += ' ' + currentBatchFinal;
+        }
+
+        const displayText = finalSpokenText.trim() || interimTranscript;
+        if (displayText) {
+          setInput(displayText);
+        }
+
+        // Purana silence timer clear karo agar user aur bol raha hai
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+        }
+
+        // 1.5 second tak bolna band karne par automatic send ho jayega
+        silenceTimerRef.current = setTimeout(() => {
+          const textToSend = finalSpokenText.trim() || displayText;
+          if (textToSend) {
+            stopVoiceInput();
+            handleSendDirect(textToSend);
+          }
+        }, 1500);
       };
 
       recognition.onerror = (event) => {
