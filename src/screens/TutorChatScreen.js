@@ -19,7 +19,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     proficiency_level: 'Beginner',
     learning_goal: null,
     field_of_interest: null,
-    preferred_voice: null
+    preferred_voice: null,
+    current_scenario: null
   });
   
   const currentDayNum = selectedDay || 1;
@@ -29,13 +30,10 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
-  // Spoken Language State for STT ('en-US', 'hi-IN', 'pa-IN')
   const [speechLang, setSpeechLang] = useState('en-US');
-  
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   
-  // Voice & Accent Selection States
   const [availableVoices, setAvailableVoices] = useState([]);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   
@@ -80,7 +78,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
   const stopAllSpeech = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+      try { window.speechSynthesis.cancel(); } catch (e) {}
     }
     speechQueueRef.current = [];
     activeUtteranceRef.current = null;
@@ -115,6 +113,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const initializeDayCurriculumChat = (profile, dayNum) => {
     const targetLang = profile.target_language || 'English';
     const interest = profile.field_of_interest || 'General Communication';
+    const scenario = profile.current_scenario || 'Interactive Practice';
 
     const welcomeMsg = {
       id: '1',
@@ -124,7 +123,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         hasCorrection: false,
         pronunciationScore: 90,
         pronunciationTip: "Keep your pacing steady and clear.",
-        reply: `Welcome to Day ${dayNum} of your ${targetLang} training! Today's focus is integrated with your interest in "${interest}". Let's start practicing. Send a sentence or reply to begin!`,
+        roleplayContext: scenario,
+        reply: `Welcome to Day ${dayNum} of your ${targetLang} training! Current Scenario: "${scenario}". Let's start practicing based on your interest in "${interest}". Send a sentence or reply to begin!`,
         isVoiceNote: false,
       }),
     };
@@ -176,7 +176,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     try {
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
-      recognition.interimResults = true; // Live typing dikhegi
+      recognition.interimResults = true;
       recognition.lang = speechLang;
 
       recognitionRef.current = recognition;
@@ -205,12 +205,10 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
           setInput(displayText);
         }
 
-        // Purana silence timer clear karo agar user aur bol raha hai
         if (silenceTimerRef.current) {
           clearTimeout(silenceTimerRef.current);
         }
 
-        // 1.5 second tak bolna band karne par automatic send ho jayega
         silenceTimerRef.current = setTimeout(() => {
           const textToSend = finalSpokenText.trim() || displayText;
           if (textToSend) {
@@ -376,6 +374,21 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     return data.choices[0].message.content;
   }
 
+  const parseAiResponse = (responseText) => {
+    try {
+      const cleanedString = responseText.replace(/```json\s*([\s\S]*?)\s*```/g, '$1').trim();
+      return JSON.parse(cleanedString);
+    } catch (e) {
+      return {
+        hasCorrection: false,
+        pronunciationScore: 85,
+        pronunciationTip: "Good articulation. Keep practicing.",
+        roleplayContext: "Interactive Practice",
+        reply: responseText || 'Let us continue practicing!',
+      };
+    }
+  };
+
   async function handleSendDirect(textToSend) {
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
@@ -386,7 +399,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     const timeStr = getCurrentTimeString();
     const tempUserMsg = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       role: 'user',
       timestamp: timeStr,
       message: messageValue.trim(),
@@ -399,49 +412,37 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const targetLang = userProfile?.target_language || 'English';
       const currentInterest = userProfile?.field_of_interest || 'General';
 
-      const prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student.
+      const prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student through an immersive **Dynamic Roleplay Scenario**.
 Current Training Roadmap Day: Day ${currentDayNum}.
 Current User Interest/Topic: "${currentInterest}".
 Current User Input: "${messageValue.trim()}".
 
 Your tasks:
-1. **Grammar & Sentence Analysis**: Check if the user's input contains any grammar, spelling, or phrasing mistakes. If there is a mistake, set "hasCorrection": true, provide "originalText", "correctedText", and a clear "explanation".
-2. **Pronunciation & Fluency Score (MANDATORY)**: You MUST ALWAYS evaluate the user's input and provide a realistic fluency score from 50 to 100 as "pronunciationScore" and a concise actionable tip under "pronunciationTip".
-3. **Curriculum Alignment**: Tailor your conversational response specifically keeping Day ${currentDayNum} objectives and their interest "${currentInterest}" in mind.
-4. **Interest Detection**: Check if the user is mentioning a *new* interest or topic. If so, extract it as "new_field_of_interest". Otherwise, leave it null.
+1. **Roleplay Context**: Assume a realistic roleplay character matching the user's interest "${currentInterest}" (e.g., if interest is Football, act as a team manager or coach; if business, act as a client). Generate or maintain a short scenario title under "roleplayContext".
+2. **Grammar & Sentence Analysis**: Check if the user's input contains any mistakes. If there is a mistake, set "hasCorrection": true, provide "originalText", "correctedText", and a clear "explanation".
+3. **Pronunciation & Fluency Score (MANDATORY)**: Evaluate the user's input with a realistic score from 50 to 100 as "pronunciationScore" and a concise tip under "pronunciationTip".
+4. **Interest & Goal Updates**: Extract any new interest under "new_field_of_interest" if applicable, otherwise null.
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
   "hasCorrection": true/false,
   "originalText": "${messageValue.trim()}",
   "correctedText": "Corrected sentence if there is an error, otherwise empty string",
-  "explanation": "Clear explanation of grammar/phrasing correction",
+  "explanation": "Clear explanation of grammar correction",
   "pronunciationScore": 85,
-  "pronunciationTip": "Tip to improve spoken clarity or pacing",
+  "pronunciationTip": "Tip to improve spoken clarity",
+  "roleplayContext": "Short label of current scenario (e.g., 'Tactical Discussion with Coach')",
   "new_field_of_interest": "Extracted new topic if user changed interest, otherwise null",
-  "learning_goal": "Updated or current learning goal for Day ${currentDayNum}",
-  "reply": "Your conversational response continuing Day ${currentDayNum} session"
+  "learning_goal": "Updated or current learning goal",
+  "reply": "Your in-character conversational response continuing the roleplay"
 }`;
 
       const responseText = await getAiResponse(prompt);
-      let parsedData;
-      try {
-        parsedData = JSON.parse(responseText);
-      } catch (e) {
-        parsedData = {
-          hasCorrection: false,
-          pronunciationScore: 85,
-          pronunciationTip: "Good articulation. Keep practicing.",
-          reply: responseText || 'Let us continue practicing!',
-        };
-      }
+      const parsedData = parseAiResponse(responseText);
 
-      if (!parsedData.pronunciationScore) {
-        parsedData.pronunciationScore = 85;
-      }
-      if (!parsedData.pronunciationTip) {
-        parsedData.pronunciationTip = "Good rhythm and phrasing.";
-      }
+      if (!parsedData.pronunciationScore) parsedData.pronunciationScore = 85;
+      if (!parsedData.pronunciationTip) parsedData.pronunciationTip = "Good rhythm and phrasing.";
+      if (!parsedData.roleplayContext) parsedData.roleplayContext = "Interactive Practice";
 
       if (parsedData.hasCorrection && parsedData.correctedText) {
         await logGrammarCorrection(
@@ -451,27 +452,26 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         );
       }
 
-      if (parsedData.new_field_of_interest || !userProfile.field_of_interest) {
-        const updatedFields = {
-          field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || 'General',
-          learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'General practice',
-          updated_at: new Date().toISOString()
-        };
+      const updatedFields = {
+        field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || 'General',
+        learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'General practice',
+        current_scenario: parsedData.roleplayContext,
+        updated_at: new Date().toISOString()
+      };
 
-        if (userIdRef.current) {
-          const { error: updateErr } = await supabase
-            .from('user_profiles')
-            .update(updatedFields)
-            .eq('id', userIdRef.current);
+      if (userIdRef.current) {
+        const { error: updateErr } = await supabase
+          .from('user_profiles')
+          .update(updatedFields)
+          .eq('id', userIdRef.current);
 
-          if (!updateErr) {
-            setUserProfile(prev => ({ ...prev, ...updatedFields }));
-          }
+        if (!updateErr) {
+          setUserProfile(prev => ({ ...prev, ...updatedFields }));
         }
       }
 
       const aiMsgObj = { 
-        id: Date.now().toString(), 
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, 
         role: 'model', 
         timestamp: getCurrentTimeString(), 
         message: JSON.stringify(parsedData) 
@@ -513,7 +513,8 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       explanation: '', 
       correctedText: '', 
       pronunciationScore: 85, 
-      pronunciationTip: 'Keep your pacing steady and clear.' 
+      pronunciationTip: 'Keep your pacing steady and clear.',
+      roleplayContext: 'Interactive Practice'
     };
     
     try {
@@ -525,6 +526,13 @@ You MUST reply ONLY with a valid JSON object in this exact format:
     return (
       <View style={styles.aiBubbleRow}>
         <View style={styles.aiBubble}>
+          <div style={{ display: 'none' }} />
+          {parsedData.roleplayContext ? (
+            <View style={styles.roleplayBadge}>
+              <Text style={styles.roleplayBadgeText}>🎭 {parsedData.roleplayContext}</Text>
+            </View>
+          ) : null}
+
           <View style={styles.aiSenderHeader}>
             <Text style={styles.buddyLabel}>⚡ DAY {currentDayNum} TUTOR AI</Text>
             <TouchableOpacity onPress={() => queueOrPlayAudio(parsedData.reply, item.id)}>
@@ -580,7 +588,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </TouchableOpacity>
         </View>
 
-        {/* Spoken Language Toggle Selector (EN, HI, PA) */}
         <View style={styles.langSelectorContainer}>
           {[
             { code: 'en-US', label: 'EN' },
@@ -644,7 +651,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
       </KeyboardAvoidingView>
 
-      {/* Voice Selection Modal */}
       <Modal visible={showVoiceModal} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -803,6 +809,21 @@ const styles = StyleSheet.create({
     maxWidth: '78%',
     borderWidth: 1.5,
     borderColor: '#116466',
+  },
+  roleplayBadge: {
+    backgroundColor: 'rgba(255, 203, 154, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
+  },
+  roleplayBadgeText: {
+    color: '#FFCB9A',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   aiSenderHeader: {
     flexDirection: 'row',
