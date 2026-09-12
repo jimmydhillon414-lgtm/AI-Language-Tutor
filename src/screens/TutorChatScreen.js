@@ -175,47 +175,30 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
+      recognition.continuous = false; // Fixed: Stops the loop accumulation bug
+      recognition.interimResults = false; // Fixed: Takes clean final spoken sentence
       recognition.lang = speechLang;
 
       recognitionRef.current = recognition;
       setListening(true);
 
-      let finalSpokenText = '';
-
       recognition.onresult = (event) => {
-        let interimTranscript = '';
-        let currentBatchFinal = '';
-
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            currentBatchFinal += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
+        const rawText = event.results[0][0].transcript;
+        if (rawText) {
+          // Clean text deduplication filter
+          const words = rawText.trim().split(/\s+/);
+          const uniqueWords = [];
+          for (let i = 0; i < words.length; i++) {
+            if (i === 0 || words[i].toLowerCase() !== words[i - 1].toLowerCase()) {
+              uniqueWords.push(words[i]);
+            }
           }
+          const cleanText = uniqueWords.join(' ');
+          
+          setInput(cleanText);
+          stopVoiceInput();
+          handleSendDirect(cleanText);
         }
-
-        if (currentBatchFinal) {
-          finalSpokenText += ' ' + currentBatchFinal;
-        }
-
-        const displayText = finalSpokenText.trim() || interimTranscript;
-        if (displayText) {
-          setInput(displayText);
-        }
-
-        if (silenceTimerRef.current) {
-          clearTimeout(silenceTimerRef.current);
-        }
-
-        silenceTimerRef.current = setTimeout(() => {
-          const textToSend = finalSpokenText.trim() || displayText;
-          if (textToSend) {
-            stopVoiceInput();
-            handleSendDirect(textToSend);
-          }
-        }, 1500);
       };
 
       recognition.onerror = (event) => {
@@ -526,7 +509,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
     return (
       <View style={styles.aiBubbleRow}>
         <View style={styles.aiBubble}>
-          <div style={{ display: 'none' }} />
           {parsedData.roleplayContext ? (
             <View style={styles.roleplayBadge}>
               <Text style={styles.roleplayBadgeText}>🎭 {parsedData.roleplayContext}</Text>
