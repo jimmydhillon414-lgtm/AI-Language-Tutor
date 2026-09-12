@@ -9,7 +9,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
 } from 'react-native';
-import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
 
@@ -33,7 +33,12 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  
+  // Audio state management for pause/resume tracking
+  const [sound, setSound] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [speakingId, setSpeakingId] = useState(null);
+  const [playbackPosition, setPlaybackPosition] = useState(0);
   
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
@@ -47,7 +52,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         try { recognitionRef.current.stop(); } catch (e) {}
       }
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      Speech.stop();
+      if (sound) {
+        sound.unloadAsync();
+      }
     };
   }, []);
 
@@ -206,28 +213,60 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setListening(false);
   };
 
-  const speakText = (text, messageId) => {
-    if (speakingId === messageId) {
-      Speech.stop();
-      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+  // Updated Audio Playback Handler with Resume Support
+  const handlePlayPauseAudio = async (text, messageId) => {
+    try {
+      // Agar same message ka audio pehle se loaded hai
+      if (sound && speakingId === messageId) {
+        const status = await sound.getStatusAsync();
+        if (status.isLoaded) {
+          if (isPlaying) {
+            // Agar chal raha hai, toh pause karo aur current position save karo
+            setPlaybackPosition(status.positionMillis);
+            await sound.pauseAsync();
+            setIsPlaying(false);
+          } else {
+            // Agar pause hai, toh wahi purani position se resume karo
+            await sound.playFromPositionAsync(playbackPosition);
+            setIsPlaying(true);
+          }
+        }
+      } else {
+        // Agar naya message hai, toh purana sound unload karo
+        if (sound) {
+          await sound.unloadAsync();
+          setSound(null);
+        }
+
+        setSpeakingId(messageId);
+        setPlaybackPosition(0);
+
+        // Note: Agar aapke paas TTS API URL hai toh wo use karein. 
+        // Example ke liye yahan sample audio ya text-to-speech stream URL daal sakte hain.
+        // Agar aap Expo web/native par standard audio file stream chahte hain:
+        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${getLanguageCode(userProfile?.target_language)}&client=tw-ob`;
+
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: ttsUrl },
+          { shouldPlay: true }
+        );
+        
+        setSound(newSound);
+        setIsPlaying(true);
+
+        newSound.setOnPlaybackStatusUpdate((status) => {
+          if (status.didJustFinish) {
+            setIsPlaying(false);
+            setPlaybackPosition(0);
+            setSpeakingId(null);
+          }
+        });
       }
+    } catch (err) {
+      console.log('Audio playback error:', err);
       setSpeakingId(null);
-      return;
+      setIsPlaying(false);
     }
-    
-    Speech.stop();
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-    
-    setSpeakingId(messageId);
-    
-    Speech.speak(text, {
-      language: getLanguageCode(userProfile?.target_language),
-      onDone: () => setSpeakingId(null),
-      onError: () => setSpeakingId(null),
-    });
   };
 
   const getCurrentTimeString = () => {
@@ -266,7 +305,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     try {
       const targetLang = userProfile?.target_language || 'English';
       
-      // Dynamic Difficulty mapping based on selectedDay
       let difficultyLevel = "Beginner (A1)";
       if (currentDayNum > 10 && currentDayNum <= 25) difficultyLevel = "Elementary (A2)";
       else if (currentDayNum > 25 && currentDayNum <= 45) difficultyLevel = "Intermediate (B1)";
@@ -317,7 +355,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
       setMessages((prev) => [...prev, aiMsgObj]);
       if (parsedData.reply) {
-        speakText(parsedData.reply, aiMsgObj.id);
+        handlePlayPauseAudio(parsedData.reply, aiMsgObj.id);
       }
     } catch (err) {
       console.log('AI Error:', err);
@@ -350,13 +388,17 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       parsedData = JSON.parse(item.message);
     } catch (e) {}
 
+    const isThisSpeaking = speakingId === item.id;
+
     return (
       <View style={styles.aiBubbleRow}>
         <View style={styles.aiBubble}>
           <View style={styles.aiSenderHeader}>
             <Text style={styles.buddyLabel}>⚡ BUDDY AI (DAY {currentDayNum})</Text>
-            <TouchableOpacity onPress={() => speakText(parsedData.reply, item.id)}>
-              <Text style={{ fontSize: 12 }}>🔊</Text>
+            <TouchableOpacity onPress={() => handlePlayPauseAudio(parsedData.reply, item.id)}>
+              <Text style={{ fontSize: 12 }}>
+                {isThisSpeaking && isPlaying ? '⏸️' : '🔊'}
+              </Text>
             </TouchableOpacity>
           </View>
 
