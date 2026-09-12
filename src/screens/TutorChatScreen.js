@@ -272,7 +272,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       utterance.lang = getLanguageCode(userProfile?.target_language);
       utterance.rate = 0.95;
 
-      // Apply selected voice/accent if configured by user
       if (userProfile?.preferred_voice) {
         const selectedVoiceObj = availableVoices.find(v => v.name === userProfile.preferred_voice);
         if (selectedVoiceObj) {
@@ -510,17 +509,20 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   return (
     <AppBackground>
       <View style={styles.headerBar}>
-        {onBack && (
-          <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.8}>
-            <Text style={styles.backButtonText}>← Back</Text>
+        <View style={styles.headerLeftGroup}>
+          {onBack && (
+            <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.8}>
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+          )}
+          
+          {/* Voice button placed right beside Back button */}
+          <TouchableOpacity style={[styles.voiceConfigBtn, { marginLeft: 8 }]} onPress={() => setShowVoiceModal(true)}>
+            <Text style={styles.voiceConfigBtnText}>🎙️ Voice</Text>
           </TouchableOpacity>
-        )}
+        </View>
+
         <Text style={styles.headerTitle}>Day {currentDayNum} Practice Session</Text>
-        
-        {/* Voice Selection Trigger Button */}
-        <TouchableOpacity style={styles.voiceConfigBtn} onPress={() => setShowVoiceModal(true)}>
-          <Text style={styles.voiceConfigBtnText}>🎙️ Voice</Text>
-        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView 
@@ -615,6 +617,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(11, 25, 23, 0.95)',
     borderBottomWidth: 1.5,
     borderBottomColor: '#116466',
+  },
+  headerLeftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     backgroundColor: '#116466',
