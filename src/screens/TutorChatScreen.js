@@ -7,6 +7,7 @@ import {
   FlatList,
   Platform,
   TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
 import * as Speech from 'expo-speech';
 import { supabase } from '../api/supabase';
@@ -105,7 +106,6 @@ export default function TutorChatScreen({ navigation }) {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
-    // If native Web Speech API is missing (e.g. Mobile Safari / unsupported mobile web), fallback to MediaRecorder
     if (!SpeechRecognition) {
       startMobileAudioFallback();
       return;
@@ -193,7 +193,6 @@ export default function TutorChatScreen({ navigation }) {
 
       mediaRecorder.start();
 
-      // Auto stop recording after 6 seconds to prevent hanging
       setTimeout(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           mediaRecorderRef.current.stop();
@@ -386,7 +385,11 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
   return (
     <AppBackground>
-      <View style={styles.container}>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
         <View style={styles.chatArea}>
           <View style={styles.chatOverlay}>
             <FlatList
@@ -426,7 +429,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             <Text style={{ fontSize: 16, color: '#1B2A26', fontWeight: 'bold' }}>➤</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </AppBackground>
   );
 }
@@ -435,10 +438,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
+    ...(Platform.OS === 'web' ? { height: 'calc(100vh - 65px)', overflow: 'hidden' } : {}),
   },
   chatArea: {
     flex: 1,
     backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
   chatOverlay: {
     flex: 1,
@@ -566,21 +571,21 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(24, 44, 37, 0.9)',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: 'rgba(24, 44, 37, 0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderTopWidth: 2,
     borderTopColor: '#116466',
-    ...(Platform.OS === 'web' ? { pointerEvents: 'auto' } : {}),
+    ...(Platform.OS === 'web' ? { pointerEvents: 'auto', width: '100%' } : {}),
   },
   plusButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#116466',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: 6,
     borderWidth: 1,
     borderColor: '#FFCB9A',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
@@ -589,31 +594,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#121E1A',
     color: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 11,
-    borderRadius: 22,
-    fontSize: 14,
-    marginHorizontal: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    fontSize: 13,
+    marginHorizontal: 4,
     borderWidth: 1.5,
     borderColor: '#116466',
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
   },
   micButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#116466',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 6,
+    marginHorizontal: 4,
     borderWidth: 1,
     borderColor: '#FFCB9A',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   sendPlaneButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#FFCB9A',
     alignItems: 'center',
     justifyContent: 'center',
