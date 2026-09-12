@@ -229,18 +229,21 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const synth = window.speechSynthesis;
       const langCode = getLanguageCode(userProfile?.target_language);
 
-      if (speakingId === messageId && synth.speaking && !synth.paused) {
-        synth.pause();
-        setIsPlaying(false);
-        return;
+      // If clicking the same message that is currently speaking
+      if (speakingId === messageId) {
+        if (synth.speaking && !synth.paused) {
+          synth.pause();
+          setIsPlaying(false);
+          return;
+        }
+        if (synth.paused) {
+          synth.resume();
+          setIsPlaying(true);
+          return;
+        }
       }
 
-      if (speakingId === messageId && synth.paused) {
-        synth.resume();
-        setIsPlaying(true);
-        return;
-      }
-
+      // Otherwise, cancel any ongoing speech and start fresh for this message
       synth.cancel();
       setSpeakingId(messageId);
 
@@ -304,8 +307,8 @@ Current User Interest/Topic: "${currentInterest}".
 Current User Input: "${messageValue.trim()}".
 
 Your tasks:
-1. **Grammar & Sentence Analysis**: Check if the user's input contains any grammar, spelling, or phrasing mistakes (e.g., "I am want to played cricket"). If there is a mistake, set "hasCorrection": true, provide "originalText", "correctedText", and a clear "explanation" of what was wrong and how to fix it.
-2. **Interest Detection**: Check if the user is mentioning a *new* interest, hobby, or topic (e.g., switching from Travel to Cricket). If a new interest is detected, extract it as "new_field_of_interest". Otherwise, leave "new_field_of_interest" null.
+1. **Grammar & Sentence Analysis**: Check if the user's input contains any grammar, spelling, or phrasing mistakes. If there is a mistake, set "hasCorrection": true, provide "originalText", "correctedText", and a clear "explanation" of what was wrong and how to fix it.
+2. **Interest Detection**: Check if the user is mentioning a *new* interest, hobby, or topic. If a new interest is detected, extract it as "new_field_of_interest". Otherwise, leave "new_field_of_interest" null.
 3. **Conversational Reply**: Continue the roleplay or conversation based on their current or newly detected interest.
 
 You MUST reply ONLY with a valid JSON object in this exact format:
@@ -313,7 +316,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "hasCorrection": true/false,
   "originalText": "${messageValue.trim()}",
   "correctedText": "Corrected sentence if there is an error, otherwise empty string",
-  explanation": "Clear explanation of grammar/phrasing correction",
+  "explanation": "Clear explanation of grammar/phrasing correction",
   "new_field_of_interest": "Extracted new topic if user changed interest, otherwise null",
   "learning_goal": "Updated or current learning goal",
   "reply": "Your conversational response continuing the session"
@@ -330,7 +333,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         };
       }
 
-      // If user specified a new interest or if fields were empty, update Supabase immediately
       if (parsedData.new_field_of_interest || !userProfile.field_of_interest) {
         const updatedFields = {
           field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || 'General',
