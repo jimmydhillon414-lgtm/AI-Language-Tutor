@@ -260,6 +260,21 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Helper to log grammar corrections to Supabase
+  async function logGrammarCorrection(original, corrected, explanation) {
+    try {
+      if (!userIdRef.current) return;
+      await supabase.from('grammar_history').insert({
+        user_id: userIdRef.current,
+        original_text: original,
+        corrected_text: corrected,
+        explanation: explanation || 'Grammar correction during chat session.'
+      });
+    } catch (err) {
+      console.log('Error saving grammar history:', err);
+    }
+  }
+
   async function getAiResponse(promptText) {
     const { data, error } = await supabase.functions.invoke('ai-proxy', {
       body: { prompt: promptText },
@@ -323,6 +338,15 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           hasCorrection: false,
           reply: responseText || 'Let us continue practicing!',
         };
+      }
+
+      // Automatically log grammar correction if present
+      if (parsedData.hasCorrection && parsedData.correctedText) {
+        await logGrammarCorrection(
+          parsedData.originalText || messageValue.trim(),
+          parsedData.correctedText,
+          parsedData.explanation
+        );
       }
 
       if (parsedData.new_field_of_interest || !userProfile.field_of_interest) {
