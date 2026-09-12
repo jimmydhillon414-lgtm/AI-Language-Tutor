@@ -54,7 +54,6 @@ export default function AppNavigator() {
     }
   };
 
-  // Direct Roadmap khulega bina kisi payment modal ke
   const handleSelectPlan = (planName) => {
     setSelectedPlan(planName);
     setIsPaid(true);
@@ -116,13 +115,29 @@ export default function AppNavigator() {
 
     switch (activeTab) {
       case 'AI Tutor':
-        return <TutorChatScreen selectedDay={selectedDay} />;
+        return (
+          <TutorChatScreen 
+            selectedDay={selectedDay} 
+            onBack={() => {
+              setCurrentStep('roadmap');
+            }}
+            onSignOut={handleSignOut}
+          />
+        );
       case 'Grammar History':
         return <GrammarHistoryScreen />;
       case 'Profile Settings':
         return <ProfileScreen user={user} selectedPlan={selectedPlan} />;
       default:
-        return <TutorChatScreen selectedDay={selectedDay} />;
+        return (
+          <TutorChatScreen 
+            selectedDay={selectedDay} 
+            onBack={() => {
+              setCurrentStep('roadmap');
+            }}
+            onSignOut={handleSignOut}
+          />
+        );
     }
   };
 
