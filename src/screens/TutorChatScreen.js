@@ -113,6 +113,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       timestamp: getCurrentTimeString(),
       message: JSON.stringify({
         hasCorrection: false,
+        pronunciationScore: 90,
+        pronunciationTip: "Keep your pacing steady and clear.",
         reply: `Welcome to Day ${dayNum} of your ${targetLang} training! Today's focus is integrated with your interest in "${interest}". Let's start practicing. Send a sentence or reply to begin!`,
         isVoiceNote: false,
       }),
@@ -375,9 +377,10 @@ Current User Interest/Topic: "${currentInterest}".
 Current User Input: "${messageValue.trim()}".
 
 Your tasks:
-1. **Grammar & Sentence Analysis**: Check if the user's input contains any grammar, spelling, or phrasing mistakes. If there is a mistake, set "hasCorrection": true, provide "originalText", "correctedText", and a clear "explanation" of what was wrong and how to fix it.
-2. **Curriculum Alignment**: Tailor your conversational response specifically keeping Day ${currentDayNum} objectives and their interest "${currentInterest}" in mind.
-3. **Interest Detection**: Check if the user is mentioning a *new* interest or topic. If so, extract it as "new_field_of_interest". Otherwise, leave it null.
+1. **Grammar & Sentence Analysis**: Check if the user's input contains any grammar, spelling, or phrasing mistakes. If there is a mistake, set "hasCorrection": true, provide "originalText", "correctedText", and a clear "explanation".
+2. **Pronunciation & Fluency Score (MANDATORY)**: You MUST ALWAYS evaluate the user's input and provide a realistic fluency score from 50 to 100 as "pronunciationScore" and a concise actionable tip under "pronunciationTip".
+3. **Curriculum Alignment**: Tailor your conversational response specifically keeping Day ${currentDayNum} objectives and their interest "${currentInterest}" in mind.
+4. **Interest Detection**: Check if the user is mentioning a *new* interest or topic. If so, extract it as "new_field_of_interest". Otherwise, leave it null.
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
@@ -385,6 +388,8 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "originalText": "${messageValue.trim()}",
   "correctedText": "Corrected sentence if there is an error, otherwise empty string",
   "explanation": "Clear explanation of grammar/phrasing correction",
+  "pronunciationScore": 85,
+  "pronunciationTip": "Tip to improve spoken clarity or pacing",
   "new_field_of_interest": "Extracted new topic if user changed interest, otherwise null",
   "learning_goal": "Updated or current learning goal for Day ${currentDayNum}",
   "reply": "Your conversational response continuing Day ${currentDayNum} session"
@@ -397,8 +402,18 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       } catch (e) {
         parsedData = {
           hasCorrection: false,
+          pronunciationScore: 85,
+          pronunciationTip: "Good articulation. Keep practicing.",
           reply: responseText || 'Let us continue practicing!',
         };
+      }
+
+      // Fallback in case AI misses score fields
+      if (!parsedData.pronunciationScore) {
+        parsedData.pronunciationScore = 85;
+      }
+      if (!parsedData.pronunciationTip) {
+        parsedData.pronunciationTip = "Good rhythm and phrasing.";
       }
 
       if (parsedData.hasCorrection && parsedData.correctedText) {
@@ -465,7 +480,15 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       );
     }
 
-    let parsedData = { reply: item.message, hasCorrection: false, explanation: '', correctedText: '' };
+    let parsedData = { 
+      reply: item.message, 
+      hasCorrection: false, 
+      explanation: '', 
+      correctedText: '', 
+      pronunciationScore: 85, 
+      pronunciationTip: 'Keep your pacing steady and clear.' 
+    };
+    
     try {
       parsedData = JSON.parse(item.message);
     } catch (e) {}
@@ -493,6 +516,16 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             </View>
           ) : null}
 
+          {/* Pronunciation Score Badge Display */}
+          <View style={styles.pronunciationBox}>
+            <Text style={styles.pronunciationText}>
+              ⚡ Pronunciation: <Text style={{color: '#FFCB9A', fontWeight: 'bold'}}>{parsedData.pronunciationScore || 85}/100</Text>
+            </Text>
+            {parsedData.pronunciationTip ? (
+              <Text style={styles.explanationText}>Tip: {parsedData.pronunciationTip}</Text>
+            ) : null}
+          </View>
+
           <Text style={styles.aiText}>{parsedData.reply}</Text>
           
           <View style={styles.timeAndAvatarRowAi}>
@@ -516,7 +549,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             </TouchableOpacity>
           )}
           
-          {/* Voice button placed right beside Back button */}
           <TouchableOpacity style={[styles.voiceConfigBtn, { marginLeft: 8 }]} onPress={() => setShowVoiceModal(true)}>
             <Text style={styles.voiceConfigBtnText}>🎙️ Voice</Text>
           </TouchableOpacity>
@@ -737,6 +769,14 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: '#FFCB9A',
   },
+  pronunciationBox: {
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#6EE7B7',
+  },
   correctionTitle: {
     color: '#FFCB9A',
     fontSize: 11,
@@ -744,6 +784,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   correctionText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  pronunciationText: {
     color: '#FFFFFF',
     fontSize: 13,
     marginBottom: 2,
