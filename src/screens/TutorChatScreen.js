@@ -13,9 +13,11 @@ import * as Speech from 'expo-speech';
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
 
-export default function TutorChatScreen({ navigation }) {
+export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
   const [userProfile, setUserProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
   
+  const currentDayNum = selectedDay || 1;
+
   const [messages, setMessages] = useState([
     {
       id: '1',
@@ -23,25 +25,8 @@ export default function TutorChatScreen({ navigation }) {
       timestamp: '09:30 AM',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: "Hello! I'm Buddy. Welcome to your elite AI language session.",
+        reply: `Hello! I'm Buddy. Welcome to Day ${currentDayNum} of your elite AI language session. Let's begin!`,
         isVoiceNote: false,
-      }),
-    },
-    {
-      id: '2',
-      role: 'user',
-      timestamp: '09:30 AM',
-      message: 'I want to master English fluently.',
-    },
-    {
-      id: '3',
-      role: 'model',
-      timestamp: '09:31 AM',
-      message: JSON.stringify({
-        hasCorrection: false,
-        reply: "Splendid! Let's begin building your vocabulary today.",
-        isVoiceNote: true,
-        duration: '0:03',
       }),
     },
   ]);
@@ -280,10 +265,22 @@ export default function TutorChatScreen({ navigation }) {
 
     try {
       const targetLang = userProfile?.target_language || 'English';
-      const proficiency = userProfile?.proficiency_level || 'Beginner';
+      
+      // Dynamic Difficulty mapping based on selectedDay
+      let difficultyLevel = "Beginner (A1)";
+      if (currentDayNum > 10 && currentDayNum <= 25) difficultyLevel = "Elementary (A2)";
+      else if (currentDayNum > 25 && currentDayNum <= 45) difficultyLevel = "Intermediate (B1)";
+      else if (currentDayNum > 45) difficultyLevel = "Advanced (B2/C1)";
 
-      const prompt = `You are an expert ${targetLang} language tutor coaching a ${proficiency} level student. The user says: "${messageValue.trim()}".
-Answer their question directly and helpfully. Check if their text has any mistakes based on ${targetLang}.
+      const prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student on Day ${currentDayNum} of their curriculum. 
+Current Proficiency Standard: ${difficultyLevel}.
+
+The user says: "${messageValue.trim()}".
+
+Act as a proactive tutor:
+1. Respond directly and helpfully to their input keeping the Day ${currentDayNum} topic and ${difficultyLevel} standard in mind.
+2. Adjust your vocabulary, sentence length, and tone strictly according to ${difficultyLevel}.
+3. Provide real-time corrections if there are grammar mistakes.
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
@@ -291,7 +288,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "originalText": "${messageValue.trim()}",
   "correctedText": "",
   "explanation": "",
-  "reply": "Your detailed and helpful answer here",
+  "reply": "Your detailed, level-appropriate response here",
   "isVoiceNote": false
 }`;
 
@@ -357,7 +354,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       <View style={styles.aiBubbleRow}>
         <View style={styles.aiBubble}>
           <View style={styles.aiSenderHeader}>
-            <Text style={styles.buddyLabel}>⚡ BUDDY AI TUTOR</Text>
+            <Text style={styles.buddyLabel}>⚡ BUDDY AI (DAY {currentDayNum})</Text>
             <TouchableOpacity onPress={() => speakText(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>🔊</Text>
             </TouchableOpacity>
@@ -385,6 +382,15 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
   return (
     <AppBackground>
+      <View style={styles.headerBar}>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.8}>
+            <Text style={styles.backButtonText}>← Roadmap</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.headerTitle}>Day {currentDayNum} Session</Text>
+      </View>
+
       <KeyboardAvoidingView 
         style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -412,7 +418,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder="Ask your AI tutor or speak..."
+            placeholder={`Reply to Buddy for Day ${currentDayNum}...`}
             placeholderTextColor="#A3B8B0"
             onSubmitEditing={() => handleSendDirect(input)}
             returnKeyType="send"
@@ -435,6 +441,34 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 }
 
 const styles = StyleSheet.create({
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(11, 25, 23, 0.95)',
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#116466',
+  },
+  backButton: {
+    backgroundColor: '#116466',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
+  },
+  backButtonText: {
+    color: '#FFCB9A',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -442,7 +476,7 @@ const styles = StyleSheet.create({
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      maxHeight: 'calc(100dvh - 60px)',
+      maxHeight: 'calc(100dvh - 110px)',
       overflow: 'hidden' 
     } : {}),
   },
