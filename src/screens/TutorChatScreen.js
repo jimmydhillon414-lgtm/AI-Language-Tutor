@@ -13,27 +13,20 @@ import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
 
 export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
-  const [userProfile, setUserProfile] = useState({ target_language: 'English', proficiency_level: 'Beginner' });
+  const [userProfile, setUserProfile] = useState({ 
+    target_language: 'English', 
+    proficiency_level: 'Beginner',
+    learning_goal: null,
+    field_of_interest: null
+  });
   
   const currentDayNum = selectedDay || 1;
 
-  const [messages, setMessages] = useState([
-    {
-      id: '1',
-      role: 'model',
-      timestamp: '09:30 AM',
-      message: JSON.stringify({
-        hasCorrection: false,
-        reply: `Hello! Welcome to Day 1. Today we will learn simple greetings and how to say who we are. Greetings: Hello, Hi, Good morning, Good evening. Introducing yourself: My name is... I am from... I am a student. Practice: Write three sentences about yourself using the pattern above.`,
-        isVoiceNote: false,
-      }),
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
-  // Audio state tracking
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   
@@ -41,6 +34,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const recognitionRef = useRef(null);
   const silenceTimerRef = useRef(null);
   const mediaRecorderRef = useRef(null);
+  const userIdRef = useRef(null);
 
   useEffect(() => {
     fetchUserAndProfile();
@@ -65,6 +59,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      userIdRef.current = user.id;
 
       const { data: profile } = await supabase
         .from('user_profiles')
@@ -74,11 +69,48 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
       if (profile) {
         setUserProfile(profile);
+        
+        // Check if profile lacks goal/interest, initialize conversation accordingly
+        if (!profile.field_of_interest || !profile.learning_goal) {
+          initializeOnboardingChat(profile.target_language || 'English');
+        } else {
+          initializeRoleplayChat(profile);
+        }
+      } else {
+        initializeOnboardingChat('English');
       }
     } catch (err) {
       console.log('Error fetching user profile:', err);
     }
   }
+
+  const initializeOnboardingChat = (targetLang) => {
+    const welcomeMsg = {
+      id: '1',
+      role: 'model',
+      timestamp: getCurrentTimeString(),
+      message: JSON.stringify({
+        hasCorrection: false,
+        reply: `Hello! Welcome to your ${targetLang} coaching session. To tailor our practice, what is your primary field or industry of interest? Choose from options like Business, IT, Healthcare, Travel, or tell me your own!`,
+        isVoiceNote: false,
+      }),
+    };
+    setMessages([welcomeMsg]);
+  };
+
+  const initializeRoleplayChat = (profile) => {
+    const roleplayMsg = {
+      id: '1',
+      role: 'model',
+      timestamp: getCurrentTimeString(),
+      message: JSON.stringify({
+        hasCorrection: false,
+        reply: `Welcome back! Continuing with your focus in ${profile.field_of_interest} (Goal: ${profile.learning_goal}), let's start today's dynamic scenario. How can I help you practice today?`,
+        isVoiceNote: false,
+      }),
+    };
+    setMessages([roleplayMsg]);
+  };
 
   const getLanguageCode = (lang) => {
     const langMap = {
@@ -141,18 +173,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         }
       };
 
-      recognition.onerror = (event) => {
-        if (event.error !== 'no-speech') {
-          startMobileAudioFallback();
-        } else {
-          setListening(false);
-        }
-      };
-
-      recognition.onend = () => {
-        setListening(false);
-      };
-
+      recognition.onerror = () => setListening(false);
+      recognition.onend = () => setListening(false);
       recognition.start();
     } catch (err) {
       startMobileAudioFallback();
@@ -186,7 +208,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
           mediaRecorderRef.current.stop();
         }
       }, 6000);
-
     } catch (err) {
       alert('Please allow microphone permissions in your mobile browser settings.');
       setListening(false);
@@ -204,27 +225,23 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setListening(false);
   };
 
-  // Robust Native Play/Pause/Resume Handling
   const handlePlayPauseAudio = (text, messageId) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       const synth = window.speechSynthesis;
       const langCode = getLanguageCode(userProfile?.target_language);
 
-      // Case 1: Agar same message play ho raha hai aur currently speaking hai -> Pause it
       if (speakingId === messageId && synth.speaking && !synth.paused) {
         synth.pause();
         setIsPlaying(false);
         return;
       }
 
-      // Case 2: Agar same message paused state mein hai -> Resume it exactly where it left off
       if (speakingId === messageId && synth.paused) {
         synth.resume();
         setIsPlaying(true);
         return;
       }
 
-      // Case 3: Naya message hai ya pehle wala cancel ho chuka hai -> Start fresh
       synth.cancel();
       setSpeakingId(messageId);
 
@@ -281,21 +298,33 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const targetLang = userProfile?.target_language || 'English';
-      
-      let difficultyLevel = "Beginner (A1)";
-      if (currentDayNum > 10 && currentDayNum <= 25) difficultyLevel = "Elementary (A2)";
-      else if (currentDayNum > 25 && currentDayNum <= 45) difficultyLevel = "Intermediate (B1)";
-      else if (currentDayNum > 45) difficultyLevel = "Advanced (B2/C1)";
+      const needsOnboarding = !userProfile?.field_of_interest || !userProfile?.learning_goal;
 
-      const prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student on Day ${currentDayNum} of their curriculum. 
-Current Proficiency Standard: ${difficultyLevel}.
+      let prompt = "";
+
+      if (needsOnboarding) {
+        prompt = `You are a proactive language tutor. The user is setting up their profile for ${targetLang}. 
+The user's response to your request for their field and interest is: "${messageValue.trim()}".
+
+Analyze their response, extract:
+1. "field_of_interest" (e.g., Business, IT, Healthcare, Travel, etc.)
+2. "learning_goal" (short summary of what they want to achieve)
+3. Provide a dynamic roleplay scenario kickoff reply matching their extracted field.
+
+You MUST reply ONLY with a valid JSON object in this exact format:
+{
+  "field_of_interest": "Extracted field",
+  "learning_goal": "Extracted goal",
+  "reply": "Your welcoming response launching a dynamic roleplay scenario based on this field"
+}`;
+      } else {
+        prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student in their chosen field: ${userProfile.field_of_interest} (Goal: ${userProfile.learning_goal}).
 
 The user says: "${messageValue.trim()}".
 
 Act as a proactive tutor:
-1. Respond directly and helpfully to their input keeping the Day ${currentDayNum} topic and ${difficultyLevel} standard in mind.
-2. Adjust your vocabulary, sentence length, and tone strictly according to ${difficultyLevel}.
-3. Provide real-time corrections if there are grammar mistakes.
+1. Continue the dynamic roleplay scenario tailored to ${userProfile.field_of_interest}.
+2. Provide real-time corrections if there are grammar mistakes.
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
@@ -303,24 +332,36 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "originalText": "${messageValue.trim()}",
   "correctedText": "",
   "explanation": "",
-  "reply": "Your detailed, level-appropriate response here",
+  "reply": "Your detailed, level-appropriate dynamic roleplay response here",
   "isVoiceNote": false
 }`;
+      }
 
       const responseText = await getAiResponse(prompt);
-
       let parsedData;
       try {
         parsedData = JSON.parse(responseText);
       } catch (e) {
         parsedData = {
-          hasCorrection: false,
-          originalText: messageValue.trim(),
-          correctedText: '',
-          explanation: '',
           reply: responseText || 'Let us continue practicing!',
           isVoiceNote: false,
         };
+      }
+
+      // If we were in onboarding, save extracted fields to Supabase
+      if (needsOnboarding && parsedData.field_of_interest && userIdRef.current) {
+        const updatedFields = {
+          field_of_interest: parsedData.field_of_interest,
+          learning_goal: parsedData.learning_goal || 'General practice',
+          updated_at: new Date().toISOString()
+        };
+
+        await supabase
+          .from('user_profiles')
+          .update(updatedFields)
+          .eq('id', userIdRef.current);
+
+        setUserProfile(prev => ({ ...prev, ...updatedFields }));
       }
 
       const aiMsgObj = { 
@@ -371,11 +412,9 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       <View style={styles.aiBubbleRow}>
         <View style={styles.aiBubble}>
           <View style={styles.aiSenderHeader}>
-            <Text style={styles.buddyLabel}>⚡ BUDDY AI (DAY {currentDayNum})</Text>
+            <Text style={styles.buddyLabel}>⚡ BUDDY AI (ROLEPLAY)</Text>
             <TouchableOpacity onPress={() => handlePlayPauseAudio(parsedData.reply, item.id)}>
-              <Text style={{ fontSize: 12 }}>
-                {isThisSpeaking ? '⏸️' : '🔊'}
-              </Text>
+              <Text style={{ fontSize: 12 }}>{isThisSpeaking ? '⏸️' : '🔊'}</Text>
             </TouchableOpacity>
           </View>
 
@@ -400,7 +439,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             <Text style={styles.backButtonText}>← Roadmap</Text>
           </TouchableOpacity>
         )}
-        <Text style={styles.headerTitle}>Day {currentDayNum} Session</Text>
+        <Text style={styles.headerTitle}>Dynamic Roleplay Session</Text>
       </View>
 
       <KeyboardAvoidingView 
@@ -422,15 +461,11 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
 
         <View style={styles.inputBar}>
-          <TouchableOpacity style={styles.plusButton}>
-            <Text style={{ color: '#FFCB9A', fontSize: 20, fontWeight: 'bold' }}>+</Text>
-          </TouchableOpacity>
-          
           <TextInput
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder={`Reply to Buddy for Day ${currentDayNum}...`}
+            placeholder="Type your reply or select an option..."
             placeholderTextColor="#A3B8B0"
             onSubmitEditing={() => handleSendDirect(input)}
             returnKeyType="send"
@@ -523,10 +558,6 @@ const styles = StyleSheet.create({
     maxWidth: '78%',
     borderWidth: 1.5,
     borderColor: '#FFCB9A',
-    shadowColor: '#FFCB9A',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
   },
   userBubble: {
     backgroundColor: '#1C312B',
@@ -536,9 +567,6 @@ const styles = StyleSheet.create({
     maxWidth: '78%',
     borderWidth: 1.5,
     borderColor: '#116466',
-    shadowColor: '#116466',
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
   },
   aiSenderHeader: {
     flexDirection: 'row',
@@ -617,18 +645,6 @@ const styles = StyleSheet.create({
       width: '100%',
       pointerEvents: 'auto' 
     } : {}),
-  },
-  plusButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#116466',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 6,
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
   textInput: {
     flex: 1,
