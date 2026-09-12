@@ -9,7 +9,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
 } from 'react-native';
-import { Audio } from 'expo-av';
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
 
@@ -25,7 +24,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       timestamp: '09:30 AM',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: `Hello! I'm Buddy. Welcome to Day ${currentDayNum} of your elite AI language session. Let's begin!`,
+        reply: `Hello! Welcome to your first English lesson. It is good that you want to learn English. We will start with simple words. Say "Hello" or "Hi". You can also say "My name is ...". Practice these sentences. If you have any question, ask me.`,
         isVoiceNote: false,
       }),
     },
@@ -34,11 +33,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
-  // Audio state management for pause/resume tracking
-  const [sound, setSound] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  // Speech synthesis tracking states
   const [speakingId, setSpeakingId] = useState(null);
-  const [playbackPosition, setPlaybackPosition] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
@@ -52,8 +49,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         try { recognitionRef.current.stop(); } catch (e) {}
       }
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      if (sound) {
-        sound.unloadAsync();
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
       }
     };
   }, []);
@@ -140,7 +137,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
       recognition.onerror = (event) => {
         if (event.error !== 'no-speech') {
-          console.warn('Speech recognition error, falling back to audio recording:', event.error);
           startMobileAudioFallback();
         } else {
           setListening(false);
@@ -153,7 +149,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
       recognition.start();
     } catch (err) {
-      console.warn('Failed to start speech recognition, using mobile fallback:', err);
       startMobileAudioFallback();
     }
   };
@@ -169,13 +164,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-      let audioChunks = [];
 
       setListening(true);
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
 
       mediaRecorder.onstop = async () => {
         setListening(false);
@@ -192,7 +182,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       }, 6000);
 
     } catch (err) {
-      console.error('Microphone permission denied or error:', err);
       alert('Please allow microphone permissions in your mobile browser settings.');
       setListening(false);
     }
@@ -201,71 +190,52 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const stopVoiceInput = () => {
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {}
+      try { recognitionRef.current.stop(); } catch (e) {}
     }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch (e) {}
+      try { mediaRecorderRef.current.stop(); } catch (e) {}
     }
     setListening(false);
   };
 
-  // Updated Audio Playback Handler with Resume Support
-  const handlePlayPauseAudio = async (text, messageId) => {
-    try {
-      // Agar same message ka audio pehle se loaded hai
-      if (sound && speakingId === messageId) {
-        const status = await sound.getStatusAsync();
-        if (status.isLoaded) {
-          if (isPlaying) {
-            // Agar chal raha hai, toh pause karo aur current position save karo
-            setPlaybackPosition(status.positionMillis);
-            await sound.pauseAsync();
-            setIsPlaying(false);
+  // Robust Web Speech Synthesis Handler with Pause/Resume Support
+  const handlePlayPauseAudio = (text, messageId) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+      const synth = window.speechSynthesis;
+
+      // Agar same message pe click hua hai
+      if (speakingId === messageId) {
+        if (synth.speaking) {
+          if (synth.paused) {
+            synth.resume();
+            setIsPaused(false);
+            return;
           } else {
-            // Agar pause hai, toh wahi purani position se resume karo
-            await sound.playFromPositionAsync(playbackPosition);
-            setIsPlaying(true);
+            synth.pause();
+            setIsPaused(true);
+            return;
           }
         }
-      } else {
-        // Agar naya message hai, toh purana sound unload karo
-        if (sound) {
-          await sound.unloadAsync();
-          setSound(null);
-        }
-
-        setSpeakingId(messageId);
-        setPlaybackPosition(0);
-
-        // Note: Agar aapke paas TTS API URL hai toh wo use karein. 
-        // Example ke liye yahan sample audio ya text-to-speech stream URL daal sakte hain.
-        // Agar aap Expo web/native par standard audio file stream chahte hain:
-        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${getLanguageCode(userProfile?.target_language)}&client=tw-ob`;
-
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: ttsUrl },
-          { shouldPlay: true }
-        );
-        
-        setSound(newSound);
-        setIsPlaying(true);
-
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.didJustFinish) {
-            setIsPlaying(false);
-            setPlaybackPosition(0);
-            setSpeakingId(null);
-          }
-        });
       }
-    } catch (err) {
-      console.log('Audio playback error:', err);
-      setSpeakingId(null);
-      setIsPlaying(false);
+
+      // Naya message ya fresh play
+      synth.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = getLanguageCode(userProfile?.target_language);
+
+      utterance.onend = () => {
+        setSpeakingId(null);
+        setIsPaused(false);
+      };
+
+      utterance.onerror = () => {
+        setSpeakingId(null);
+        setIsPaused(false);
+      };
+
+      setSpeakingId(messageId);
+      setIsPaused(false);
+      synth.speak(utterance);
     }
   };
 
@@ -397,17 +367,10 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             <Text style={styles.buddyLabel}>⚡ BUDDY AI (DAY {currentDayNum})</Text>
             <TouchableOpacity onPress={() => handlePlayPauseAudio(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>
-                {isThisSpeaking && isPlaying ? '⏸️' : '🔊'}
+                {isThisSpeaking && !isPaused ? '⏸️' : '🔊'}
               </Text>
             </TouchableOpacity>
           </View>
-
-          {parsedData.isVoiceNote ? (
-            <View style={styles.voiceNoteContainer}>
-              <Text style={styles.voiceIcon}>▶️ 0:03</Text>
-              <View style={styles.waveformMock} />
-            </View>
-          ) : null}
 
           <Text style={styles.aiText}>{parsedData.reply}</Text>
           
@@ -629,26 +592,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#FFCB9A',
-  },
-  voiceNoteContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    padding: 6,
-    borderRadius: 8,
-  },
-  voiceIcon: {
-    color: '#FFCB9A',
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginRight: 8,
-  },
-  waveformMock: {
-    flex: 1,
-    height: 4,
-    backgroundColor: '#FFCB9A',
-    borderRadius: 2,
   },
   inputBar: {
     flexDirection: 'row',
