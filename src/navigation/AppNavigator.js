@@ -13,7 +13,6 @@ import GrammarHistoryScreen from '../screens/GrammarHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 export default function AppNavigator() {
-  // SessionStorage: Page refresh karne par session rahega, par browser band karne par clear ho jayega
   const [user, setUser] = useState(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       try {
@@ -26,7 +25,7 @@ export default function AppNavigator() {
     return null;
   });
 
-  const [currentStep, setCurrentStep] = useState('pricing'); // 'pricing', 'roadmap', 'chat'
+  const [currentStep, setCurrentStep] = useState('pricing');
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
   const [isPaid, setIsPaid] = useState(false);
@@ -190,7 +189,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#070D10',
-    ...(Platform.OS === 'web' ? { height: '100vh', overflow: 'hidden' } : {}),
+    ...(Platform.OS === 'web' ? { height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' } : {}),
   },
   content: {
     flex: 1,
