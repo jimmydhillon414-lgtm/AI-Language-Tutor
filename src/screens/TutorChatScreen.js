@@ -33,13 +33,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
-  // Audio state tracking refs
+  // Audio state tracking
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  
-  const sentenceIndexRef = useRef(0);
-  const sentencesRef = useRef([]);
-  const currentUtteranceRef = useRef(null);
   
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
@@ -61,7 +57,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
-    currentUtteranceRef.current = null;
     setIsPlaying(false);
     setSpeakingId(null);
   };
@@ -209,71 +204,45 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setListening(false);
   };
 
-  // Robust recursive sentence runner preserving index position on pause/resume
-  const playNextSentence = (synth, langCode, messageId) => {
-    if (sentenceIndexRef.current >= sentencesRef.current.length) {
-      stopAllSpeech();
-      return;
-    }
-
-    const currentSentence = sentencesRef.current[sentenceIndexRef.current];
-    if (!currentSentence || !currentSentence.trim()) {
-      sentenceIndexRef.current++;
-      playNextSentence(synth, langCode, messageId);
-      return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(currentSentence);
-    utterance.lang = langCode;
-    currentUtteranceRef.current = utterance;
-
-    utterance.onend = () => {
-      // Sirf tabhi aage badho agar current utterance wahi hai aur play state active hai
-      if (currentUtteranceRef.current === utterance) {
-        sentenceIndexRef.current++;
-        playNextSentence(synth, langCode, messageId);
-      }
-    };
-
-    utterance.onerror = () => {
-      stopAllSpeech();
-    };
-
-    synth.speak(utterance);
-  };
-
+  // Robust Native Play/Pause/Resume Handling
   const handlePlayPauseAudio = (text, messageId) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       const synth = window.speechSynthesis;
       const langCode = getLanguageCode(userProfile?.target_language);
 
-      // 1. Agar wahi message already play ho raha hai, toh use pause/stop karo (position retain rahegi)
-      if (speakingId === messageId && isPlaying) {
-        synth.cancel();
-        currentUtteranceRef.current = null;
+      // Case 1: Agar same message play ho raha hai aur currently speaking hai -> Pause it
+      if (speakingId === messageId && synth.speaking && !synth.paused) {
+        synth.pause();
         setIsPlaying(false);
-        // Note: sentenceIndexRef.current yahan par wahi index rakhega jahan par roka gaya tha!
         return;
       }
 
-      // 2. Agar koi aur message play ho raha tha ya naya message hai, toh reset karo
-      synth.cancel();
-      currentUtteranceRef.current = null;
-
-      if (speakingId !== messageId) {
-        // Naya message hai toh sentences tod kar index 0 se shuru karo
-        sentencesRef.current = text.split(/(?<=[.!?])\s+|\n+/).filter(Boolean);
-        sentenceIndexRef.current = 0;
-        setSpeakingId(messageId);
-      } else {
-        // Agar same message ko dubara play kiya gaya hai paused state se, toh current sentence index se resume hoga!
-        if (sentenceIndexRef.current >= sentencesRef.current.length) {
-          sentenceIndexRef.current = 0; // Agar khatam ho gaya tha toh wapas start se
-        }
+      // Case 2: Agar same message paused state mein hai -> Resume it exactly where it left off
+      if (speakingId === messageId && synth.paused) {
+        synth.resume();
+        setIsPlaying(true);
+        return;
       }
 
+      // Case 3: Naya message hai ya pehle wala cancel ho chuka hai -> Start fresh
+      synth.cancel();
+      setSpeakingId(messageId);
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = langCode;
+
+      utterance.onend = () => {
+        setSpeakingId(null);
+        setIsPlaying(false);
+      };
+
+      utterance.onerror = () => {
+        setSpeakingId(null);
+        setIsPlaying(false);
+      };
+
       setIsPlaying(true);
-      playNextSentence(synth, langCode, messageId);
+      synth.speak(utterance);
     }
   };
 
@@ -405,7 +374,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             <Text style={styles.buddyLabel}>⚡ BUDDY AI (DAY {currentDayNum})</Text>
             <TouchableOpacity onPress={() => handlePlayPauseAudio(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>
-                {isThisSpeaking ? '⏹️' : '🔊'}
+                {isThisSpeaking ? '⏸️' : '🔊'}
               </Text>
             </TouchableOpacity>
           </View>
