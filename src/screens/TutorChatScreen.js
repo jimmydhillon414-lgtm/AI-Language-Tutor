@@ -175,8 +175,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = true; // Enabled continuous to catch full sentences smoothly
-      recognition.interimResults = true; // Enabled interim results so text shows up live in the box
+      recognition.continuous = true;
+      recognition.interimResults = true;
       recognition.lang = speechLang;
 
       recognitionRef.current = recognition;
@@ -188,35 +188,42 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         let interimTranscript = '';
         let currentBatchFinal = '';
 
+        // Loop through results cleanly to avoid duplication bugs
         for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const transcriptPiece = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            currentBatchFinal += event.results[i][0].transcript;
+            currentBatchFinal += transcriptPiece;
           } else {
-            interimTranscript += event.results[i][0].transcript;
+            interimTranscript += transcriptPiece;
           }
         }
 
         if (currentBatchFinal) {
-          finalSpokenText += ' ' + currentBatchFinal;
+          // Cleanly append without leaving duplicated repeating segments
+          const trimmedBatch = currentBatchFinal.trim();
+          if (!finalSpokenText.endsWith(trimmedBatch)) {
+            finalSpokenText = (finalSpokenText ? finalSpokenText + ' ' : '') + trimmedBatch;
+          }
         }
 
-        const displayText = finalSpokenText.trim() || interimTranscript;
-        if (displayText) {
-          setInput(displayText); // Shows live transcription in text box
+        const displayText = finalSpokenText ? (finalSpokenText + (interimTranscript ? ' ' + interimTranscript : '')) : interimTranscript;
+        
+        if (displayText.trim()) {
+          setInput(displayText.trim());
         }
 
         if (silenceTimerRef.current) {
           clearTimeout(silenceTimerRef.current);
         }
 
-        // Automatically send after 1.5 seconds of silence
+        // Automatically send after 1.8 seconds of pause/silence
         silenceTimerRef.current = setTimeout(() => {
-          const textToSend = finalSpokenText.trim() || displayText;
+          const textToSend = (finalSpokenText || displayText).trim();
           if (textToSend) {
             stopVoiceInput();
             handleSendDirect(textToSend);
           }
-        }, 1500);
+        }, 1800);
       };
 
       recognition.onerror = (event) => {
@@ -419,7 +426,7 @@ Current User Interest/Topic: "${currentInterest}".
 Current User Input: "${messageValue.trim()}".
 
 Your tasks:
-1. **Roleplay Context**: Assume a realistic roleplay character matching the user's interest "${currentInterest}" (e.g., if interest is Football, act as a team manager or coach; if business, act as a client). Generate or maintain a short scenario title under "roleplayContext".
+1. **Roleplay Context**: Assume a realistic roleplay character matching the user's interest "${currentInterest}". Generate or maintain a short scenario title under "roleplayContext".
 2. **Grammar & Sentence Analysis**: Check if the user's input contains any mistakes. If there is a mistake, set "hasCorrection": true, provide "originalText", "correctedText", and a clear "explanation".
 3. **Pronunciation & Fluency Score (MANDATORY)**: Evaluate the user's input with a realistic score from 50 to 100 as "pronunciationScore" and a concise tip under "pronunciationTip".
 4. **Interest & Goal Updates**: Extract any new interest under "new_field_of_interest" if applicable, otherwise null.
@@ -432,7 +439,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "explanation": "Clear explanation of grammar correction",
   "pronunciationScore": 85,
   "pronunciationTip": "Tip to improve spoken clarity",
-  "roleplayContext": "Short label of current scenario (e.g., 'Tactical Discussion with Coach')",
+  "roleplayContext": "Short label of current scenario",
   "new_field_of_interest": "Extracted new topic if user changed interest, otherwise null",
   "learning_goal": "Updated or current learning goal",
   "reply": "Your in-character conversational response continuing the roleplay"
