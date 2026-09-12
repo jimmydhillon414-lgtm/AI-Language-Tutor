@@ -6,15 +6,18 @@ export default function GrammarHistoryScreen() {
   const [corrections, setCorrections] = useState([]);
   const [filter, setFilter] = useState('ALL');
 
+  // Har baar jab yeh screen focus ya mount ho, data refresh ho
   useEffect(() => {
     fetchCorrections();
   }, []);
 
   async function fetchCorrections() {
     try {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Fetching from tutor_chat_history ordered by newest first
       const { data, error } = await supabase
         .from('tutor_chat_history')
         .select('*')
@@ -25,21 +28,26 @@ export default function GrammarHistoryScreen() {
       if (error) throw error;
 
       const parsedList = [];
-      data.forEach((item) => {
-        try {
-          const parsed = JSON.parse(item.message);
-          if (parsed && (parsed.hasCorrection || parsed.explanation)) {
-            parsedList.push({
-              id: item.id,
-              originalText: parsed.originalText || '',
-              correctedText: parsed.correctedText || '',
-              explanation: parsed.explanation || '',
-              hasCorrection: parsed.hasCorrection || false,
-              createdAt: item.created_at,
-            });
+      if (data) {
+        data.forEach((item) => {
+          try {
+            const parsed = JSON.parse(item.message);
+            // Check if it's a correction or contains explanation/tips
+            if (parsed && (parsed.hasCorrection || parsed.explanation || parsed.correctedText)) {
+              parsedList.push({
+                id: item.id,
+                originalText: parsed.originalText || parsed.original || '',
+                correctedText: parsed.correctedText || parsed.corrected || '',
+                explanation: parsed.explanation || '',
+                hasCorrection: Boolean(parsed.hasCorrection || parsed.correctedText),
+                createdAt: item.created_at,
+              });
+            }
+          } catch (e) {
+            // Fallback if message is plain text
           }
-        } catch (e) {}
-      });
+        });
+      }
 
       setCorrections(parsedList);
     } catch (err) {
@@ -80,14 +88,16 @@ export default function GrammarHistoryScreen() {
 
   return (
     <div style={styles.backgroundImage}>
-      {/* Fixed Background Image Layer so it stays in place while scrolling */}
       <div style={styles.bgImageWrapper}>
         <img src={require('../../assets/tutor_girl.png.png')} style={styles.bgImageStyle} alt="Background" />
         <div style={styles.bgOverlay} />
       </div>
 
       <div style={styles.container}>
-        <h1 style={styles.headerTitle}>Grammar & Learning History</h1>
+        <div style={styles.headerRow}>
+          <h1 style={styles.headerTitle}>Grammar & Learning History</h1>
+          <button style={styles.refreshButton} onClick={fetchCorrections}>🔄 Refresh</button>
+        </div>
 
         <div style={styles.filterRow}>
           <button 
@@ -112,7 +122,7 @@ export default function GrammarHistoryScreen() {
 
         {filteredCorrections.length === 0 ? (
           <div style={styles.emptyContainer}>
-            <p style={styles.emptyText}>No records found.</p>
+            <p style={styles.emptyText}>No records found. Complete a chat session with corrections to see them here!</p>
           </div>
         ) : (
           <div style={styles.listContainer}>
@@ -150,7 +160,7 @@ const styles = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   },
   bgImageWrapper: {
-    position: 'fixed', // Changed from absolute to fixed so background stays locked on screen
+    position: 'fixed',
     top: 0,
     left: 0,
     width: '100vw',
@@ -195,12 +205,27 @@ const styles = {
     position: 'relative',
     zIndex: 1,
   },
+  headerRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+    marginTop: '10px',
+  },
   headerTitle: {
     color: '#ffffff',
     fontSize: '24px',
     fontWeight: '800',
-    marginBottom: '20px',
-    marginTop: '10px',
+  },
+  refreshButton: {
+    backgroundColor: '#116466',
+    color: '#FFCB9A',
+    border: '1px solid #FFCB9A',
+    padding: '6px 12px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '12px',
   },
   filterRow: {
     display: 'flex',
