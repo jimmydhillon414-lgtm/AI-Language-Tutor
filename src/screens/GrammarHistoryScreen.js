@@ -6,7 +6,6 @@ export default function GrammarHistoryScreen() {
   const [corrections, setCorrections] = useState([]);
   const [filter, setFilter] = useState('ALL');
 
-  // Har baar jab yeh screen focus ya mount ho, data refresh ho
   useEffect(() => {
     fetchCorrections();
   }, []);
@@ -17,7 +16,6 @@ export default function GrammarHistoryScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetching from tutor_chat_history ordered by newest first
       const { data, error } = await supabase
         .from('tutor_chat_history')
         .select('*')
@@ -32,8 +30,11 @@ export default function GrammarHistoryScreen() {
         data.forEach((item) => {
           try {
             const parsed = JSON.parse(item.message);
-            // Check if it's a correction or contains explanation/tips
-            if (parsed && (parsed.hasCorrection || parsed.explanation || parsed.correctedText)) {
+            // STRICT CHECK: Only include if it has explicit correction properties or explanation
+            const hasValidCorrection = parsed && (parsed.hasCorrection === true || (parsed.originalText && parsed.correctedText));
+            const hasValidTip = parsed && !parsed.hasCorrection && parsed.explanation;
+
+            if (hasValidCorrection || hasValidTip) {
               parsedList.push({
                 id: item.id,
                 originalText: parsed.originalText || parsed.original || '',
@@ -44,7 +45,7 @@ export default function GrammarHistoryScreen() {
               });
             }
           } catch (e) {
-            // Fallback if message is plain text
+            // Skip non-JSON plain text messages completely
           }
         });
       }
@@ -59,16 +60,23 @@ export default function GrammarHistoryScreen() {
 
   async function deleteItem(id) {
     try {
+      // Optimistically remove from UI first for instant response
+      setCorrections((prev) => prev.filter((item) => item.id !== id));
+
       const { error } = await supabase
         .from('tutor_chat_history')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
-
-      setCorrections((prev) => prev.filter((item) => item.id !== id));
+      if (error) {
+        console.error('Supabase delete error:', error.message);
+        alert('Failed to delete from database: ' + error.message);
+        fetchCorrections(); // Re-fetch if deletion failed on server
+      }
     } catch (err) {
-      alert('Failed to delete item.');
+      console.error('Delete exception:', err);
+      alert('Failed to delete item due to an error.');
+      fetchCorrections();
     }
   }
 
@@ -122,7 +130,7 @@ export default function GrammarHistoryScreen() {
 
         {filteredCorrections.length === 0 ? (
           <div style={styles.emptyContainer}>
-            <p style={styles.emptyText}>No records found. Complete a chat session with corrections to see them here!</p>
+            <p style={styles.emptyText}>No grammar records found yet.</p>
           </div>
         ) : (
           <div style={styles.listContainer}>
@@ -132,7 +140,7 @@ export default function GrammarHistoryScreen() {
                   <span style={styles.cardBadge}>
                     {item.hasCorrection ? '⚠️ Grammar Correction' : '💡 Tutor Tip'}
                   </span>
-                  <button onClick={() => deleteItem(item.id)} style={styles.deleteButton}>
+                  <button onClick={() => deleteItem(item.id)} style={styles.deleteButton} title="Delete">
                     🗑️
                   </button>
                 </div>
