@@ -2,13 +2,35 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 
 export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
-  const totalDays = selectedPlan === 'Base Starter' ? 30 : (selectedPlan?.includes('Pro') ? 60 : 1);
+  const totalDays = selectedPlan === 'Base Starter' ? 30 : (selectedPlan?.includes('Pro') ? 60 : 7);
 
-  const daysList = Array.from({ length: totalDays }, (_, i) => ({
-    day: i + 1,
-    title: i === 0 ? 'Introduction & Basic Greetings' : i === 1 ? 'Daily Conversational Phrases' : `Masterclass Module ${i + 1}`,
-    unlocked: true,
-  }));
+  // Dynamic difficulty and scenario generation based on day number
+  const daysList = Array.from({ length: totalDays }, (_, i) => {
+    const dayNum = i + 1;
+    let level = "Beginner (A1)";
+    let title = "Basic Greetings & Self Introduction";
+
+    if (dayNum > 10 && dayNum <= 25) {
+      level = "Elementary (A2)";
+      title = dayNum === 11 ? "Ordering Food & Restaurant Etiquette" : `Daily Scenario Module ${dayNum}`;
+    } else if (dayNum > 25 && dayNum <= 45) {
+      level = "Intermediate (B1)";
+      title = dayNum === 26 ? "Job Interview: Tell Me About Yourself" : `Professional Practice ${dayNum}`;
+    } else if (dayNum > 45) {
+      level = "Advanced (B2/C1)";
+      title = dayNum === 46 ? "Corporate Presentation & Negotiation" : `Masterclass Scenario ${dayNum}`;
+    } else {
+      if (dayNum === 1) title = "Introduction & Basic Greetings";
+      if (dayNum === 2) title = "Asking for Directions & Travel Basics";
+    }
+
+    return {
+      day: dayNum,
+      title,
+      level,
+      unlocked: true,
+    };
+  });
 
   return (
     <View style={styles.mainWrapper}>
@@ -17,7 +39,6 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
         source={require('../../assets/tutor_girl.png.png')} 
         style={styles.bgImage} 
       />
-      {/* Lightened overlay with pointerEvents none so clicks pass through seamlessly */}
       <View style={styles.darkOverlay} />
 
       {/* Modern Sleek Top Bar */}
@@ -29,17 +50,17 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
         )}
         <View style={styles.planPill}>
           <Text style={styles.planLabel}>Active Plan:</Text>
-          <Text style={styles.planValue}>{selectedPlan || 'Free Demo'}</Text>
+          <Text style={styles.planValue}>{selectedPlan || 'Free Trial'}</Text>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerBox}>
           <View style={styles.glowBadge}>
-            <Text style={styles.badgeText}>⚡ YOUR FLUENCY ROADMAP ({totalDays} {totalDays === 1 ? 'Day' : 'Days'})</Text>
+            <Text style={styles.badgeText}>⚡ PROACTIVE ROLEPLAY ROADMAP ({totalDays} {totalDays === 1 ? 'Day' : 'Days'})</Text>
           </View>
-          <Text style={styles.title}>Your Daily Masterclass Curriculum</Text>
-          <Text style={styles.subtitle}>Complete each daily session with your AI Tutor to unlock rapid conversational fluency.</Text>
+          <Text style={styles.title}>Your Daily Immersive Curriculum</Text>
+          <Text style={styles.subtitle}>Select a daily scenario to start your proactive AI tutoring session with real-time feedback.</Text>
         </View>
 
         <View style={styles.grid}>
@@ -52,11 +73,11 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
             >
               <View style={styles.cardHeader}>
                 <Text style={styles.dayBadge}>DAY {item.day}</Text>
-                <View style={styles.liveIndicator} />
+                <Text style={styles.levelTag}>{item.level}</Text>
               </View>
               <Text style={styles.dayTitle}>{item.title}</Text>
               <View style={styles.cardFooter}>
-                <Text style={styles.statusText}>Start Session</Text>
+                <Text style={styles.statusText}>Start Scenario</Text>
                 <Text style={styles.arrowIcon}>→</Text>
               </View>
             </TouchableOpacity>
@@ -83,7 +104,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-    opacity: 0.6, // Increased opacity so the background girl/tutor image is vividly visible!
+    opacity: 0.6,
   },
   darkOverlay: {
     position: 'absolute',
@@ -91,7 +112,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(5, 11, 14, 0.45)', // Much lighter tint so it's not pitch black
+    backgroundColor: 'rgba(5, 11, 14, 0.45)',
     zIndex: 1,
     ...(Platform.OS === 'web' ? { pointerEvents: 'none' } : {}),
   },
@@ -194,14 +215,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayCard: {
-    width: 240,
-    backgroundColor: 'rgba(11, 29, 27, 0.95)', // Solid yet slightly translucent card background for readability
+    width: 250,
+    backgroundColor: 'rgba(11, 29, 27, 0.95)',
     borderRadius: 16,
     padding: 22,
     borderWidth: 2,
     borderColor: '#116466',
     justifyContent: 'space-between',
-    minHeight: 150,
+    minHeight: 160,
     ...(Platform.OS === 'web' ? { 
       cursor: 'pointer', 
       boxShadow: '0 10px 30px rgba(0,0,0,0.8)'
@@ -219,15 +240,18 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 1,
   },
-  liveIndicator: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: '#2ECC71',
+  levelTag: {
+    color: '#2ECC71',
+    fontSize: 10,
+    fontWeight: '700',
+    backgroundColor: 'rgba(46, 204, 113, 0.15)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
   dayTitle: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     marginBottom: 16,
     lineHeight: 22,
