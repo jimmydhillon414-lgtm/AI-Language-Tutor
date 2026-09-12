@@ -29,6 +29,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
+  // Spoken Language State for STT ('en-US', 'hi-IN', 'pa-IN')
+  const [speechLang, setSpeechLang] = useState('en-US');
+  
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   
@@ -61,6 +64,13 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       stopAllSpeech();
     };
   }, [currentDayNum]);
+
+  // Synchronize speechLang with user's target language profile initially if available
+  useEffect(() => {
+    if (userProfile?.target_language) {
+      setSpeechLang(getLanguageCode(userProfile.target_language));
+    }
+  }, [userProfile?.target_language]);
 
   const loadDeviceVoices = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
@@ -166,41 +176,31 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = getLanguageCode(userProfile?.target_language);
+      recognition.continuous = false;
+      recognition.interimResults = false; // Fixed: Disabled interim results to eliminate ghost typing and delayed rendering
+      recognition.lang = speechLang; // Uses active locale selector (EN, HI, PA)
 
       recognitionRef.current = recognition;
       setListening(true);
 
       recognition.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
-
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
-          }
-        }
-
-        const currentText = finalTranscript || interimTranscript;
-        if (currentText) {
-          setInput(currentText);
-
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-          silenceTimerRef.current = setTimeout(() => {
-            stopVoiceInput();
-            if (currentText.trim()) {
-              handleSendDirect(currentText.trim());
-            }
-          }, 2500);
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setInput(transcript);
+          stopVoiceInput();
+          handleSendDirect(transcript.trim());
         }
       };
 
-      recognition.onerror = () => setListening(false);
-      recognition.onend = () => setListening(false);
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setListening(false);
+      };
+
+      recognition.onend = () => {
+        setListening(false);
+      };
+
       recognition.start();
     } catch (err) {
       startMobileAudioFallback();
@@ -408,7 +408,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         };
       }
 
-      // Fallback in case AI misses score fields
       if (!parsedData.pronunciationScore) {
         parsedData.pronunciationScore = 85;
       }
@@ -516,7 +515,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             </View>
           ) : null}
 
-          {/* Pronunciation Score Badge Display */}
           <View style={styles.pronunciationBox}>
             <Text style={styles.pronunciationText}>
               ⚡ Pronunciation: <Text style={{color: '#FFCB9A', fontWeight: 'bold'}}>{parsedData.pronunciationScore || 85}/100</Text>
@@ -554,7 +552,26 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.headerTitle}>Day {currentDayNum} Practice Session</Text>
+        {/* Spoken Language Toggle Selector (EN, HI, PA) */}
+        <View style={styles.langSelectorContainer}>
+          {[
+            { code: 'en-US', label: 'EN' },
+            { code: 'hi-IN', label: 'HI' },
+            { code: 'pa-IN', label: 'PA' }
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.code}
+              style={[styles.langToggleBtn, speechLang === item.code && styles.activeLangToggle]}
+              onPress={() => setSpeechLang(item.code)}
+            >
+              <Text style={[styles.langToggleText, speechLang === item.code && { color: '#1B2A26' }]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
       <KeyboardAvoidingView 
@@ -644,7 +661,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     backgroundColor: 'rgba(11, 25, 23, 0.95)',
     borderBottomWidth: 1.5,
@@ -656,7 +673,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     backgroundColor: '#116466',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
@@ -664,17 +681,17 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     color: '#FFCB9A',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   headerTitle: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
   },
   voiceConfigBtn: {
     backgroundColor: '#1C312B',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
@@ -682,8 +699,30 @@ const styles = StyleSheet.create({
   },
   voiceConfigBtnText: {
     color: '#FFCB9A',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
+  },
+  langSelectorContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#121E1A',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#116466',
+    padding: 2,
+    gap: 2,
+  },
+  langToggleBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  activeLangToggle: {
+    backgroundColor: '#FFCB9A',
+  },
+  langToggleText: {
+    color: '#FFCB9A',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   container: {
     flex: 1,
