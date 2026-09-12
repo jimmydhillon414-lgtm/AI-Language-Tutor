@@ -70,7 +70,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       if (profile) {
         setUserProfile(profile);
         
-        // Check if database columns are genuinely missing values
         if (!profile.field_of_interest || !profile.learning_goal) {
           initializeOnboardingChat(profile.target_language || 'English');
         } else {
@@ -91,7 +90,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       timestamp: getCurrentTimeString(),
       message: JSON.stringify({
         hasCorrection: false,
-        reply: `Hello! Welcome to your ${targetLang} coaching session. To personalize your practice, what is your main interest or goal? (e.g., Traveling to hills, Business meetings, IT interviews, or daily casual chat)`,
+        reply: `Hello! Welcome to your ${targetLang} coaching session. What is your main interest or goal for practice today? (e.g., Cricket, Business, IT interviews, Traveling)`,
         isVoiceNote: false,
       }),
     };
@@ -105,7 +104,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       timestamp: getCurrentTimeString(),
       message: JSON.stringify({
         hasCorrection: false,
-        reply: `Welcome back! Continuing with your interest in "${profile.field_of_interest}" (Goal: ${profile.learning_goal}), let's continue practicing. How can I help you today?`,
+        reply: `Welcome back! Continuing with your interest in "${profile.field_of_interest}" (Goal: ${profile.learning_goal}). Feel free to chat or practice. If you want to change your topic, just let me know!`,
         isVoiceNote: false,
       }),
     };
@@ -298,48 +297,27 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const targetLang = userProfile?.target_language || 'English';
-      const needsOnboarding = !userProfile?.field_of_interest || !userProfile?.learning_goal;
+      const currentInterest = userProfile?.field_of_interest || 'General';
 
-      let prompt = "";
-
-      if (needsOnboarding) {
-        prompt = `You are an intelligent language onboarding assistant. The user's input describing their interest or goal is: "${messageValue.trim()}".
+      const prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student.
+Current User Interest/Topic: "${currentInterest}".
+Current User Input: "${messageValue.trim()}".
 
 Your tasks:
-1. Extract or deduce a clean "field_of_interest" (e.g., "Traveling to hills", "Business", "IT", etc.).
-2. Extract or deduce a clear "learning_goal" (e.g., "Planning a trip and conversing fluently").
-3. Check if the user's sentence contains grammar errors (e.g., "I am want to"). If so, politely point it out, explain the correction, and then launch the roleplay scenario.
+1. **Grammar & Sentence Analysis**: Check if the user's input contains any grammar, spelling, or phrasing mistakes (e.g., "I am want to played cricket"). If there is a mistake, set "hasCorrection": true, provide "originalText", "correctedText", and a clear "explanation" of what was wrong and how to fix it.
+2. **Interest Detection**: Check if the user is mentioning a *new* interest, hobby, or topic (e.g., switching from Travel to Cricket). If a new interest is detected, extract it as "new_field_of_interest". Otherwise, leave "new_field_of_interest" null.
+3. **Conversational Reply**: Continue the roleplay or conversation based on their current or newly detected interest.
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
-  "field_of_interest": "Extracted field or topic",
-  "learning_goal": "Extracted goal",
-  "hasCorrection": true,
+  "hasCorrection": true/false,
   "originalText": "${messageValue.trim()}",
-  "correctedText": "Provide corrected English sentence here",
-  "explanation": "Brief, friendly grammar correction explanation in Hinglish/English",
-  "reply": "Your friendly reply acknowledging their interest and starting the roleplay scenario."
+  "correctedText": "Corrected sentence if there is an error, otherwise empty string",
+  explanation": "Clear explanation of grammar/phrasing correction",
+  "new_field_of_interest": "Extracted new topic if user changed interest, otherwise null",
+  "learning_goal": "Updated or current learning goal",
+  "reply": "Your conversational response continuing the session"
 }`;
-      } else {
-        prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student whose interest is: "${userProfile.field_of_interest}" and goal is: "${userProfile.learning_goal}".
-
-The user says: "${messageValue.trim()}".
-
-CRITICAL INSTRUCTIONS:
-1. Analyze the user's input for grammar, spelling, or pronunciation mistakes (e.g., saying "I am want" instead of "I want", or confusing "heels" with "hills").
-2. If there is any mistake, set "hasCorrection" to true, provide the "originalText", "correctedText", and a clear "explanation" of how to fix it politely.
-3. Then, continue the interactive roleplay scenario related to "${userProfile.field_of_interest}".
-
-You MUST reply ONLY with a valid JSON object in this exact format:
-{
-  "hasCorrection": true,
-  "originalText": "${messageValue.trim()}",
-  "correctedText": "Corrected sentence here",
-  "explanation": "Explain why the grammar was wrong and how to improve it",
-  "reply": "Your conversational response continuing the roleplay scenario",
-  "isVoiceNote": false
-}`;
-      }
 
       const responseText = await getAiResponse(prompt);
       let parsedData;
@@ -349,25 +327,26 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         parsedData = {
           hasCorrection: false,
           reply: responseText || 'Let us continue practicing!',
-          isVoiceNote: false,
         };
       }
 
-      // Save or update profile if onboarding fields were empty
-      if (needsOnboarding && parsedData.field_of_interest && userIdRef.current) {
+      // If user specified a new interest or if fields were empty, update Supabase immediately
+      if (parsedData.new_field_of_interest || !userProfile.field_of_interest) {
         const updatedFields = {
-          field_of_interest: parsedData.field_of_interest,
-          learning_goal: parsedData.learning_goal || 'General practice',
+          field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || 'General',
+          learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'General practice',
           updated_at: new Date().toISOString()
         };
 
-        const { error: updateErr } = await supabase
-          .from('user_profiles')
-          .update(updatedFields)
-          .eq('id', userIdRef.current);
+        if (userIdRef.current) {
+          const { error: updateErr } = await supabase
+            .from('user_profiles')
+            .update(updatedFields)
+            .eq('id', userIdRef.current);
 
-        if (!updateErr) {
-          setUserProfile(prev => ({ ...prev, ...updatedFields }));
+          if (!updateErr) {
+            setUserProfile(prev => ({ ...prev, ...updatedFields }));
+          }
         }
       }
 
@@ -408,7 +387,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       );
     }
 
-    let parsedData = { reply: item.message, hasCorrection: false, explanation: '', correctedText: '', isVoiceNote: false };
+    let parsedData = { reply: item.message, hasCorrection: false, explanation: '', correctedText: '' };
     try {
       parsedData = JSON.parse(item.message);
     } catch (e) {}
@@ -419,13 +398,12 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       <View style={styles.aiBubbleRow}>
         <View style={styles.aiBubble}>
           <View style={styles.aiSenderHeader}>
-            <Text style={styles.buddyLabel}>⚡ BUDDY AI (ROLEPLAY)</Text>
+            <Text style={styles.buddyLabel}>⚡ BUDDY AI (TUTOR)</Text>
             <TouchableOpacity onPress={() => handlePlayPauseAudio(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>{isThisSpeaking ? '⏸️' : '🔊'}</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Correction box if grammar mistake found */}
           {parsedData.hasCorrection && parsedData.correctedText ? (
             <View style={styles.correctionBox}>
               <Text style={styles.correctionTitle}>💡 Grammar Correction Tip:</Text>
@@ -484,7 +462,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder="Type your reply..."
+            placeholder="Type your reply or new interest..."
             placeholderTextColor="#A3B8B0"
             onSubmitEditing={() => handleSendDirect(input)}
             returnKeyType="send"
@@ -608,7 +586,7 @@ const styles = StyleSheet.create({
   userText: {
     color: '#FFFFFF',
     fontSize: 14,
-    lineLineHeight: 22,
+    lineHeight: 22,
     fontWeight: '500',
   },
   correctionBox: {
