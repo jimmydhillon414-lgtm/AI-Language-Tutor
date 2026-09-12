@@ -33,10 +33,13 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
+  // Audio state tracking refs
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  
   const sentenceIndexRef = useRef(0);
   const sentencesRef = useRef([]);
+  const currentUtteranceRef = useRef(null);
   
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
@@ -50,11 +53,18 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         try { recognitionRef.current.stop(); } catch (e) {}
       }
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      stopAllSpeech();
     };
   }, []);
+
+  const stopAllSpeech = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    currentUtteranceRef.current = null;
+    setIsPlaying(false);
+    setSpeakingId(null);
+  };
 
   async function fetchUserAndProfile() {
     try {
@@ -199,11 +209,10 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setListening(false);
   };
 
+  // Robust recursive sentence runner preserving index position on pause/resume
   const playNextSentence = (synth, langCode, messageId) => {
     if (sentenceIndexRef.current >= sentencesRef.current.length) {
-      setSpeakingId(null);
-      setIsPlaying(false);
-      sentenceIndexRef.current = 0;
+      stopAllSpeech();
       return;
     }
 
@@ -216,15 +225,18 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     const utterance = new SpeechSynthesisUtterance(currentSentence);
     utterance.lang = langCode;
+    currentUtteranceRef.current = utterance;
 
     utterance.onend = () => {
-      sentenceIndexRef.current++;
-      playNextSentence(synth, langCode, messageId);
+      // Sirf tabhi aage badho agar current utterance wahi hai aur play state active hai
+      if (currentUtteranceRef.current === utterance) {
+        sentenceIndexRef.current++;
+        playNextSentence(synth, langCode, messageId);
+      }
     };
 
     utterance.onerror = () => {
-      setSpeakingId(null);
-      setIsPlaying(false);
+      stopAllSpeech();
     };
 
     synth.speak(utterance);
@@ -235,18 +247,29 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const synth = window.speechSynthesis;
       const langCode = getLanguageCode(userProfile?.target_language);
 
+      // 1. Agar wahi message already play ho raha hai, toh use pause/stop karo (position retain rahegi)
       if (speakingId === messageId && isPlaying) {
         synth.cancel();
+        currentUtteranceRef.current = null;
         setIsPlaying(false);
+        // Note: sentenceIndexRef.current yahan par wahi index rakhega jahan par roka gaya tha!
         return;
       }
 
+      // 2. Agar koi aur message play ho raha tha ya naya message hai, toh reset karo
       synth.cancel();
-      
+      currentUtteranceRef.current = null;
+
       if (speakingId !== messageId) {
+        // Naya message hai toh sentences tod kar index 0 se shuru karo
         sentencesRef.current = text.split(/(?<=[.!?])\s+|\n+/).filter(Boolean);
         sentenceIndexRef.current = 0;
         setSpeakingId(messageId);
+      } else {
+        // Agar same message ko dubara play kiya gaya hai paused state se, toh current sentence index se resume hoga!
+        if (sentenceIndexRef.current >= sentencesRef.current.length) {
+          sentenceIndexRef.current = 0; // Agar khatam ho gaya tha toh wapas start se
+        }
       }
 
       setIsPlaying(true);
