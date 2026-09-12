@@ -27,7 +27,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
-  // Robust audio tracking refs to avoid race conditions
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const activeUtteranceRef = useRef(null);
@@ -47,7 +46,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       stopAllSpeech();
     };
-  }, []);
+  }, [currentDayNum]);
 
   const stopAllSpeech = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
@@ -72,46 +71,31 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
       if (profile) {
         setUserProfile(profile);
-        
-        if (!profile.field_of_interest || !profile.learning_goal) {
-          initializeOnboardingChat(profile.target_language || 'English');
-        } else {
-          initializeRoleplayChat(profile);
-        }
+        initializeDayCurriculumChat(profile, currentDayNum);
       } else {
-        initializeOnboardingChat('English');
+        initializeDayCurriculumChat({ target_language: 'English' }, currentDayNum);
       }
     } catch (err) {
       console.log('Error fetching user profile:', err);
+      initializeDayCurriculumChat({ target_language: 'English' }, currentDayNum);
     }
   }
 
-  const initializeOnboardingChat = (targetLang) => {
+  const initializeDayCurriculumChat = (profile, dayNum) => {
+    const targetLang = profile.target_language || 'English';
+    const interest = profile.field_of_interest || 'General Communication';
+
     const welcomeMsg = {
       id: '1',
       role: 'model',
       timestamp: getCurrentTimeString(),
       message: JSON.stringify({
         hasCorrection: false,
-        reply: `Hello! Welcome to your ${targetLang} coaching session. What is your main interest or goal for practice today? (e.g., Cricket, Business, IT interviews, Traveling)`,
+        reply: `Welcome to Day ${dayNum} of your ${targetLang} training! Today's focus is integrated with your interest in "${interest}". Let's start practicing. Send a sentence or reply to begin!`,
         isVoiceNote: false,
       }),
     };
     setMessages([welcomeMsg]);
-  };
-
-  const initializeRoleplayChat = (profile) => {
-    const roleplayMsg = {
-      id: '1',
-      role: 'model',
-      timestamp: getCurrentTimeString(),
-      message: JSON.stringify({
-        hasCorrection: false,
-        reply: `Welcome back! Continuing with your interest in "${profile.field_of_interest}" (Goal: ${profile.learning_goal}). Feel free to chat or practice. If you want to change your topic, just let me know!`,
-        isVoiceNote: false,
-      }),
-    };
-    setMessages([roleplayMsg]);
   };
 
   const getLanguageCode = (lang) => {
@@ -227,12 +211,10 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setListening(false);
   };
 
-  // Robust Play/Pause/Resume/Restart handler
   const handlePlayPauseAudio = (text, messageId) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       const synth = window.speechSynthesis;
 
-      // Case 1: Clicking the exact same message that is currently active
       if (speakingId === messageId) {
         if (synth.speaking && !synth.paused) {
           synth.pause();
@@ -246,7 +228,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         }
       }
 
-      // Case 2: Clicking a different message or starting fresh after completion
       synth.cancel();
       
       const utterance = new SpeechSynthesisUtterance(text);
@@ -313,13 +294,14 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const currentInterest = userProfile?.field_of_interest || 'General';
 
       const prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student.
+Current Training Roadmap Day: Day ${currentDayNum}.
 Current User Interest/Topic: "${currentInterest}".
 Current User Input: "${messageValue.trim()}".
 
 Your tasks:
 1. **Grammar & Sentence Analysis**: Check if the user's input contains any grammar, spelling, or phrasing mistakes. If there is a mistake, set "hasCorrection": true, provide "originalText", "correctedText", and a clear "explanation" of what was wrong and how to fix it.
-2. **Interest Detection**: Check if the user is mentioning a *new* interest, hobby, or topic. If a new interest is detected, extract it as "new_field_of_interest". Otherwise, leave "new_field_of_interest" null.
-3. **Conversational Reply**: Continue the roleplay or conversation based on their current or newly detected interest.
+2. **Curriculum Alignment**: Tailor your conversational response specifically keeping Day ${currentDayNum} objectives and their interest "${currentInterest}" in mind.
+3. **Interest Detection**: Check if the user is mentioning a *new* interest or topic. If so, extract it as "new_field_of_interest". Otherwise, leave it null.
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
@@ -328,8 +310,8 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "correctedText": "Corrected sentence if there is an error, otherwise empty string",
   "explanation": "Clear explanation of grammar/phrasing correction",
   "new_field_of_interest": "Extracted new topic if user changed interest, otherwise null",
-  "learning_goal": "Updated or current learning goal",
-  "reply": "Your conversational response continuing the session"
+  "learning_goal": "Updated or current learning goal for Day ${currentDayNum}",
+  "reply": "Your conversational response continuing Day ${currentDayNum} session"
 }`;
 
       const responseText = await getAiResponse(prompt);
@@ -410,7 +392,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       <View style={styles.aiBubbleRow}>
         <View style={styles.aiBubble}>
           <View style={styles.aiSenderHeader}>
-            <Text style={styles.buddyLabel}>⚡ BUDDY AI (TUTOR)</Text>
+            <Text style={styles.buddyLabel}>⚡ DAY {currentDayNum} TUTOR AI</Text>
             <TouchableOpacity onPress={() => handlePlayPauseAudio(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>{isThisSpeaking ? '⏸️' : '🔊'}</Text>
             </TouchableOpacity>
@@ -448,7 +430,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             <Text style={styles.backButtonText}>← Roadmap</Text>
           </TouchableOpacity>
         )}
-        <Text style={styles.headerTitle}>Dynamic Roleplay Session</Text>
+        <Text style={styles.headerTitle}>Day {currentDayNum} Practice Session</Text>
       </View>
 
       <KeyboardAvoidingView 
@@ -474,7 +456,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder="Type your reply or new interest..."
+            placeholder={`Type reply for Day ${currentDayNum}...`}
             placeholderTextColor="#A3B8B0"
             onSubmitEditing={() => handleSendDirect(input)}
             returnKeyType="send"
