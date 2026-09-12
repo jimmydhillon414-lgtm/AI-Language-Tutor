@@ -11,28 +11,20 @@ import {
 } from 'react-native';
 
 export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSuccess }) {
-  const [selectedPlan, setSelectedPlan] = useState(null);
-  const [selectedMethod, setSelectedMethod] = useState('upi'); // 'upi', 'qr', 'card'
   const [processing, setProcessing] = useState(false);
 
-  const handleOpenCheckout = (plan) => {
-    setSelectedPlan(plan);
-    setSelectedMethod('upi'); // default selection
-  };
-
-  const handleConfirmPayment = () => {
+  const handleGetProPlan = () => {
     setProcessing(true);
     setTimeout(() => {
       setProcessing(false);
-      const purchasedPlan = selectedPlan;
-      setSelectedPlan(null);
+      const purchasedPlan = '60-Day Pro Master';
       if (onPaymentSuccess) {
         onPaymentSuccess(purchasedPlan);
       }
       if (onSelectPlan) {
         onSelectPlan(purchasedPlan);
       }
-    }, 1500);
+    }, 1000);
   };
 
   return (
@@ -67,8 +59,8 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
         </View>
 
         <View style={styles.pricingGrid}>
-          {/* 60-Day Pro Master Card (Single Plan) */}
-          <View style={[styles.card, styles.popularCard]} style={[styles.card, styles.popularCard, { maxWidth: 400, width: '100%' }]}>
+          {/* Single Pro Master Card */}
+          <View style={[styles.card, styles.popularCard]}>
             <View style={styles.popularBadge}>MOST POPULAR 🔥</View>
             <View>
               <Text style={styles.planTitle}>60-Day Pro Master</Text>
@@ -84,96 +76,19 @@ export default function PricingScreen({ onSelectPlan, onSignOut, onPaymentSucces
 
             <TouchableOpacity 
               style={styles.solidButton}
-              onPress={() => handleOpenCheckout('60-Day Pro Master')}
+              onPress={handleGetProPlan}
               activeOpacity={0.8}
+              disabled={processing}
             >
-              <Text style={styles.solidButtonText}>Get Pro Plan</Text>
+              {processing ? (
+                <ActivityIndicator color="#121E1A" />
+              ) : (
+                <Text style={styles.solidButtonText}>Get Pro Plan (FREE FOR DEMO)</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
-
-      {/* SINGLE-WINDOW CHECKOUT MODAL WITH PAYMENT METHODS */}
-      {selectedPlan && (
-        <View style={styles.modalOverlay}>
-          <ScrollView contentContainerStyle={styles.modalScrollContainer} showsVerticalScrollIndicator={false}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalLock}>🔒 Secure Checkout</Text>
-              <Text style={styles.modalPlanTitle}>
-                Plan: {selectedPlan} (₹1,799)
-              </Text>
-
-              <Text style={styles.sectionLabel}>Select Payment Method:</Text>
-
-              {/* Payment Options Selection */}
-              <View style={styles.optionsContainer}>
-                <TouchableOpacity 
-                  style={[styles.optionCard, selectedMethod === 'upi' && styles.selectedOptionCard]}
-                  onPress={() => setSelectedMethod('upi')}
-                >
-                  <Text style={styles.optionEmoji}>📱</Text>
-                  <View>
-                    <Text style={styles.optionTitle}>UPI Apps</Text>
-                    <Text style={styles.optionSub}>GPay, PhonePe, Paytm</Text>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={[styles.optionCard, selectedMethod === 'qr' && styles.selectedOptionCard]}
-                  onPress={() => setSelectedMethod('qr')}
-                >
-                  <Text style={styles.optionEmoji}>📷</Text>
-                  <View>
-                    <Text style={styles.optionTitle}>Scan QR Code</Text>
-                    <Text style={styles.optionSub}>Scan via Scanner App</Text>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={[styles.optionCard, selectedMethod === 'card' && styles.selectedOptionCard]}
-                  onPress={() => setSelectedMethod('card')}
-                >
-                  <Text style={styles.optionEmoji}>💳</Text>
-                  <View>
-                    <Text style={styles.optionTitle}>Card / NetBanking</Text>
-                    <Text style={styles.optionSub}>Credit, Debit, NetBanking</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-
-              {/* QR Code box if QR is selected */}
-              {selectedMethod === 'qr' && (
-                <View style={styles.qrBox}>
-                  <Text style={styles.qrTitle}>[ Scan QR to Pay ]</Text>
-                  <Text style={styles.qrSub}>Use GPay, PhonePe or Paytm to scan</Text>
-                </View>
-              )}
-
-              <TouchableOpacity 
-                style={styles.payNowButton} 
-                onPress={handleConfirmPayment}
-                disabled={processing}
-              >
-                {processing ? (
-                  <ActivityIndicator color="#121E1A" />
-                ) : (
-                  <Text style={styles.payNowText}>
-                    {selectedMethod === 'qr' ? 'I Have Paid 🚀' : 'Pay ₹1,799 Now 🚀'}
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                onPress={() => setSelectedPlan(null)} 
-                disabled={processing}
-                style={styles.cancelTouch}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      )}
     </View>
   );
 }
@@ -286,16 +201,16 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 16,
-    maxWidth: 1100,
+    maxWidth: 450,
     width: '100%',
   },
   card: {
     flex: 1,
-    minWidth: 260,
-    maxWidth: 340,
+    minWidth: 280,
+    maxWidth: 400,
     backgroundColor: '#12221D',
     borderRadius: 20,
-    padding: 22,
+    padding: 24,
     borderWidth: 1.5,
     borderColor: '#116466',
     justifyContent: 'space-between',
@@ -318,15 +233,17 @@ const styles = StyleSheet.create({
   },
   planTitle: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 4,
+    textAlign: 'center',
   },
   planPrice: {
     color: '#FFCB9A',
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '900',
     marginBottom: 8,
+    textAlign: 'center',
   },
   planSub: {
     fontSize: 12,
@@ -335,151 +252,29 @@ const styles = StyleSheet.create({
   },
   planDesc: {
     color: '#D1E8E2',
-    fontSize: 12,
-    marginBottom: 16,
-    lineHeight: 16,
+    fontSize: 13,
+    marginBottom: 20,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   featureList: {
-    gap: 8,
-    marginBottom: 20,
+    gap: 10,
+    marginBottom: 25,
   },
   featureItem: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 13,
   },
   solidButton: {
     backgroundColor: '#FFCB9A',
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     ...(Platform.OS === 'web' ? { cursor: 'pointer', border: 'none' } : {}),
   },
   solidButtonText: {
     color: '#121E1A',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    zIndex: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalScrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    width: '100%',
-  },
-  modalContent: {
-    backgroundColor: '#12221D',
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#116466',
-    padding: 24,
-    width: '100%',
-    maxWidth: 420,
-    alignItems: 'center',
-    ...(Platform.OS === 'web' ? { boxShadow: '0 20px 50px rgba(0,0,0,0.9)' } : {}),
-  },
-  modalLock: {
-    color: '#FFCB9A',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  modalPlanTitle: {
-    color: '#D1E8E2',
-    fontSize: 13,
-    marginBottom: 14,
-    textAlign: 'center',
-  },
-  sectionLabel: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  optionsContainer: {
-    width: '100%',
-    marginBottom: 12,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#182C25',
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#116466',
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
-  },
-  selectedOptionCard: {
-    borderColor: '#FFCB9A',
-    backgroundColor: '#1C312B',
-  },
-  optionEmoji: {
-    fontSize: 20,
-    marginRight: 10,
-  },
-  optionTitle: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  optionSub: {
-    color: '#8EA89D',
-    fontSize: 10,
-  },
-  qrBox: {
-    width: '100%',
-    alignItems: 'center',
-    backgroundColor: '#182C25',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#116466',
-  },
-  qrTitle: {
-    color: '#FFCB9A',
-    fontSize: 13,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  qrSub: {
-    color: '#8EA89D',
-    fontSize: 10,
-  },
-  payNowButton: {
-    backgroundColor: '#FFCB9A',
-    width: '100%',
-    paddingVertical: 13,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 10,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
-  },
-  payNowText: {
-    color: '#121E1A',
     fontSize: 14,
     fontWeight: '800',
-  },
-  cancelTouch: {
-    padding: 4,
-  },
-  cancelText: {
-    color: '#8FA39D',
-    fontSize: 12,
-    fontWeight: '600',
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
   },
 });
