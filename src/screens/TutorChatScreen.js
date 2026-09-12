@@ -33,7 +33,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
-  // Advanced Speech tracking states for sentence-by-sentence resumption
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const sentenceIndexRef = useRef(0);
@@ -200,7 +199,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setListening(false);
   };
 
-  // Sentence-by-sentence queue runner so that pausing/resuming continues from where it left off!
   const playNextSentence = (synth, langCode, messageId) => {
     if (sentenceIndexRef.current >= sentencesRef.current.length) {
       setSpeakingId(null);
@@ -237,19 +235,15 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const synth = window.speechSynthesis;
       const langCode = getLanguageCode(userProfile?.target_language);
 
-      // Agar wahi message pehle se play ho raha hai, toh ise pause/stop karo
       if (speakingId === messageId && isPlaying) {
         synth.cancel();
         setIsPlaying(false);
-        // Note: sentenceIndexRef.current wahin par ruk jayega jahan chhoda tha!
         return;
       }
 
-      // Agar naya message hai ya paused state se wapas play karna hai
       synth.cancel();
       
       if (speakingId !== messageId) {
-        // Naye message ke liye sentences ko split karo aur index 0 se shuru karo
         sentencesRef.current = text.split(/(?<=[.!?])\s+|\n+/).filter(Boolean);
         sentenceIndexRef.current = 0;
         setSpeakingId(messageId);
@@ -664,7 +658,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#116466',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: paragraphMargin = 4,
+    marginHorizontal: 4,
     borderWidth: 1,
     borderColor: '#FFCB9A',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
