@@ -27,9 +27,11 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
+  // Robust audio tracking refs to avoid race conditions
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  
+  const activeUtteranceRef = useRef(null);
+
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
   const silenceTimerRef = useRef(null);
@@ -51,6 +53,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+    activeUtteranceRef.current = null;
     setIsPlaying(false);
     setSpeakingId(null);
   };
@@ -224,12 +227,12 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setListening(false);
   };
 
+  // Robust Play/Pause/Resume/Restart handler
   const handlePlayPauseAudio = (text, messageId) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       const synth = window.speechSynthesis;
-      const langCode = getLanguageCode(userProfile?.target_language);
 
-      // If clicking the same message that is currently speaking
+      // Case 1: Clicking the exact same message that is currently active
       if (speakingId === messageId) {
         if (synth.speaking && !synth.paused) {
           synth.pause();
@@ -243,24 +246,30 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         }
       }
 
-      // Otherwise, cancel any ongoing speech and start fresh for this message
+      // Case 2: Clicking a different message or starting fresh after completion
       synth.cancel();
-      setSpeakingId(messageId);
-
+      
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = langCode;
+      utterance.lang = getLanguageCode(userProfile?.target_language);
+      
+      utterance.onstart = () => {
+        setSpeakingId(messageId);
+        setIsPlaying(true);
+      };
 
       utterance.onend = () => {
         setSpeakingId(null);
         setIsPlaying(false);
+        activeUtteranceRef.current = null;
       };
 
       utterance.onerror = () => {
         setSpeakingId(null);
         setIsPlaying(false);
+        activeUtteranceRef.current = null;
       };
 
-      setIsPlaying(true);
+      activeUtteranceRef.current = utterance;
       synth.speak(utterance);
     }
   };
@@ -286,6 +295,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     stopVoiceInput();
     setInput('');
+    stopAllSpeech();
 
     const timeStr = getCurrentTimeString();
     const tempUserMsg = {
