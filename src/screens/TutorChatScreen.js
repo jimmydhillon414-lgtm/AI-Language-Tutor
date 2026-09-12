@@ -198,23 +198,23 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setListening(false);
   };
 
-  // Robust Web Speech Synthesis Handler with Pause/Resume Support
+  // Improved Speech Handler (Cancels cleanly or toggles cleanly to avoid glitchy restarts)
   const handlePlayPauseAudio = (text, messageId) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       const synth = window.speechSynthesis;
 
-      // Agar same message pe click hua hai
-      if (speakingId === messageId) {
-        if (synth.speaking) {
-          if (synth.paused) {
-            synth.resume();
-            setIsPaused(false);
-            return;
-          } else {
-            synth.pause();
-            setIsPaused(true);
-            return;
-          }
+      // Agar same message pe click hua hai aur pehle se bol raha hai
+      if (speakingId === messageId && synth.speaking) {
+        if (synth.paused) {
+          synth.resume();
+          setIsPaused(false);
+          return;
+        } else {
+          // Browser ki limitation ki wajah se pause ke bajaye cancel karna zyaada reliable hai taaki audio ganda na ho
+          synth.cancel();
+          setSpeakingId(null);
+          setIsPaused(false);
+          return;
         }
       }
 
@@ -367,7 +367,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             <Text style={styles.buddyLabel}>⚡ BUDDY AI (DAY {currentDayNum})</Text>
             <TouchableOpacity onPress={() => handlePlayPauseAudio(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>
-                {isThisSpeaking && !isPaused ? '⏸️' : '🔊'}
+                {isThisSpeaking && !isPaused ? '⏹️' : '🔊'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -431,6 +431,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
           <TouchableOpacity 
             style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
+            onResponseCanceled={stopVoiceInput}
             onPress={toggleVoiceInput}
           >
             <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
@@ -591,7 +592,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#FFCB9A',
+    borderColor: '#116466',
   },
   inputBar: {
     flexDirection: 'row',
@@ -613,7 +614,7 @@ const styles = StyleSheet.create({
   },
   plusButton: {
     width: 36,
-    height: 36,
+    height: 37,
     borderRadius: 18,
     backgroundColor: '#116466',
     alignItems: 'center',
