@@ -1,8 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { supabase } from '../api/supabase';
 
 export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
+  const [completedDays, setCompletedDays] = useState([]);
   const totalDays = selectedPlan === 'Base Starter' ? 30 : (selectedPlan?.includes('Pro') ? 60 : 7);
+
+  useEffect(() => {
+    fetchUserProgress();
+  }, []);
+
+  async function fetchUserProgress() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('completed_days')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile && profile.completed_days) {
+        setCompletedDays(profile.completed_days);
+      }
+    } catch (err) {
+      console.log('Error fetching user progress:', err);
+    }
+  }
 
   // Dynamic difficulty and scenario generation based on day number
   const daysList = Array.from({ length: totalDays }, (_, i) => {
@@ -24,11 +49,14 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
       if (dayNum === 2) title = "Asking for Directions & Travel Basics";
     }
 
+    const isCompleted = completedDays.includes(dayNum);
+
     return {
       day: dayNum,
       title,
       level,
       unlocked: true,
+      isCompleted,
     };
   });
 
@@ -67,7 +95,7 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
           {daysList.map((item) => (
             <TouchableOpacity 
               key={item.day} 
-              style={styles.dayCard}
+              style={[styles.dayCard, item.isCompleted && styles.completedDayCard]}
               onPress={() => onSelectDay(item.day)}
               activeOpacity={0.85}
             >
@@ -77,8 +105,10 @@ export default function RoadmapScreen({ selectedPlan, onSelectDay, onBack }) {
               </View>
               <Text style={styles.dayTitle}>{item.title}</Text>
               <View style={styles.cardFooter}>
-                <Text style={styles.statusText}>Start Scenario</Text>
-                <Text style={styles.arrowIcon}>→</Text>
+                <Text style={[styles.statusText, item.isCompleted && { color: '#2ECC71' }]}>
+                  {item.isCompleted ? '✓ Completed' : 'Start Scenario'}
+                </Text>
+                <Text style={[styles.arrowIcon, item.isCompleted && { color: '#2ECC71' }]}>→</Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -228,6 +258,10 @@ const styles = StyleSheet.create({
       boxShadow: '0 10px 30px rgba(0,0,0,0.8)'
     } : {}),
   },
+  completedDayCard: {
+    borderColor: '#2ECC71',
+    backgroundColor: 'rgba(18, 45, 35, 0.95)',
+  },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -262,6 +296,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.15)',
+    paddingTops: 12,
     paddingTop: 12,
   },
   statusText: {
