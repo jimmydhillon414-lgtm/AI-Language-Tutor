@@ -66,6 +66,18 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       const voices = window.speechSynthesis.getVoices();
       setAvailableVoices(voices);
+
+      // AUTO-SYNC: If profile already has a preferred_voice, ensure it matches available device voices
+      if (voices.length > 0 && userProfile?.preferred_voice) {
+        const exists = voices.some(v => v.name === userProfile.preferred_voice);
+        if (!exists) {
+          // Fallback to first available matching language voice if saved one isn't found
+          const matchingLangVoice = voices.find(v => v.lang.includes('hi') || v.lang.includes('en'));
+          if (matchingLangVoice) {
+            updatePreferredVoice(matchingLangVoice.name, false); // Update without redundant db call if just matching
+          }
+        }
+      }
     }
   };
 
@@ -133,11 +145,11 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     return langMap[lang] || 'en-US';
   };
 
-  const updatePreferredVoice = async (voiceName) => {
+  const updatePreferredVoice = async (voiceName, saveToDb = true) => {
     setUserProfile(prev => ({ ...prev, preferred_voice: voiceName }));
     setShowVoiceModal(false);
 
-    if (userIdRef.current) {
+    if (saveToDb && userIdRef.current) {
       try {
         await supabase
           .from('user_profiles')
@@ -516,7 +528,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             </TouchableOpacity>
           )}
           
-          {/* Voice button placed right beside Back button */}
           <TouchableOpacity style={[styles.voiceConfigBtn, { marginLeft: 8 }]} onPress={() => setShowVoiceModal(true)}>
             <Text style={styles.voiceConfigBtnText}>🎙️ Voice</Text>
           </TouchableOpacity>
@@ -583,7 +594,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
                 return (
                   <TouchableOpacity 
                     style={[styles.voiceOptionItem, isSelected && styles.voiceOptionSelected]}
-                    onPress={() => updatePreferredVoice(item.name)}
+                    onPress={() => updatePreferredVoice(item.name, true)}
                   >
                     <Text style={[styles.voiceOptionText, isSelected && { color: '#FFCB9A', fontWeight: 'bold' }]}>
                       {item.name} ({item.lang})
@@ -854,7 +865,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     backgroundColor: '#112522',
-    borderRadius: 16,
+    borderRadius: '16px',
     padding: 20,
     borderWidth: 1.5,
     borderColor: '#116466',
