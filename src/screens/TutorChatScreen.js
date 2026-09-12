@@ -70,7 +70,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       if (profile) {
         setUserProfile(profile);
         
-        // Check if profile lacks goal/interest, initialize conversation accordingly
+        // Check if database columns are genuinely missing values
         if (!profile.field_of_interest || !profile.learning_goal) {
           initializeOnboardingChat(profile.target_language || 'English');
         } else {
@@ -91,7 +91,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       timestamp: getCurrentTimeString(),
       message: JSON.stringify({
         hasCorrection: false,
-        reply: `Hello! Welcome to your ${targetLang} coaching session. To tailor our practice, what is your primary field or industry of interest? Choose from options like Business, IT, Healthcare, Travel, or tell me your own!`,
+        reply: `Hello! Welcome to your ${targetLang} coaching session. To personalize your practice, what is your main interest or goal? (e.g., Traveling to hills, Business meetings, IT interviews, or daily casual chat)`,
         isVoiceNote: false,
       }),
     };
@@ -105,7 +105,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       timestamp: getCurrentTimeString(),
       message: JSON.stringify({
         hasCorrection: false,
-        reply: `Welcome back! Continuing with your focus in ${profile.field_of_interest} (Goal: ${profile.learning_goal}), let's start today's dynamic scenario. How can I help you practice today?`,
+        reply: `Welcome back! Continuing with your interest in "${profile.field_of_interest}" (Goal: ${profile.learning_goal}), let's continue practicing. How can I help you today?`,
         isVoiceNote: false,
       }),
     };
@@ -303,36 +303,40 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       let prompt = "";
 
       if (needsOnboarding) {
-        prompt = `You are a proactive language tutor. The user is setting up their profile for ${targetLang}. 
-The user's response to your request for their field and interest is: "${messageValue.trim()}".
+        prompt = `You are an intelligent language onboarding assistant. The user's input describing their interest or goal is: "${messageValue.trim()}".
 
-Analyze their response, extract:
-1. "field_of_interest" (e.g., Business, IT, Healthcare, Travel, etc.)
-2. "learning_goal" (short summary of what they want to achieve)
-3. Provide a dynamic roleplay scenario kickoff reply matching their extracted field.
+Your tasks:
+1. Extract or deduce a clean "field_of_interest" (e.g., "Traveling to hills", "Business", "IT", etc.).
+2. Extract or deduce a clear "learning_goal" (e.g., "Planning a trip and conversing fluently").
+3. Check if the user's sentence contains grammar errors (e.g., "I am want to"). If so, politely point it out, explain the correction, and then launch the roleplay scenario.
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
-  "field_of_interest": "Extracted field",
+  "field_of_interest": "Extracted field or topic",
   "learning_goal": "Extracted goal",
-  "reply": "Your welcoming response launching a dynamic roleplay scenario based on this field"
+  "hasCorrection": true,
+  "originalText": "${messageValue.trim()}",
+  "correctedText": "Provide corrected English sentence here",
+  "explanation": "Brief, friendly grammar correction explanation in Hinglish/English",
+  "reply": "Your friendly reply acknowledging their interest and starting the roleplay scenario."
 }`;
       } else {
-        prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student in their chosen field: ${userProfile.field_of_interest} (Goal: ${userProfile.learning_goal}).
+        prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student whose interest is: "${userProfile.field_of_interest}" and goal is: "${userProfile.learning_goal}".
 
 The user says: "${messageValue.trim()}".
 
-Act as a proactive tutor:
-1. Continue the dynamic roleplay scenario tailored to ${userProfile.field_of_interest}.
-2. Provide real-time corrections if there are grammar mistakes.
+CRITICAL INSTRUCTIONS:
+1. Analyze the user's input for grammar, spelling, or pronunciation mistakes (e.g., saying "I am want" instead of "I want", or confusing "heels" with "hills").
+2. If there is any mistake, set "hasCorrection" to true, provide the "originalText", "correctedText", and a clear "explanation" of how to fix it politely.
+3. Then, continue the interactive roleplay scenario related to "${userProfile.field_of_interest}".
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
-  "hasCorrection": false,
+  "hasCorrection": true,
   "originalText": "${messageValue.trim()}",
-  "correctedText": "",
-  "explanation": "",
-  "reply": "Your detailed, level-appropriate dynamic roleplay response here",
+  "correctedText": "Corrected sentence here",
+  "explanation": "Explain why the grammar was wrong and how to improve it",
+  "reply": "Your conversational response continuing the roleplay scenario",
   "isVoiceNote": false
 }`;
       }
@@ -343,12 +347,13 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         parsedData = JSON.parse(responseText);
       } catch (e) {
         parsedData = {
+          hasCorrection: false,
           reply: responseText || 'Let us continue practicing!',
           isVoiceNote: false,
         };
       }
 
-      // If we were in onboarding, save extracted fields to Supabase
+      // Save or update profile if onboarding fields were empty
       if (needsOnboarding && parsedData.field_of_interest && userIdRef.current) {
         const updatedFields = {
           field_of_interest: parsedData.field_of_interest,
@@ -356,12 +361,14 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           updated_at: new Date().toISOString()
         };
 
-        await supabase
+        const { error: updateErr } = await supabase
           .from('user_profiles')
           .update(updatedFields)
           .eq('id', userIdRef.current);
 
-        setUserProfile(prev => ({ ...prev, ...updatedFields }));
+        if (!updateErr) {
+          setUserProfile(prev => ({ ...prev, ...updatedFields }));
+        }
       }
 
       const aiMsgObj = { 
@@ -401,7 +408,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       );
     }
 
-    let parsedData = { reply: item.message, isVoiceNote: false };
+    let parsedData = { reply: item.message, hasCorrection: false, explanation: '', correctedText: '', isVoiceNote: false };
     try {
       parsedData = JSON.parse(item.message);
     } catch (e) {}
@@ -417,6 +424,18 @@ You MUST reply ONLY with a valid JSON object in this exact format:
               <Text style={{ fontSize: 12 }}>{isThisSpeaking ? '⏸️' : '🔊'}</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Correction box if grammar mistake found */}
+          {parsedData.hasCorrection && parsedData.correctedText ? (
+            <View style={styles.correctionBox}>
+              <Text style={styles.correctionTitle}>💡 Grammar Correction Tip:</Text>
+              <Text style={styles.correctionText}>❌ <Text style={{textDecorationLine: 'line-through'}}>{parsedData.originalText}</Text></Text>
+              <Text style={styles.correctionText}>✅ <Text style={{fontWeight: 'bold', color: '#FFCB9A'}}>{parsedData.correctedText}</Text></Text>
+              {parsedData.explanation ? (
+                <Text style={styles.explanationText}>{parsedData.explanation}</Text>
+              ) : null}
+            </View>
+          ) : null}
 
           <Text style={styles.aiText}>{parsedData.reply}</Text>
           
@@ -465,7 +484,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder="Type your reply or select an option..."
+            placeholder="Type your reply..."
             placeholderTextColor="#A3B8B0"
             onSubmitEditing={() => handleSendDirect(input)}
             returnKeyType="send"
@@ -584,12 +603,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
+    marginTop: 4,
   },
   userText: {
     color: '#FFFFFF',
     fontSize: 14,
-    lineHeight: 22,
+    lineLineHeight: 22,
     fontWeight: '500',
+  },
+  correctionBox: {
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#FFCB9A',
+  },
+  correctionTitle: {
+    color: '#FFCB9A',
+    fontSize: 11,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  correctionText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  explanationText: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   timeAndAvatarRowUser: {
     flexDirection: 'row',
