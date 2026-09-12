@@ -8,6 +8,7 @@ import {
   Platform,
   TextInput,
   KeyboardAvoidingView,
+  Modal,
 } from 'react-native';
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
@@ -17,7 +18,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     target_language: 'English', 
     proficiency_level: 'Beginner',
     learning_goal: null,
-    field_of_interest: null
+    field_of_interest: null,
+    preferred_voice: null
   });
   
   const currentDayNum = selectedDay || 1;
@@ -29,6 +31,12 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Voice & Accent Selection States
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  
+  const speechQueueRef = useRef([]);
   const activeUtteranceRef = useRef(null);
 
   const flatListRef = useRef();
@@ -39,6 +47,12 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
   useEffect(() => {
     fetchUserAndProfile();
+    loadDeviceVoices();
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = loadDeviceVoices;
+    }
+
     return () => {
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (e) {}
@@ -48,10 +62,18 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     };
   }, [currentDayNum]);
 
+  const loadDeviceVoices = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+      const voices = window.speechSynthesis.getVoices();
+      setAvailableVoices(voices);
+    }
+  };
+
   const stopAllSpeech = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+    speechQueueRef.current = [];
     activeUtteranceRef.current = null;
     setIsPlaying(false);
     setSpeakingId(null);
@@ -109,6 +131,22 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       Italian: 'it-IT',
     };
     return langMap[lang] || 'en-US';
+  };
+
+  const updatePreferredVoice = async (voiceName) => {
+    setUserProfile(prev => ({ ...prev, preferred_voice: voiceName }));
+    setShowVoiceModal(false);
+
+    if (userIdRef.current) {
+      try {
+        await supabase
+          .from('user_profiles')
+          .update({ preferred_voice: voiceName, updated_at: new Date().toISOString() })
+          .eq('id', userIdRef.current);
+      } catch (err) {
+        console.log('Error saving preferred voice:', err);
+      }
+    }
   };
 
   const toggleVoiceInput = () => {
@@ -232,6 +270,15 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = getLanguageCode(userProfile?.target_language);
+      utterance.rate = 0.95;
+
+      // Apply selected voice/accent if configured by user
+      if (userProfile?.preferred_voice) {
+        const selectedVoiceObj = availableVoices.find(v => v.name === userProfile.preferred_voice);
+        if (selectedVoiceObj) {
+          utterance.voice = selectedVoiceObj;
+        }
+      }
       
       utterance.onstart = () => {
         setSpeakingId(messageId);
@@ -242,6 +289,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         setSpeakingId(null);
         setIsPlaying(false);
         activeUtteranceRef.current = null;
+        processNextInQueue();
       };
 
       utterance.onerror = () => {
@@ -255,12 +303,26 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
   };
 
+  const processNextInQueue = () => {
+    if (speechQueueRef.current.length > 0) {
+      const nextItem = speechQueueRef.current.shift();
+      handlePlayPauseAudio(nextItem.text, nextItem.id);
+    }
+  };
+
+  const queueOrPlayAudio = (text, messageId) => {
+    if (isPlaying && speakingId !== messageId) {
+      speechQueueRef.current.push({ text, id: messageId });
+    } else {
+      handlePlayPauseAudio(text, messageId);
+    }
+  };
+
   const getCurrentTimeString = () => {
     const now = new Date();
     return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Helper to log grammar corrections to Supabase
   async function logGrammarCorrection(original, corrected, explanation) {
     try {
       if (!userIdRef.current) return;
@@ -340,7 +402,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         };
       }
 
-      // Automatically log grammar correction if present
       if (parsedData.hasCorrection && parsedData.correctedText) {
         await logGrammarCorrection(
           parsedData.originalText || messageValue.trim(),
@@ -377,7 +438,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
       setMessages((prev) => [...prev, aiMsgObj]);
       if (parsedData.reply) {
-        handlePlayPauseAudio(parsedData.reply, aiMsgObj.id);
+        queueOrPlayAudio(parsedData.reply, aiMsgObj.id);
       }
     } catch (err) {
       console.log('AI Error:', err);
@@ -417,7 +478,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         <View style={styles.aiBubble}>
           <View style={styles.aiSenderHeader}>
             <Text style={styles.buddyLabel}>⚡ DAY {currentDayNum} TUTOR AI</Text>
-            <TouchableOpacity onPress={() => handlePlayPauseAudio(parsedData.reply, item.id)}>
+            <TouchableOpacity onPress={() => queueOrPlayAudio(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>{isThisSpeaking ? '⏸️' : '🔊'}</Text>
             </TouchableOpacity>
           </View>
@@ -455,6 +516,11 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </TouchableOpacity>
         )}
         <Text style={styles.headerTitle}>Day {currentDayNum} Practice Session</Text>
+        
+        {/* Voice Selection Trigger Button */}
+        <TouchableOpacity style={styles.voiceConfigBtn} onPress={() => setShowVoiceModal(true)}>
+          <Text style={styles.voiceConfigBtnText}>🎙️ Voice</Text>
+        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView 
@@ -498,6 +564,43 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Voice Selection Modal */}
+      <Modal visible={showVoiceModal} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Choose Tutor Voice & Accent</Text>
+            <Text style={styles.modalSubtitle}>Select an available accent profile for your device:</Text>
+
+            <FlatList
+              data={availableVoices}
+              keyExtractor={(item, index) => `${item.name}-${index}`}
+              style={{ maxHeight: 250, marginVertical: 10 }}
+              renderItem={({ item }) => {
+                const isSelected = userProfile?.preferred_voice === item.name;
+                return (
+                  <TouchableOpacity 
+                    style={[styles.voiceOptionItem, isSelected && styles.voiceOptionSelected]}
+                    onPress={() => updatePreferredVoice(item.name)}
+                  >
+                    <Text style={[styles.voiceOptionText, isSelected && { color: '#FFCB9A', fontWeight: 'bold' }]}>
+                      {item.name} ({item.lang})
+                    </Text>
+                    {isSelected && <Text style={{ color: '#FFCB9A' }}>✓</Text>}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+
+            <TouchableOpacity 
+              style={styles.modalCloseButton} 
+              onPress={() => setShowVoiceModal(false)}
+            >
+              <Text style={styles.modalCloseText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </AppBackground>
   );
 }
@@ -507,7 +610,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     paddingVertical: 12,
     backgroundColor: 'rgba(11, 25, 23, 0.95)',
     borderBottomWidth: 1.5,
@@ -515,7 +618,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     backgroundColor: '#116466',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
@@ -528,8 +631,21 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
+  },
+  voiceConfigBtn: {
+    backgroundColor: '#1C312B',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
+  },
+  voiceConfigBtnText: {
+    color: '#FFCB9A',
+    fontSize: 11,
+    fontWeight: '700',
   },
   container: {
     flex: 1,
@@ -720,5 +836,66 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#112522',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: '#116466',
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    color: '#A3B8B0',
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  voiceOptionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 6,
+    backgroundColor: '#182C25',
+    borderWidth: 1,
+    borderColor: '#1C312B',
+  },
+  voiceOptionSelected: {
+    borderColor: '#FFCB9A',
+    backgroundColor: '#1C312B',
+  },
+  voiceOptionText: {
+    color: '#E2E8F0',
+    fontSize: 13,
+  },
+  modalCloseButton: {
+    backgroundColor: '#116466',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
+  },
+  modalCloseText: {
+    color: '#FFCB9A',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
