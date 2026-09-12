@@ -427,7 +427,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       <View style={styles.headerBar}>
         {onBack && (
           <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.8}>
-            <Text style={styles.backButtonText}>← Roadmap</Text>
+            <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
         )}
         <Text style={styles.headerTitle}>Day {currentDayNum} Practice Session</Text>
