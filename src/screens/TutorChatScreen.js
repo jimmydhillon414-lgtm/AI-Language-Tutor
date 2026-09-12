@@ -24,7 +24,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       timestamp: '09:30 AM',
       message: JSON.stringify({
         hasCorrection: false,
-        reply: `Hello! Welcome to your first English lesson. It is good that you want to learn English. We will start with simple words. Say "Hello" or "Hi". You can also say "My name is ...". Practice these sentences. If you have any question, ask me.`,
+        reply: `Hello! Welcome to Day 1. Today we will learn simple greetings and how to say who we are. Greetings: Hello, Hi, Good morning, Good evening. Introducing yourself: My name is... I am from... I am a student. Practice: Write three sentences about yourself using the pattern above.`,
         isVoiceNote: false,
       }),
     },
@@ -33,9 +33,11 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
-  // Speech synthesis tracking states
+  // Advanced Speech tracking states for sentence-by-sentence resumption
   const [speakingId, setSpeakingId] = useState(null);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const sentenceIndexRef = useRef(0);
+  const sentencesRef = useRef([]);
   
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
@@ -198,44 +200,63 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setListening(false);
   };
 
-  // Improved Speech Handler (Cancels cleanly or toggles cleanly to avoid glitchy restarts)
+  // Sentence-by-sentence queue runner so that pausing/resuming continues from where it left off!
+  const playNextSentence = (synth, langCode, messageId) => {
+    if (sentenceIndexRef.current >= sentencesRef.current.length) {
+      setSpeakingId(null);
+      setIsPlaying(false);
+      sentenceIndexRef.current = 0;
+      return;
+    }
+
+    const currentSentence = sentencesRef.current[sentenceIndexRef.current];
+    if (!currentSentence || !currentSentence.trim()) {
+      sentenceIndexRef.current++;
+      playNextSentence(synth, langCode, messageId);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(currentSentence);
+    utterance.lang = langCode;
+
+    utterance.onend = () => {
+      sentenceIndexRef.current++;
+      playNextSentence(synth, langCode, messageId);
+    };
+
+    utterance.onerror = () => {
+      setSpeakingId(null);
+      setIsPlaying(false);
+    };
+
+    synth.speak(utterance);
+  };
+
   const handlePlayPauseAudio = (text, messageId) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       const synth = window.speechSynthesis;
+      const langCode = getLanguageCode(userProfile?.target_language);
 
-      // Agar same message pe click hua hai aur pehle se bol raha hai
-      if (speakingId === messageId && synth.speaking) {
-        if (synth.paused) {
-          synth.resume();
-          setIsPaused(false);
-          return;
-        } else {
-          // Browser ki limitation ki wajah se pause ke bajaye cancel karna zyaada reliable hai taaki audio ganda na ho
-          synth.cancel();
-          setSpeakingId(null);
-          setIsPaused(false);
-          return;
-        }
+      // Agar wahi message pehle se play ho raha hai, toh ise pause/stop karo
+      if (speakingId === messageId && isPlaying) {
+        synth.cancel();
+        setIsPlaying(false);
+        // Note: sentenceIndexRef.current wahin par ruk jayega jahan chhoda tha!
+        return;
       }
 
-      // Naya message ya fresh play
+      // Agar naya message hai ya paused state se wapas play karna hai
       synth.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = getLanguageCode(userProfile?.target_language);
+      
+      if (speakingId !== messageId) {
+        // Naye message ke liye sentences ko split karo aur index 0 se shuru karo
+        sentencesRef.current = text.split(/(?<=[.!?])\s+|\n+/).filter(Boolean);
+        sentenceIndexRef.current = 0;
+        setSpeakingId(messageId);
+      }
 
-      utterance.onend = () => {
-        setSpeakingId(null);
-        setIsPaused(false);
-      };
-
-      utterance.onerror = () => {
-        setSpeakingId(null);
-        setIsPaused(false);
-      };
-
-      setSpeakingId(messageId);
-      setIsPaused(false);
-      synth.speak(utterance);
+      setIsPlaying(true);
+      playNextSentence(synth, langCode, messageId);
     }
   };
 
@@ -358,7 +379,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       parsedData = JSON.parse(item.message);
     } catch (e) {}
 
-    const isThisSpeaking = speakingId === item.id;
+    const isThisSpeaking = speakingId === item.id && isPlaying;
 
     return (
       <View style={styles.aiBubbleRow}>
@@ -367,7 +388,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             <Text style={styles.buddyLabel}>⚡ BUDDY AI (DAY {currentDayNum})</Text>
             <TouchableOpacity onPress={() => handlePlayPauseAudio(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>
-                {isThisSpeaking && !isPaused ? '⏹️' : '🔊'}
+                {isThisSpeaking ? '⏹️' : '🔊'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -431,7 +452,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
           <TouchableOpacity 
             style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
-            onResponseCanceled={stopVoiceInput}
             onPress={toggleVoiceInput}
           >
             <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
@@ -592,7 +612,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#116466',
+    borderColor: '#FFCB9A',
   },
   inputBar: {
     flexDirection: 'row',
@@ -614,7 +634,7 @@ const styles = StyleSheet.create({
   },
   plusButton: {
     width: 36,
-    height: 37,
+    height: 36,
     borderRadius: 18,
     backgroundColor: '#116466',
     alignItems: 'center',
@@ -644,7 +664,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#116466',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: paragraphMargin = 4,
     borderWidth: 1,
     borderColor: '#FFCB9A',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
