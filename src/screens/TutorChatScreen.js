@@ -175,30 +175,48 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false; // Fixed: Stops the loop accumulation bug
-      recognition.interimResults = false; // Fixed: Takes clean final spoken sentence
+      recognition.continuous = true; // Enabled continuous to catch full sentences smoothly
+      recognition.interimResults = true; // Enabled interim results so text shows up live in the box
       recognition.lang = speechLang;
 
       recognitionRef.current = recognition;
       setListening(true);
 
+      let finalSpokenText = '';
+
       recognition.onresult = (event) => {
-        const rawText = event.results[0][0].transcript;
-        if (rawText) {
-          // Clean text deduplication filter
-          const words = rawText.trim().split(/\s+/);
-          const uniqueWords = [];
-          for (let i = 0; i < words.length; i++) {
-            if (i === 0 || words[i].toLowerCase() !== words[i - 1].toLowerCase()) {
-              uniqueWords.push(words[i]);
-            }
+        let interimTranscript = '';
+        let currentBatchFinal = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            currentBatchFinal += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
           }
-          const cleanText = uniqueWords.join(' ');
-          
-          setInput(cleanText);
-          stopVoiceInput();
-          handleSendDirect(cleanText);
         }
+
+        if (currentBatchFinal) {
+          finalSpokenText += ' ' + currentBatchFinal;
+        }
+
+        const displayText = finalSpokenText.trim() || interimTranscript;
+        if (displayText) {
+          setInput(displayText); // Shows live transcription in text box
+        }
+
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+        }
+
+        // Automatically send after 1.5 seconds of silence
+        silenceTimerRef.current = setTimeout(() => {
+          const textToSend = finalSpokenText.trim() || displayText;
+          if (textToSend) {
+            stopVoiceInput();
+            handleSendDirect(textToSend);
+          }
+        }, 1500);
       };
 
       recognition.onerror = (event) => {
