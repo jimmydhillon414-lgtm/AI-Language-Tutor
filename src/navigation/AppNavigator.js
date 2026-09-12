@@ -190,9 +190,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#070D10',
+    ...(Platform.OS === 'web' ? { height: '100vh', overflow: 'hidden' } : {}),
   },
   content: {
     flex: 1,
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
   modalOverlay: {
     flex: 1,
