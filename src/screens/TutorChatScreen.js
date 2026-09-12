@@ -438,7 +438,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
-    ...(Platform.OS === 'web' ? { height: 'calc(100vh - 65px)', overflow: 'hidden' } : {}),
+    ...(Platform.OS === 'web' ? { 
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      maxHeight: 'calc(100dvh - 60px)',
+      overflow: 'hidden' 
+    } : {}),
   },
   chatArea: {
     flex: 1,
@@ -571,12 +577,20 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(24, 44, 37, 0.95)',
+    backgroundColor: 'rgba(24, 44, 37, 0.98)',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderTopWidth: 2,
     borderTopColor: '#116466',
-    ...(Platform.OS === 'web' ? { pointerEvents: 'auto', width: '100%' } : {}),
+    ...(Platform.OS === 'web' ? { 
+      position: 'sticky', 
+      bottom: 0, 
+      left: 0, 
+      right: 0, 
+      zIndex: 999,
+      width: '100%',
+      pointerEvents: 'auto' 
+    } : {}),
   },
   plusButton: {
     width: 36,
