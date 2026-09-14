@@ -397,10 +397,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     alignItems: 'center',
     gap: 6,
+    zIndex: 2,
     ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
   },
   fullWidthCard: {
     flexBasis: '100%',
+    width: '100%',
   },
   selectedOptionCard: {
     backgroundColor: 'rgba(255, 203, 154, 0.2)',
@@ -432,6 +434,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
+    zIndex: 2,
     ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
   },
   selectedLevelCard: {
