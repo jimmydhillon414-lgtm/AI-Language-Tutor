@@ -13,7 +13,7 @@ import {
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
 
-// Newly integrated components and services (fixed paths to utils folder)
+// Newly integrated components and services
 import RoleplaySelector from '../components/RoleplaySelector';
 import ImmersiveBackground from '../components/ImmersiveBackground';
 import speechService from '../utils/speechService';
@@ -659,11 +659,11 @@ You MUST reply ONLY with a valid JSON object in this exact format:
               key={item.code}
               style={[styles.langToggleBtn, speechLang === item.code && styles.activeLangToggle]}
               onPress={() => setSpeechLang(item.code)}
-          >
+            >
               <Text style={[styles.langToggleText, speechLang === item.code && { color: '#1B2A26' }]}>
                 {item.label}
               </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -680,19 +680,16 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       <KeyboardAvoidingView 
         style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.chatArea}>
-          <View style={styles.chatOverlay}>
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.messageListContainer}
-              onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-              renderItem={renderMessageItem}
-            />
-          </View>
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.messageListContainer}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            renderItem={renderMessageItem}
+          />
         </View>
 
         <View style={styles.inputBar}>
@@ -704,18 +701,18 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             placeholderTextColor="#A3B8B0"
             onSubmitEditing={() => handleSendDirect(input)}
             returnKeyType="send"
-        />
+          />
 
           <TouchableOpacity 
             style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
             onPress={toggleVoiceInput}
-        >
+          >
             <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
-        </TouchableOpacity>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
+          <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
             <Text style={{ fontSize: 16, color: '#1B2A26', fontWeight: 'bold' }}>➤</Text>
-        </TouchableOpacity>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
 
@@ -742,33 +739,33 @@ You MUST reply ONLY with a valid JSON object in this exact format:
                     {isSelected && <Text style={{ color: '#FFCB9A' }}>✓</Text>}
                   </TouchableOpacity>
                 );
-            }}
-          />
+              }}
+            />
 
-          <TouchableOpacity 
-            style={styles.modalCloseButton} 
-            onPress={() => setShowVoiceModal(false)}
-        >
-            <Text style={styles.modalCloseText}>Done</Text>
-        </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.modalCloseButton} 
+              onPress={() => setShowVoiceModal(false)}
+            >
+              <Text style={styles.modalCloseText}>Done</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
 
-    <Modal visible={showRoleplayModal} animationType="slide" transparent={true}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <RoleplaySelector onSelectScenario={handleSelectCustomScenario} />
-          <TouchableOpacity 
-            style={[styles.modalCloseButton, { marginTop: 12 }]} 
-            onPress={() => setShowRoleplayModal(false)}
-        >
-            <Text style={styles.modalCloseText}>Close</Text>
-        </TouchableOpacity>
+      <Modal visible={showRoleplayModal} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <RoleplaySelector onSelectScenario={handleSelectCustomScenario} />
+            <TouchableOpacity 
+              style={[styles.modalCloseButton, { marginTop: 12 }]} 
+              onPress={() => setShowRoleplayModal(false)}
+            >
+              <Text style={styles.modalCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </Modal>
-  </ImmersiveBackground>
+      </Modal>
+    </ImmersiveBackground>
   );
 }
 
@@ -863,20 +860,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
-    ...(Platform.OS === 'web' ? { 
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      maxHeight: 'calc(100dvh - 150px)',
-      overflow: 'hidden' 
-    } : {}),
+    display: 'flex',
+    flexDirection: 'column',
   },
   chatArea: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    overflow: 'hidden',
-  },
-  chatOverlay: {
     flex: 1,
     backgroundColor: 'transparent',
   },
