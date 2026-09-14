@@ -13,11 +13,11 @@ import {
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
 
-// Newly integrated components and services
+// Newly integrated components and services (fixed paths to utils folder)
 import RoleplaySelector from '../components/RoleplaySelector';
 import ImmersiveBackground from '../components/ImmersiveBackground';
-import speechService from '../services/speechService';
-import sentimentAnalyzer from '../services/sentimentAnalyzer';
+import speechService from '../utils/speechService';
+import sentimentAnalyzer from '../utils/sentimentAnalyzer';
 
 export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
   const [userProfile, setUserProfile] = useState({ 
@@ -411,7 +411,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setInput('');
     stopAllSpeech();
 
-    // Analyze sentiment of user input using sentimentAnalyzer service
     if (sentimentAnalyzer && sentimentAnalyzer.analyze) {
       const tone = sentimentAnalyzer.analyze(messageValue.trim());
       setSentimentTone(tone);
@@ -523,12 +522,11 @@ You MUST reply ONLY with a valid JSON object in this exact format:
     
     if (isUser) {
       const displayName = userProfile?.full_name?.trim() ? userProfile.full_name : 'User';
-      const displayAvatar = userProfile?.avatar_type || '👤';
+      const displayAvatar = userProfile?.avatar_type || '🎓';
 
       return (
         <View style={styles.userBubbleRow}>
           <View style={styles.userBubble}>
-            {/* User Name & Avatar Header inside User Bubble */}
             <View style={styles.chatProfileHeader}>
               <Text style={styles.chatSenderName} numberOfLines={1}>{displayName}</Text>
               <View style={styles.chatMiniAvatar}>
@@ -656,18 +654,17 @@ You MUST reply ONLY with a valid JSON object in this exact format:
               key={item.code}
               style={[styles.langToggleBtn, speechLang === item.code && styles.activeLangToggle]}
               onPress={() => setSpeechLang(item.code)}
-            >
+          >
               <Text style={[styles.langToggleText, speechLang === item.code && { color: '#1B2A26' }]}>
                 {item.label}
               </Text>
-            </TouchableOpacity>
+          </TouchableOpacity>
           ))}
         </View>
 
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
-      {/* Live Scenario Objective Banner */}
       <View style={styles.activeObjectiveBanner}>
         <Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
         <Text style={styles.bannerText} numberOfLines={1}>
@@ -702,22 +699,21 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             placeholderTextColor="#A3B8B0"
             onSubmitEditing={() => handleSendDirect(input)}
             returnKeyType="send"
-          />
+        />
 
           <TouchableOpacity 
             style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
             onPress={toggleVoiceInput}
-          >
+        >
             <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
-          </TouchableOpacity>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
+        <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
             <Text style={{ fontSize: 16, color: '#1B2A26', fontWeight: 'bold' }}>➤</Text>
-          </TouchableOpacity>
+        </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
 
-      {/* Voice Selection Modal */}
       <Modal visible={showVoiceModal} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -741,38 +737,38 @@ You MUST reply ONLY with a valid JSON object in this exact format:
                     {isSelected && <Text style={{ color: '#FFCB9A' }}>✓</Text>}
                   </TouchableOpacity>
                 );
-              }}
-            />
+            }}
+          />
 
-            <TouchableOpacity 
-              style={styles.modalCloseButton} 
-              onPress={() => setShowVoiceModal(false)}
-            >
-              <Text style={styles.modalCloseText}>Done</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={styles.modalCloseButton} 
+            onPress={() => setShowVoiceModal(false)}
+        >
+            <Text style={styles.modalCloseText}>Done</Text>
+        </TouchableOpacity>
         </View>
-      </Modal>
+      </View>
+    </Modal>
 
-      {/* Roleplay Selector Modal */}
-      <Modal visible={showRoleplayModal} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <RoleplaySelector onSelectScenario={handleSelectCustomScenario} />
-            <TouchableOpacity 
-              style={[styles.modalCloseButton, { marginTop: 12 }]} 
-              onPress={() => setShowRoleplayModal(false)}
-            >
-              <Text style={styles.modalCloseText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+    <Modal visible={showRoleplayModal} animationType="slide" transparent={true}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <RoleplaySelector onSelectScenario={handleSelectCustomScenario} />
+          <TouchableOpacity 
+            style={[styles.modalCloseButton, { marginTop: 12 }]} 
+            onPress={() => setShowRoleplayModal(false)}
+        >
+            <Text style={styles.modalCloseText}>Close</Text>
+        </TouchableOpacity>
         </View>
-      </Modal>
-    </ImmersiveBackground>
+      </View>
+    </Modal>
+  </ImmersiveBackground>
   );
 }
 
 const styles = StyleSheet.create({
+ 
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
