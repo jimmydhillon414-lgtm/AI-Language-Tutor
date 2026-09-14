@@ -25,23 +25,58 @@ export default function AppNavigator() {
     return null;
   });
 
-  const [currentStep, setCurrentStep] = useState('pricing');
-  const [selectedPlan, setSelectedPlan] = useState(null);
-  const [selectedDay, setSelectedDay] = useState(null);
-  const [isPaid, setIsPaid] = useState(false);
+  // Session storage se currentStep, plan, aur paid status ko persist karein
+  const [currentStep, setCurrentStep] = useState(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return sessionStorage.getItem('ai_tutor_current_step') || 'pricing';
+    }
+    return 'pricing';
+  });
+
+  const [selectedPlan, setSelectedPlan] = useState(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return sessionStorage.getItem('ai_tutor_selected_plan') || null;
+    }
+    return null;
+  });
+
+  const [selectedDay, setSelectedDay] = useState(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const day = sessionStorage.getItem('ai_tutor_selected_day');
+      return day ? JSON.parse(day) : null;
+    }
+    return null;
+  });
+
+  const [isPaid, setIsPaid] = useState(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return sessionStorage.getItem('ai_tutor_is_paid') === 'true';
+    }
+    return false;
+  });
 
   const [activeTab, setActiveTab] = useState('AI Tutor');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
 
+  const updateSessionStorage = (key, value) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (value === null) {
+        sessionStorage.removeItem(key);
+      } else {
+        sessionStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : value);
+      }
+    }
+  };
+
   const handleLoginSuccess = (email) => {
     const userData = { email: email || 'Creatorstack9@gmail.com' };
     setUser(userData);
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      sessionStorage.setItem('ai_tutor_user', JSON.stringify(userData));
-    }
+    updateSessionStorage('ai_tutor_user', userData);
     setShowAuthModal(false);
+    
     setCurrentStep('pricing');
+    updateSessionStorage('ai_tutor_current_step', 'pricing');
   };
 
   const handleSignOut = () => {
@@ -49,8 +84,10 @@ export default function AppNavigator() {
     setCurrentStep('pricing');
     setSelectedPlan(null);
     setIsPaid(false);
+    setSelectedDay(null);
+    
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      sessionStorage.removeItem('ai_tutor_user');
+      sessionStorage.clear(); // Clear all saved session data on sign out
     }
   };
 
@@ -58,12 +95,19 @@ export default function AppNavigator() {
     setSelectedPlan(planName);
     setIsPaid(true);
     setCurrentStep('roadmap');
+    
+    updateSessionStorage('ai_tutor_selected_plan', planName);
+    updateSessionStorage('ai_tutor_is_paid', 'true');
+    updateSessionStorage('ai_tutor_current_step', 'roadmap');
   };
 
   const handleSelectDay = (dayNumber) => {
     setSelectedDay(dayNumber);
     setCurrentStep('chat');
     setActiveTab('AI Tutor');
+    
+    updateSessionStorage('ai_tutor_selected_day', dayNumber);
+    updateSessionStorage('ai_tutor_current_step', 'chat');
   };
 
   const renderContent = () => {
@@ -98,7 +142,10 @@ export default function AppNavigator() {
         <PricingScreen 
           onSelectPlan={handleSelectPlan} 
           onSignOut={handleSignOut} 
-          onBack={() => setUser(null)}
+          onBack={() => {
+            setUser(null);
+            updateSessionStorage('ai_tutor_user', null);
+          }}
         />
       );
     }
@@ -108,7 +155,10 @@ export default function AppNavigator() {
         <RoadmapScreen 
           selectedPlan={selectedPlan}
           onSelectDay={handleSelectDay}
-          onBack={() => setCurrentStep('pricing')}
+          onBack={() => {
+            setCurrentStep('pricing');
+            updateSessionStorage('ai_tutor_current_step', 'pricing');
+          }}
         />
       );
     }
@@ -120,6 +170,7 @@ export default function AppNavigator() {
             selectedDay={selectedDay} 
             onBack={() => {
               setCurrentStep('roadmap');
+              updateSessionStorage('ai_tutor_current_step', 'roadmap');
             }}
             onSignOut={handleSignOut}
           />
@@ -134,6 +185,7 @@ export default function AppNavigator() {
             selectedDay={selectedDay} 
             onBack={() => {
               setCurrentStep('roadmap');
+              updateSessionStorage('ai_tutor_current_step', 'roadmap');
             }}
             onSignOut={handleSignOut}
           />
@@ -151,7 +203,10 @@ export default function AppNavigator() {
           activeTab={activeTab} 
           setActiveTab={(tab) => {
             setActiveTab(tab);
-            if (tab === 'AI Tutor' && isPaid) setCurrentStep('roadmap');
+            if (tab === 'AI Tutor' && isPaid) {
+              setCurrentStep('roadmap');
+              updateSessionStorage('ai_tutor_current_step', 'roadmap');
+            }
           }} 
           onOpenLogin={() => { setAuthMode('login'); setShowAuthModal(true); }}
           onOpenSignup={() => { setAuthMode('signup'); setShowAuthModal(true); }}
