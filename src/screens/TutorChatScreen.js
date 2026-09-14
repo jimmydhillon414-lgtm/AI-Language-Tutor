@@ -21,7 +21,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     field_of_interest: null,
     preferred_voice: null,
     current_scenario: null,
-    scenario_objective: 'Initialize immersive roleplay simulation'
+    scenario_objective: 'Initialize immersive roleplay simulation',
+    full_name: 'User',
+    avatar_type: '🎓',
   });
   
   const currentDayNum = selectedDay || 1;
@@ -110,8 +112,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   }
 
   const initializeDayCurriculumChat = (profile, dayNum) => {
-    const targetLang = profile.target_language || 'English';
-    const interest = profile.field_of_interest || 'General Communication & Fluency';
     const scenario = profile.current_scenario || 'Interactive Roleplay Simulation';
     const objective = profile.scenario_objective || 'Introduce yourself, state your current goal, and let the session adapt to you.';
 
@@ -413,9 +413,9 @@ Current Scenario Objective: "${currentObj}".
 User's Latest Spoken Input: "${messageValue.trim()}".
 
 CRITICAL INSTRUCTIONS FOR INTENT & GOAL SWITCHING:
-1. **Dynamic Intent Detection**: Analyze the user's latest input ("${messageValue.trim()}"). If the user specifies a brand new goal, introduction, or interest (e.g., "my goal is to become a fluent speaker", "I want to practice job interviews", etc.), you MUST dynamically switch the context. Do NOT rigidly stick to the old saved interest ("${currentInterest}") if the user has introduced a new focus.
+1. **Dynamic Intent Detection**: Analyze the user's latest input ("${messageValue.trim()}"). If the user specifies a brand new goal, introduction, or interest, you MUST dynamically switch the context.
 2. **In-Character Immersion**: Adopt a professional coaching persona matching the user's *newly stated* goal or interest.
-3. **Scenario Progression**: Provide an updated "roleplayContext", a fresh "scenarioObjective", and appropriate "scenarioStage" (e.g., 'Introduction', 'Core Drill', 'Challenge Round').
+3. **Scenario Progression**: Provide an updated "roleplayContext", a fresh "scenarioObjective", and appropriate "scenarioStage".
 4. **Grammar & Fluency Analysis**: Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
 5. **Pronunciation & Fluency Score (MANDATORY)**: Score from 50 to 100 as "pronunciationScore" with a short constructive "pronunciationTip".
 
@@ -430,7 +430,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "roleplayContext": "Updated roleplay context matching user's new goal/interest",
   "scenarioObjective": "Next clear mission objective based on user's input",
   "scenarioStage": "Current phase (e.g. Core Drill)",
-  "new_field_of_interest": "Extracted new field of interest or goal from user message (or keep existing if unchanged)",
+  "new_field_of_interest": "Extracted new field of interest or goal from user message",
   "learning_goal": "Updated learning goal if changed",
   "reply": "Your strict in-character conversational response acknowledging their goal and continuing the session"
 }`;
@@ -493,15 +493,24 @@ You MUST reply ONLY with a valid JSON object in this exact format:
     const isUser = item.role === 'user';
     
     if (isUser) {
+      const displayName = userProfile?.full_name?.trim() ? userProfile.full_name : 'User';
+      const displayAvatar = userProfile?.avatar_type || '👤';
+
       return (
         <View style={styles.userBubbleRow}>
           <View style={styles.userBubble}>
+            {/* User Name & Avatar Header inside User Bubble */}
+            <View style={styles.chatProfileHeader}>
+              <Text style={styles.chatSenderName} numberOfLines={1}>{displayName}</Text>
+              <View style={styles.chatMiniAvatar}>
+                <Text style={styles.miniEmoji}>{displayAvatar}</Text>
+              </View>
+            </View>
+
             <Text style={styles.userText}>{item.message}</Text>
+            
             <View style={styles.timeAndAvatarRowUser}>
               <Text style={styles.timestampText}>{item.timestamp}</Text>
-              <View style={styles.miniAvatarContainerUser}>
-                <Text style={{ fontSize: 10 }}>👤</Text>
-              </View>
             </View>
           </View>
         </View>
@@ -909,6 +918,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
+    marginTop: 4,
   },
   objectiveBox: {
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
@@ -987,11 +997,35 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#116466',
+    backgroundColor: '#0A1411',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
+  },
+  miniEmoji: {
+    fontSize: 11,
+  },
+  chatProfileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 6,
+    marginBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 203, 154, 0.2)',
+    paddingBottom: 4,
+  },
+  chatSenderName: {
+    color: '#FFCB9A',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  chatMiniAvatar: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#0A1411',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   miniAvatarContainerAi: {
     width: 20,
@@ -1023,41 +1057,34 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#121E1A',
-    color: '#FFFFFF',
+    backgroundColor: '#0A1411',
+    borderWidth: 1,
+    borderColor: '#116466',
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 20,
-    fontSize: 13,
-    marginHorizontal: 4,
-    borderWidth: 1.5,
-    borderColor: '#116466',
-    ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
+    color: '#FFFFFF',
+    fontSize: 14,
   },
   micButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
     backgroundColor: '#116466',
-    alignItems: 'center',
+    padding: 10,
+    borderRadius: 10,
+    marginHorizontal: 6,
     justifyContent: 'center',
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+    alignItems: 'center',
   },
   sendPlaneButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
     backgroundColor: '#FFCB9A',
-    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
     justifyContent: 'center',
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+    alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -1065,17 +1092,17 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#112522',
+    backgroundColor: '#12221D',
     borderRadius: 16,
-    padding: 20,
     borderWidth: 1.5,
     borderColor: '#116466',
+    padding: 20,
   },
   modalTitle: {
-    color: '#FFFFFF',
+    color: '#FFCB9A',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   modalSubtitle: {
     color: '#A3B8B0',
@@ -1090,29 +1117,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     marginBottom: 6,
-    backgroundColor: '#182C25',
-    borderWidth: 1,
-    borderColor: '#1C312B',
+    backgroundColor: '#0A1411',
   },
   voiceOptionSelected: {
-    borderColor: '#FFCB9A',
     backgroundColor: '#1C312B',
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
   },
   voiceOptionText: {
     color: '#E2E8F0',
     fontSize: 13,
   },
   modalCloseButton: {
-    backgroundColor: '#116466',
-    paddingVertical: 10,
+    backgroundColor: '#FFCB9A',
+    paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
   },
   modalCloseText: {
-    color: '#FFCB9A',
+    color: '#12221D',
     fontWeight: 'bold',
     fontSize: 14,
   },
