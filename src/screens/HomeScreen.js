@@ -104,8 +104,9 @@ export default function HomeScreen({ navigation }) {
         //       <Text style={styles.primaryButtonText}>Start Practicing Now 🚀</Text>
         //     </TouchableOpacity>
         //   </div>
-        // </div>
-        */}
+         */}
+         </div>
+       
 
         {/* Interactive AI Tutor Video Demonstration */}
         <div style={styles.videoSectionCard}>
