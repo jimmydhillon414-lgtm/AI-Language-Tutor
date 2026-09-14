@@ -111,9 +111,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
   const initializeDayCurriculumChat = (profile, dayNum) => {
     const targetLang = profile.target_language || 'English';
-    const interest = profile.field_of_interest || 'General Communication';
+    const interest = profile.field_of_interest || 'General Communication & Fluency';
     const scenario = profile.current_scenario || 'Interactive Roleplay Simulation';
-    const objective = profile.scenario_objective || 'Introduce yourself and state your primary goal for this session.';
+    const objective = profile.scenario_objective || 'Introduce yourself, state your current goal, and let the session adapt to you.';
 
     const welcomeMsg = {
       id: '1',
@@ -126,7 +126,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         roleplayContext: scenario,
         scenarioObjective: objective,
         scenarioStage: 'Introduction',
-        reply: `Welcome to Day ${dayNum} simulation! Role: Expert mentor for "${interest}". Your current mission: ${objective}. Let's begin!`,
+        reply: `Welcome to Day ${dayNum} simulation! I am your adaptive AI language coach. Tell me your name, what you want to achieve, or any topic you wish to practice. Let's begin!`,
         isVoiceNote: false,
       }),
     };
@@ -405,18 +405,19 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
       const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
 
-      const prompt = `You are an expert, immersive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
+      const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
 Current Training Roadmap Day: Day ${currentDayNum}.
-User Interest/Topic: "${currentInterest}".
+Previously Saved User Interest/Topic: "${currentInterest}".
 Active Simulation Scenario: "${currentScenario}".
 Current Scenario Objective: "${currentObj}".
 User's Latest Spoken Input: "${messageValue.trim()}".
 
-Your strict operational rules:
-1. **In-Character Immersion**: Stay fully inside your roleplay persona matching "${currentInterest}" and "${currentScenario}". Never break character or speak like a generic AI assistant.
-2. **Scenario Progression**: Evaluate if the user achieved the current objective or if the conversation should advance. Provide a new or updated "scenarioObjective" and "scenarioStage" (e.g., 'Introduction', 'Core Drill', 'Challenge Round', 'Debrief').
-3. **Grammar & Fluency Analysis**: Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
-4. **Pronunciation & Fluency Score (MANDATORY)**: Score from 50 to 100 as "pronunciationScore" with a short constructive "pronunciationTip".
+CRITICAL INSTRUCTIONS FOR INTENT & GOAL SWITCHING:
+1. **Dynamic Intent Detection**: Analyze the user's latest input ("${messageValue.trim()}"). If the user specifies a brand new goal, introduction, or interest (e.g., "my goal is to become a fluent speaker", "I want to practice job interviews", etc.), you MUST dynamically switch the context. Do NOT rigidly stick to the old saved interest ("${currentInterest}") if the user has introduced a new focus.
+2. **In-Character Immersion**: Adopt a professional coaching persona matching the user's *newly stated* goal or interest.
+3. **Scenario Progression**: Provide an updated "roleplayContext", a fresh "scenarioObjective", and appropriate "scenarioStage" (e.g., 'Introduction', 'Core Drill', 'Challenge Round').
+4. **Grammar & Fluency Analysis**: Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
+5. **Pronunciation & Fluency Score (MANDATORY)**: Score from 50 to 100 as "pronunciationScore" with a short constructive "pronunciationTip".
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
@@ -426,12 +427,12 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "explanation": "Grammar feedback explanation",
   "pronunciationScore": 88,
   "pronunciationTip": "Tip for spoken rhythm",
-  "roleplayContext": "${currentScenario}",
-  "scenarioObjective": "Next clear mission objective for the user",
+  "roleplayContext": "Updated roleplay context matching user's new goal/interest",
+  "scenarioObjective": "Next clear mission objective based on user's input",
   "scenarioStage": "Current phase (e.g. Core Drill)",
-  "new_field_of_interest": null,
+  "new_field_of_interest": "Extracted new field of interest or goal from user message (or keep existing if unchanged)",
   "learning_goal": "Updated learning goal if changed",
-  "reply": "Your strict in-character conversational response continuing the roleplay scenario"
+  "reply": "Your strict in-character conversational response acknowledging their goal and continuing the session"
 }`;
 
       const responseText = await getAiResponse(prompt);
