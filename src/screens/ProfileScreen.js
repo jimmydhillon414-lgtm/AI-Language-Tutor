@@ -34,7 +34,7 @@ const MAIN_PROFESSIONS = [
   { id: 'Artist / Designer', name: 'Artist / Designer', emoji: '🎨' },
 ];
 
-// "Other" popup window ke andar dikhne wali extra professions
+// Popup window ke andar dikhne wali bachi hui other professions
 const OTHER_PROFESSIONS = [
   { id: 'Actor / Performer', name: 'Actor / Performer', emoji: '🎬' },
   { id: 'Athlete / Player', name: 'Athlete / Player', emoji: '⚽' },
@@ -54,7 +54,7 @@ export default function ProfileScreen() {
   const [professionCategory, setProfessionCategory] = useState('Student');
   const [avatarType, setAvatarType] = useState('🎓');
   
-  // Modal visibility state
+  // Popup Modal visibility state
   const [otherModalVisible, setOtherModalVisible] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -134,7 +134,6 @@ export default function ProfileScreen() {
     );
   }
 
-  // Check if currently selected profession belongs to the "Other" list
   const isOtherSelected = !MAIN_PROFESSIONS.some((p) => p.name === professionCategory);
 
   return (
@@ -146,7 +145,11 @@ export default function ProfileScreen() {
         </div>
       )}
 
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.container} 
+        showsVerticalScrollIndicator={true}
+        style={styles.scrollViewStyle}
+      >
         <View style={styles.card}>
           <View style={styles.headerRow}>
             <Text style={styles.headerIcon}>⚙️</Text>
@@ -189,7 +192,7 @@ export default function ProfileScreen() {
             onChangeText={setFullName}
           />
 
-          {/* Profession & Avatar Selection (Main 6 Grid) */}
+          {/* Profession & Avatar Selection */}
           <Text style={styles.label}>Select Profession & Avatar</Text>
           <View style={styles.gridContainer}>
             {MAIN_PROFESSIONS.map((prof) => {
@@ -346,8 +349,16 @@ const styles = StyleSheet.create({
   mainWrapper: {
     flex: 1,
     position: 'relative',
-    minHeight: '100vh',
+    height: '100vh',
+    maxHeight: '100vh',
     backgroundColor: '#0F1715',
+    overflow: 'hidden',
+    ...(Platform.OS === 'web' ? { display: 'flex', flexDirection: 'column' } : {}),
+  },
+  scrollViewStyle: {
+    flex: 1,
+    width: '100%',
+    ...(Platform.OS === 'web' ? { overflowY: 'auto', WebkitOverflowScrolling: 'touch' } : {}),
   },
   bgImageWrapper: {
     position: 'absolute',
@@ -378,7 +389,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    padding: '30px 16px',
+    padding: '30px 16px 60px 16px',
     alignItems: 'center',
   },
   card: {
