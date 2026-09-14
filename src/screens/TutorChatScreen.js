@@ -499,7 +499,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       return (
         <View style={styles.userBubbleRow}>
           <View style={styles.userBubble}>
-            {/* User Name & Avatar Header inside User Bubble */}
             <View style={styles.chatProfileHeader}>
               <Text style={styles.chatSenderName} numberOfLines={1}>{displayName}</Text>
               <View style={styles.chatMiniAvatar}>
@@ -634,7 +633,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
-      {/* Live Scenario Objective Banner */}
       <View style={styles.activeObjectiveBanner}>
         <Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
         <Text style={styles.bannerText} numberOfLines={1}>
