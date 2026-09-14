@@ -74,7 +74,10 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
   useEffect(() => {
     if (userProfile?.target_language) {
-      setSpeechLang(speechService.getLanguageCode ? speechService.getLanguageCode(userProfile.target_language) : getLanguageCode(userProfile.target_language));
+      const langCode = speechService?.getLanguageCode 
+        ? speechService.getLanguageCode(userProfile.target_language) 
+        : getLanguageCode(userProfile.target_language);
+      setSpeechLang(langCode);
     }
   }, [userProfile?.target_language]);
 
@@ -86,11 +89,13 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   };
 
   const stopAllSpeech = () => {
-    speechService.stopAllSpeech ? speechService.stopAllSpeech() : (() => {
+    if (speechService?.stopAllSpeech) {
+      speechService.stopAllSpeech();
+    } else {
       if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
         try { window.speechSynthesis.cancel(); } catch (e) {}
       }
-    })();
+    }
     speechQueueRef.current = [];
     activeUtteranceRef.current = null;
     setIsPlaying(false);
@@ -768,7 +773,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 }
 
 const styles = StyleSheet.create({
- 
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -991,14 +995,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: '#FFCB9A',
   },
-  pronunciationBox: {
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: '#6EE7B7',
-  },
   correctionTitle: {
     color: '#FFCB9A',
     fontSize: 11,
@@ -1007,72 +1003,72 @@ const styles = StyleSheet.create({
   },
   correctionText: {
     color: '#FFFFFF',
-    fontSize: 13,
-    marginBottom: 2,
-  },
-  pronunciationText: {
-    color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     marginBottom: 2,
   },
   explanationText: {
     color: '#E2E8F0',
-    fontSize: 12,
-    fontStyle: 'italic',
+    fontSize: 11,
     marginTop: 4,
+    fontStyle: 'italic',
+  },
+  pronunciationBox: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#6EE7B7',
+  },
+  pronunciationText: {
+    color: '#FFFFFF',
+    fontSize: 12,
   },
   timeAndAvatarRowUser: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'flex-end',
     marginTop: 6,
   },
   timeAndAvatarRowAi: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    marginTop: 6,
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  miniAvatarContainerAi: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timestampText: {
-    color: '#94A3B8',
+    color: '#A3B8B0',
     fontSize: 10,
-    marginHorizontal: 4,
-  },
-  miniEmoji: {
-    fontSize: 11,
   },
   chatProfileHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 6,
     marginBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 203, 154, 0.2)',
-    paddingBottom: 4,
   },
   chatSenderName: {
     color: '#FFCB9A',
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: 'bold',
+    maxWidth: '80%',
   },
   chatMiniAvatar: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#0A1411',
-    justifyContent: 'center',
+    backgroundColor: '#116466',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  miniAvatarContainerAi: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#182C25',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#116466'
+  miniEmoji: {
+    fontSize: 10,
   },
   inputBar: {
     flexDirection: 'row',
@@ -1084,49 +1080,49 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#1C312B',
+    backgroundColor: '#121E1A',
     color: '#FFFFFF',
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 20,
+    fontSize: 14,
     borderWidth: 1,
     borderColor: '#116466',
-    fontSize: 14,
   },
   micButton: {
     marginLeft: 8,
     backgroundColor: '#1C312B',
-    padding: 8,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#116466',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   sendPlaneButton: {
-    marginLeft: 8,
+    marginLeft: 6,
     backgroundColor: '#FFCB9A',
-    paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContainer: {
+    backgroundColor: '#121E1A',
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#112521',
-    borderRadius: 12,
+    borderRadius: 16,
+    padding: 20,
     borderWidth: 1.5,
     borderColor: '#116466',
-    padding: 20,
   },
   modalTitle: {
     color: '#FFCB9A',
@@ -1145,17 +1141,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 6,
-    marginBottom: 4,
-    backgroundColor: '#1C312B',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1C312B',
   },
   voiceOptionSelected: {
-    backgroundColor: '#163832',
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
+    backgroundColor: 'rgba(255, 203, 154, 0.1)',
   },
   voiceOptionText: {
-    color: '#E2E8F0',
+    color: '#FFFFFF',
     fontSize: 13,
   },
   modalCloseButton: {
@@ -1169,5 +1162,5 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontWeight: 'bold',
     fontSize: 14,
-  }
+  },
 });
