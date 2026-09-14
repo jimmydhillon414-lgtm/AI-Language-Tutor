@@ -135,6 +135,19 @@ export default function ProfileScreen() {
             <Text style={styles.headerTitle}>TUTOR PREFERENCES & GOALS</Text>
           </View>
 
+          {/* Profile Circle Avatar & Name Preview */}
+          <View style={styles.profilePreviewContainer}>
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarEmoji}>{avatarType || '🎓'}</Text>
+            </View>
+            <Text style={styles.profilePreviewName}>
+              {fullName.trim() !== '' ? fullName : 'Your Name'}
+            </Text>
+            <Text style={styles.profilePreviewProfession}>
+              {professionCategory}
+            </Text>
+          </View>
+
           <Text style={styles.sectionSubtitle}>
             Update your profile name, profession, avatar, and language preferences to personalize your AI sessions.
           </Text>
@@ -150,14 +163,19 @@ export default function ProfileScreen() {
           />
 
           {/* Profession & Avatar Selection */}
-          <Text style={styles.label}>Select Profession & Avatar ({avatarType})</Text>
+          <Text style={styles.label}>Select Profession & Avatar</Text>
           <View style={styles.gridContainer}>
             {PROFESSIONS.map((prof) => {
               const isSelected = professionCategory === prof.name;
+              const isOther = prof.id === 'Other';
               return (
                 <TouchableOpacity
                   key={prof.id}
-                  style={[styles.optionCard, isSelected && styles.selectedOptionCard]}
+                  style={[
+                    styles.optionCard,
+                    isOther && styles.fullWidthCard,
+                    isSelected && styles.selectedOptionCard,
+                  ]}
                   onPress={() => handleSelectProfession(prof)}
                   activeOpacity={0.8}
                 >
@@ -300,11 +318,50 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1.2,
   },
+  profilePreviewContainer: {
+    alignItems: 'center',
+    marginVertical: 16,
+    padding: 16,
+    backgroundColor: 'rgba(10, 20, 17, 0.6)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#116466',
+  },
+  avatarCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#0A1411',
+    borderWidth: 2.5,
+    borderColor: '#FFCB9A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    shadowColor: '#FFCB9A',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+  },
+  avatarEmoji: {
+    fontSize: 34,
+  },
+  profilePreviewName: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  profilePreviewProfession: {
+    color: '#FFCB9A',
+    fontSize: 13,
+    fontWeight: '600',
+  },
   sectionSubtitle: {
     color: '#D1E8E2',
     fontSize: 13,
-    marginBottom: 24,
+    marginBottom: 20,
     lineHeight: 18,
+    textAlign: 'center',
   },
   label: {
     color: '#FFCB9A',
@@ -341,6 +398,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
+  },
+  fullWidthCard: {
+    flexBasis: '100%',
   },
   selectedOptionCard: {
     backgroundColor: 'rgba(255, 203, 154, 0.2)',
