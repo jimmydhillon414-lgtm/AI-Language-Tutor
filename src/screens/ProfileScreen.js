@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { supabase } from '../api/supabase';
 
@@ -23,13 +24,27 @@ const LANGUAGES = [
 
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
-const PROFESSIONS = [
+// Main screen par dikhne wali 6 professions
+const MAIN_PROFESSIONS = [
   { id: 'Student', name: 'Student', emoji: '🎓' },
   { id: 'Software Engineer', name: 'Software Engineer', emoji: '💻' },
   { id: 'Doctor / Medical', name: 'Doctor / Medical', emoji: '🩺' },
   { id: 'Business / Entrepreneur', name: 'Business / Entrepreneur', emoji: '💼' },
   { id: 'Teacher / Educator', name: 'Teacher / Educator', emoji: '📚' },
   { id: 'Artist / Designer', name: 'Artist / Designer', emoji: '🎨' },
+];
+
+// "Other" popup window ke andar dikhne wali extra professions
+const OTHER_PROFESSIONS = [
+  { id: 'Actor / Performer', name: 'Actor / Performer', emoji: '🎬' },
+  { id: 'Athlete / Player', name: 'Athlete / Player', emoji: '⚽' },
+  { id: 'Scientist / Researcher', name: 'Scientist / Researcher', emoji: '🔬' },
+  { id: 'Chef / Culinary', name: 'Chef / Culinary', emoji: '🍳' },
+  { id: 'Writer / Author', name: 'Writer / Author', emoji: '✍️' },
+  { id: 'Lawyer / Legal', name: 'Lawyer / Legal', emoji: '⚖️' },
+  { id: 'Musician / Singer', name: 'Musician / Singer', emoji: '🎵' },
+  { id: 'Freelancer / Creator', name: 'Freelancer / Creator', emoji: '🚀' },
+  { id: 'Photographer', name: 'Photographer', emoji: '📷' },
 ];
 
 export default function ProfileScreen() {
@@ -39,6 +54,9 @@ export default function ProfileScreen() {
   const [professionCategory, setProfessionCategory] = useState('Student');
   const [avatarType, setAvatarType] = useState('🎓');
   
+  // Modal visibility state
+  const [otherModalVisible, setOtherModalVisible] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -116,7 +134,8 @@ export default function ProfileScreen() {
     );
   }
 
-  const isOtherSelected = !PROFESSIONS.some((p) => p.name === professionCategory);
+  // Check if currently selected profession belongs to the "Other" list
+  const isOtherSelected = !MAIN_PROFESSIONS.some((p) => p.name === professionCategory);
 
   return (
     <View style={styles.mainWrapper}>
@@ -170,10 +189,10 @@ export default function ProfileScreen() {
             onChangeText={setFullName}
           />
 
-          {/* Profession & Avatar Selection */}
+          {/* Profession & Avatar Selection (Main 6 Grid) */}
           <Text style={styles.label}>Select Profession & Avatar</Text>
           <View style={styles.gridContainer}>
-            {PROFESSIONS.map((prof) => {
+            {MAIN_PROFESSIONS.map((prof) => {
               const isSelected = professionCategory === prof.name;
               return (
                 <TouchableOpacity
@@ -194,19 +213,20 @@ export default function ProfileScreen() {
             })}
           </View>
 
-          {/* Dedicated Full-Width "Other" Button with explicit click handler */}
+          {/* Dedicated Full-Width "Other / Custom Role" Button */}
           <TouchableOpacity
             style={[
               styles.otherOptionButton,
               isOtherSelected && styles.selectedOptionCard,
             ]}
-            onPress={() => handleSelectProfession('Other / Custom', '🚀')}
+            onPress={() => setOtherModalVisible(true)}
             activeOpacity={0.7}
           >
-            <Text style={styles.flagEmoji}>🚀</Text>
+            <Text style={styles.flagEmoji}>{isOtherSelected ? avatarType : '🚀'}</Text>
             <Text style={[styles.optionText, isOtherSelected && styles.selectedOptionText]}>
-              Other / Custom Role
+              {isOtherSelected ? professionCategory : 'Other / Custom Role'}
             </Text>
+            <Text style={styles.dropdownArrow}>▼</Text>
           </TouchableOpacity>
 
           {/* Target Languages Grid */}
@@ -266,6 +286,58 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* OTHER PROFESSIONS POPUP MODAL */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={otherModalVisible}
+        onRequestClose={() => setOtherModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContentCard}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>✨ Select Custom / Other Role</Text>
+              <TouchableOpacity onPress={() => setOtherModalVisible(false)}>
+                <Text style={styles.closeModalText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubText}>Choose from our extended list of professions and roles:</Text>
+
+            <ScrollView contentContainerStyle={styles.modalGridContainer} showsVerticalScrollIndicator={false}>
+              {OTHER_PROFESSIONS.map((item) => {
+                const isSelected = professionCategory === item.name;
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.modalOptionCard,
+                      isSelected && styles.selectedOptionCard,
+                    ]}
+                    onPress={() => {
+                      handleSelectProfession(item.name, item.emoji);
+                      setOtherModalVisible(false);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.flagEmoji}>{item.emoji}</Text>
+                    <Text style={[styles.optionText, isSelected && styles.selectedOptionText]}>
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setOtherModalVisible(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -459,14 +531,18 @@ const styles = StyleSheet.create({
     borderColor: '#116466',
     borderRadius: 14,
     paddingVertical: 14,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    justifyContent: 'space-between',
     marginBottom: 20,
     position: 'relative',
-    zIndex: 99, // Ensuring it sits strictly on top for web events
+    zIndex: 99,
     ...(Platform.OS === 'web' ? { cursor: 'pointer', pointerEvents: 'auto', transition: 'all 0.2s ease' } : {}),
+  },
+  dropdownArrow: {
+    color: '#FFCB9A',
+    fontSize: 12,
   },
   selectedOptionCard: {
     backgroundColor: 'rgba(255, 203, 154, 0.2)',
@@ -539,5 +615,81 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalContentCard: {
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '80%',
+    backgroundColor: '#12221D',
+    borderRadius: 22,
+    padding: 24,
+    borderWidth: 2,
+    borderColor: '#FFCB9A',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    color: '#FFCB9A',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  closeModalText: {
+    color: '#B2D8D8',
+    fontSize: 18,
+    fontWeight: 'bold',
+    padding: 4,
+  },
+  modalSubText: {
+    color: '#B2D8D8',
+    fontSize: 13,
+    marginBottom: 18,
+  },
+  modalGridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingBottom: 10,
+  },
+  modalOptionCard: {
+    width: '48%',
+    flexGrow: 1,
+    backgroundColor: '#0A1411',
+    borderWidth: 1.5,
+    borderColor: '#116466',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    gap: 6,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
+  },
+  modalCloseButton: {
+    marginTop: 16,
+    backgroundColor: '#FFCB9A',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalCloseButtonText: {
+    color: '#121E1A',
+    fontSize: 14,
+    fontWeight: '800',
   },
 });
