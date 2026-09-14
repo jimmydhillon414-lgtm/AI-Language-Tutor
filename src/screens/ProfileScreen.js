@@ -23,7 +23,6 @@ const LANGUAGES = [
 
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
-// Standard Professions Grid (Aapka "Other" yahan se alag kar diya hai)
 const PROFESSIONS = [
   { id: 'Student', name: 'Student', emoji: '🎓' },
   { id: 'Software Engineer', name: 'Software Engineer', emoji: '💻' },
@@ -135,7 +134,7 @@ export default function ProfileScreen() {
             <Text style={styles.headerTitle}>TUTOR PREFERENCES & GOALS</Text>
           </View>
 
-          {/* Modernized Profile Preview Header */}
+          {/* Modern Profile Preview Header */}
           <View style={styles.modernProfileCard}>
             <View style={styles.avatarGlowWrapper}>
               <View style={styles.avatarCircle}>
@@ -195,14 +194,14 @@ export default function ProfileScreen() {
             })}
           </View>
 
-          {/* Dedicated Full-Width "Other" Button (100% Clickable & Fixed) */}
+          {/* Dedicated Full-Width "Other" Button with explicit click handler */}
           <TouchableOpacity
             style={[
               styles.otherOptionButton,
               isOtherSelected && styles.selectedOptionCard,
             ]}
             onPress={() => handleSelectProfession('Other / Custom', '🚀')}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
             <Text style={styles.flagEmoji}>🚀</Text>
             <Text style={[styles.optionText, isOtherSelected && styles.selectedOptionText]}>
@@ -465,8 +464,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     marginBottom: 20,
-    zIndex: 5,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer', transition: 'all 0.2s ease' } : {}),
+    position: 'relative',
+    zIndex: 99, // Ensuring it sits strictly on top for web events
+    ...(Platform.OS === 'web' ? { cursor: 'pointer', pointerEvents: 'auto', transition: 'all 0.2s ease' } : {}),
   },
   selectedOptionCard: {
     backgroundColor: 'rgba(255, 203, 154, 0.2)',
