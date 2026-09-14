@@ -13,6 +13,12 @@ import {
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
 
+// Newly integrated components and services
+import RoleplaySelector from '../components/RoleplaySelector';
+import ImmersiveBackground from '../components/ImmersiveBackground';
+import speechService from '../services/speechService';
+import sentimentAnalyzer from '../services/sentimentAnalyzer';
+
 export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
   const [userProfile, setUserProfile] = useState({ 
     target_language: 'English', 
@@ -39,6 +45,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   
   const [availableVoices, setAvailableVoices] = useState([]);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [showRoleplayModal, setShowRoleplayModal] = useState(false);
+  const [sentimentTone, setSentimentTone] = useState('neutral');
   
   const speechQueueRef = useRef([]);
   const activeUtteranceRef = useRef(null);
@@ -66,7 +74,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
   useEffect(() => {
     if (userProfile?.target_language) {
-      setSpeechLang(getLanguageCode(userProfile.target_language));
+      setSpeechLang(speechService.getLanguageCode ? speechService.getLanguageCode(userProfile.target_language) : getLanguageCode(userProfile.target_language));
     }
   }, [userProfile?.target_language]);
 
@@ -78,9 +86,11 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   };
 
   const stopAllSpeech = () => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
-      try { window.speechSynthesis.cancel(); } catch (e) {}
-    }
+    speechService.stopAllSpeech ? speechService.stopAllSpeech() : (() => {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+    })();
     speechQueueRef.current = [];
     activeUtteranceRef.current = null;
     setIsPlaying(false);
@@ -160,6 +170,19 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         console.log('Error saving preferred voice:', err);
       }
     }
+  };
+
+  const handleSelectCustomScenario = async (selectedScenario) => {
+    setShowRoleplayModal(false);
+    if (!selectedScenario) return;
+
+    setUserProfile(prev => ({
+      ...prev,
+      current_scenario: selectedScenario.title,
+      scenario_objective: selectedScenario.objective
+    }));
+
+    await handleSendDirect(`Let's switch scenario to: ${selectedScenario.title}. Objective: ${selectedScenario.objective}`);
   };
 
   const toggleVoiceInput = () => {
@@ -388,6 +411,12 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setInput('');
     stopAllSpeech();
 
+    // Analyze sentiment of user input using sentimentAnalyzer service
+    if (sentimentAnalyzer && sentimentAnalyzer.analyze) {
+      const tone = sentimentAnalyzer.analyze(messageValue.trim());
+      setSentimentTone(tone);
+    }
+
     const timeStr = getCurrentTimeString();
     const tempUserMsg = {
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -599,7 +628,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   };
 
   return (
-    <AppBackground>
+    <ImmersiveBackground tone={sentimentTone}>
       <View style={styles.headerBar}>
         <View style={styles.headerLeftGroup}>
           {onBack && (
@@ -610,6 +639,10 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           
           <TouchableOpacity style={[styles.voiceConfigBtn, { marginLeft: 8 }]} onPress={() => setShowVoiceModal(true)}>
             <Text style={styles.voiceConfigBtnText}>🎙️ Voice</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.voiceConfigBtn, { marginLeft: 6 }]} onPress={() => setShowRoleplayModal(true)}>
+            <Text style={styles.voiceConfigBtnText}>🎭 Scenarios</Text>
           </TouchableOpacity>
         </View>
 
@@ -684,6 +717,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
       </KeyboardAvoidingView>
 
+      {/* Voice Selection Modal */}
       <Modal visible={showVoiceModal} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -719,7 +753,22 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </View>
         </View>
       </Modal>
-    </AppBackground>
+
+      {/* Roleplay Selector Modal */}
+      <Modal visible={showRoleplayModal} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <RoleplaySelector onSelectScenario={handleSelectCustomScenario} />
+            <TouchableOpacity 
+              style={[styles.modalCloseButton, { marginTop: 12 }]} 
+              onPress={() => setShowRoleplayModal(false)}
+            >
+              <Text style={styles.modalCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </ImmersiveBackground>
   );
 }
 
@@ -993,14 +1042,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginHorizontal: 4,
   },
-  miniAvatarContainerUser: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#0A1411',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   miniEmoji: {
     fontSize: 11,
   },
@@ -1035,56 +1076,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#FFCB9A',
+    borderColor: '#116466'
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(24, 44, 37, 0.98)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderTopWidth: 2,
+    padding: 10,
+    backgroundColor: 'rgba(11, 25, 23, 0.95)',
+    borderTopWidth: 1,
     borderTopColor: '#116466',
-    ...(Platform.OS === 'web' ? { 
-      position: 'sticky', 
-      bottom: 0, 
-      left: 0, 
-      right: 0, 
-      zIndex: 999,
-      width: '100%',
-      pointerEvents: 'auto' 
-    } : {}),
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#0A1411',
+    backgroundColor: '#1C312B',
+    color: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#116466',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    color: '#FFFFFF',
     fontSize: 14,
   },
   micButton: {
-    backgroundColor: '#116466',
-    padding: 10,
-    borderRadius: 10,
-    marginHorizontal: 6,
+    marginLeft: 8,
+    backgroundColor: '#1C312B',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#116466',
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendPlaneButton: {
+    marginLeft: 8,
     backgroundColor: '#FFCB9A',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -1092,8 +1126,8 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#12221D',
-    borderRadius: 16,
+    backgroundColor: '#112521',
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#116466',
     padding: 20,
@@ -1102,12 +1136,12 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   modalSubtitle: {
     color: '#A3B8B0',
     fontSize: 12,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   voiceOptionItem: {
     flexDirection: 'row',
@@ -1115,12 +1149,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    marginBottom: 6,
-    backgroundColor: '#0A1411',
+    borderRadius: 6,
+    marginBottom: 4,
+    backgroundColor: '#1C312B',
   },
   voiceOptionSelected: {
-    backgroundColor: '#1C312B',
+    backgroundColor: '#163832',
     borderWidth: 1,
     borderColor: '#FFCB9A',
   },
@@ -1129,15 +1163,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   modalCloseButton: {
-    backgroundColor: '#FFCB9A',
-    paddingVertical: 12,
-    borderRadius: 10,
+    backgroundColor: '#116466',
+    paddingVertical: 10,
+    borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
   },
   modalCloseText: {
-    color: '#12221D',
+    color: '#FFCB9A',
     fontWeight: 'bold',
     fontSize: 14,
-  },
+  }
 });
