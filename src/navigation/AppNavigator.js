@@ -25,7 +25,6 @@ export default function AppNavigator() {
     return null;
   });
 
-  // Session storage se currentStep, plan, aur paid status ko persist karein
   const [currentStep, setCurrentStep] = useState(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       return sessionStorage.getItem('ai_tutor_current_step') || 'pricing';
@@ -55,7 +54,14 @@ export default function AppNavigator() {
     return false;
   });
 
-  const [activeTab, setActiveTab] = useState('AI Tutor');
+  // Active Tab ko bhi sessionStorage se persist karein taaki History/Profile refresh par na khoye
+  const [activeTab, setActiveTab] = useState(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return sessionStorage.getItem('ai_tutor_active_tab') || 'AI Tutor';
+    }
+    return 'AI Tutor';
+  });
+
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
 
@@ -85,9 +91,10 @@ export default function AppNavigator() {
     setSelectedPlan(null);
     setIsPaid(false);
     setSelectedDay(null);
+    setActiveTab('AI Tutor');
     
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      sessionStorage.clear(); // Clear all saved session data on sign out
+      sessionStorage.clear();
     }
   };
 
@@ -108,6 +115,7 @@ export default function AppNavigator() {
     
     updateSessionStorage('ai_tutor_selected_day', dayNumber);
     updateSessionStorage('ai_tutor_current_step', 'chat');
+    updateSessionStorage('ai_tutor_active_tab', 'AI Tutor');
   };
 
   const renderContent = () => {
@@ -175,8 +183,10 @@ export default function AppNavigator() {
             onSignOut={handleSignOut}
           />
         );
+      case 'History': // Navbar ke label ke mutabiq check karein ('History' ya 'Grammar History')
       case 'Grammar History':
         return <GrammarHistoryScreen />;
+      case 'Profile': // Navbar ke label ke mutabiq check karein ('Profile' ya 'Profile Settings')
       case 'Profile Settings':
         return <ProfileScreen user={user} selectedPlan={selectedPlan} />;
       default:
@@ -203,6 +213,7 @@ export default function AppNavigator() {
           activeTab={activeTab} 
           setActiveTab={(tab) => {
             setActiveTab(tab);
+            updateSessionStorage('ai_tutor_active_tab', tab);
             if (tab === 'AI Tutor' && isPaid) {
               setCurrentStep('roadmap');
               updateSessionStorage('ai_tutor_current_step', 'roadmap');
