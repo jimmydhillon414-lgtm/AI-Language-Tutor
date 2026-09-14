@@ -95,15 +95,15 @@ export default function HomeScreen({ navigation }) {
             Your personal 1-on-1 voice and chat companion engineered for rapid conversational fluency at a <span style={{ color: '#FFCB9A', fontWeight: 'bold' }}>{userProfile.proficiency_level || 'Beginner'}</span> level.
           </p>
 
-          <div style={styles.heroBtnGroup}>
-            <TouchableOpacity 
-              style={styles.primaryButton}
-              onPress={() => navigation.navigate('TutorChat')}
-            >
-              <Text style={styles.primaryButtonText}>Start Practicing Now 🚀</Text>
-            </TouchableOpacity>
-          </div>
-        </div>
+        //   <div style={styles.heroBtnGroup}>
+        //     <TouchableOpacity 
+        //       style={styles.primaryButton}
+        //       onPress={() => navigation.navigate('TutorChat')}
+        //     >
+        //       <Text style={styles.primaryButtonText}>Start Practicing Now 🚀</Text>
+        //     </TouchableOpacity>
+        //   </div>
+        // </div>
 
         {/* Interactive AI Tutor Video Demonstration */}
         <div style={styles.videoSectionCard}>
