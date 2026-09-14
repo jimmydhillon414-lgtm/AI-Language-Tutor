@@ -12,6 +12,10 @@ import {
 } from 'react-native';
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
+import ImmersiveBackground from '../components/ImmersiveBackground';
+import RoleplaySelector from '../components/RoleplaySelector';
+import speechService from '../utils/speechService';
+import sentimentAnalyzer from '../utils/sentimentAnalyzer';
 
 export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
   const [userProfile, setUserProfile] = useState({ 
@@ -384,6 +388,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
 
+    // Optional usage of sentiment analyzer to understand user tone
+    const userSentiment = sentimentAnalyzer ? sentimentAnalyzer.analyze(messageValue) : null;
+
     stopVoiceInput();
     setInput('');
     stopAllSpeech();
@@ -411,6 +418,7 @@ Previously Saved User Interest/Topic: "${currentInterest}".
 Active Simulation Scenario: "${currentScenario}".
 Current Scenario Objective: "${currentObj}".
 User's Latest Spoken Input: "${messageValue.trim()}".
+User Tone/Sentiment Analysis: "${userSentiment?.sentiment || 'neutral'}".
 
 CRITICAL INSTRUCTIONS FOR INTENT & GOAL SWITCHING:
 1. **Dynamic Intent Detection**: Analyze the user's latest input ("${messageValue.trim()}"). If the user specifies a brand new goal, introduction, or interest, you MUST dynamically switch the context.
@@ -639,6 +647,13 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           {userProfile?.scenario_objective || 'Immersive Roleplay Simulation in progress...'}
         </Text>
       </View>
+
+      {/* Roleplay Selector Component Integration */}
+      <RoleplaySelector 
+        onSelectScenario={(selectedScenario) => {
+          setUserProfile(prev => ({ ...prev, current_scenario: selectedScenario }));
+        }} 
+      />
 
       <KeyboardAvoidingView 
         style={styles.container} 
@@ -1022,75 +1037,65 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     backgroundColor: '#0A1411',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   miniAvatarContainerAi: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#182C25',
+    backgroundColor: '#116466',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(24, 44, 37, 0.98)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderTopWidth: 2,
+    padding: 10,
+    backgroundColor: 'rgba(11, 25, 23, 0.95)',
+    borderTopWidth: 1.5,
     borderTopColor: '#116466',
-    ...(Platform.OS === 'web' ? { 
-      position: 'sticky', 
-      bottom: 0, 
-      left: 0, 
-      right: 0, 
-      zIndex: 999,
-      width: '100%',
-      pointerEvents: 'auto' 
-    } : {}),
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#0A1411',
+    backgroundColor: '#121E1A',
     borderWidth: 1,
     borderColor: '#116466',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     color: '#FFFFFF',
     fontSize: 14,
+    maxHeight: 100,
   },
   micButton: {
-    backgroundColor: '#116466',
+    marginLeft: 8,
+    backgroundColor: '#1C312B',
     padding: 10,
-    borderRadius: 10,
-    marginHorizontal: 6,
-    justifyContent: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#116466',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   sendPlaneButton: {
+    marginLeft: 8,
     backgroundColor: '#FFCB9A',
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 10,
-    justifyContent: 'center',
+    borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   modalContainer: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#12221D',
+    width: '85%',
+    backgroundColor: '#121E1A',
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#116466',
@@ -1113,29 +1118,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    marginBottom: 6,
-    backgroundColor: '#0A1411',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(17, 100, 102, 0.3)',
   },
   voiceOptionSelected: {
-    backgroundColor: '#1C312B',
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
+    backgroundColor: 'rgba(255, 203, 154, 0.1)',
   },
   voiceOptionText: {
-    color: '#E2E8F0',
+    color: '#FFFFFF',
     fontSize: 13,
   },
   modalCloseButton: {
-    backgroundColor: '#FFCB9A',
-    paddingVertical: 12,
-    borderRadius: 10,
+    marginTop: 14,
+    backgroundColor: '#116466',
+    paddingVertical: 10,
+    borderRadius: 8,
     alignItems: 'center',
-    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
   },
   modalCloseText: {
-    color: '#12221D',
-    fontWeight: 'bold',
+    color: '#FFCB9A',
     fontSize: 14,
+    fontWeight: 'bold',
   },
 });
