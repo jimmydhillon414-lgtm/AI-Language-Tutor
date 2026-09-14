@@ -16,41 +16,31 @@ export default function GrammarHistoryScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Fixed: Querying 'grammar_history' where TutorChatScreen actually saves corrections
       const { data, error } = await supabase
-        .from('tutor_chat_history')
+        .from('grammar_history')
         .select('*')
         .eq('user_id', user.id)
-        .eq('role', 'model')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const parsedList = [];
+      const formattedList = [];
       if (data) {
         data.forEach((item) => {
-          try {
-            const parsed = JSON.parse(item.message);
-            // STRICT CHECK: Only include if it has explicit correction properties or explanation
-            const hasValidCorrection = parsed && (parsed.hasCorrection === true || (parsed.originalText && parsed.correctedText));
-            const hasValidTip = parsed && !parsed.hasCorrection && parsed.explanation;
-
-            if (hasValidCorrection || hasValidTip) {
-              parsedList.push({
-                id: item.id,
-                originalText: parsed.originalText || parsed.original || '',
-                correctedText: parsed.correctedText || parsed.corrected || '',
-                explanation: parsed.explanation || '',
-                hasCorrection: Boolean(parsed.hasCorrection || parsed.correctedText),
-                createdAt: item.created_at,
-              });
-            }
-          } catch (e) {
-            // Skip non-JSON plain text messages completely
-          }
+          const hasCorrection = Boolean(item.corrected_text && item.corrected_text.trim() !== '');
+          formattedList.push({
+            id: item.id,
+            originalText: item.original_text || '',
+            correctedText: item.corrected_text || '',
+            explanation: item.explanation || '',
+            hasCorrection: hasCorrection,
+            createdAt: item.created_at,
+          });
         });
       }
 
-      setCorrections(parsedList);
+      setCorrections(formattedList);
     } catch (err) {
       console.error('Error fetching history:', err);
     } finally {
@@ -60,18 +50,17 @@ export default function GrammarHistoryScreen() {
 
   async function deleteItem(id) {
     try {
-      // Optimistically remove from UI first for instant response
       setCorrections((prev) => prev.filter((item) => item.id !== id));
 
       const { error } = await supabase
-        .from('tutor_chat_history')
+        .from('grammar_history')
         .delete()
         .eq('id', id);
 
       if (error) {
         console.error('Supabase delete error:', error.message);
         alert('Failed to delete from database: ' + error.message);
-        fetchCorrections(); // Re-fetch if deletion failed on server
+        fetchCorrections();
       }
     } catch (err) {
       console.error('Delete exception:', err);
@@ -130,7 +119,7 @@ export default function GrammarHistoryScreen() {
 
         {filteredCorrections.length === 0 ? (
           <div style={styles.emptyContainer}>
-            <p style={styles.emptyText}>No grammar records found yet.</p>
+            <p style={styles.emptyText}>No grammar records found yet. Chat with the tutor to log corrections!</p>
           </div>
         ) : (
           <div style={styles.listContainer}>
