@@ -3,6 +3,7 @@ import {
   StyleSheet,
   Text,
   View,
+  TextInput,
   TouchableOpacity,
   ScrollView,
   Platform,
@@ -23,6 +24,7 @@ const LANGUAGES = [
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
 export default function ProfileScreen() {
+  const [fullName, setFullName] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('English');
   const [proficiencyLevel, setProficiencyLevel] = useState('Beginner');
   const [loading, setLoading] = useState(true);
@@ -45,6 +47,7 @@ export default function ProfileScreen() {
         .maybeSingle();
 
       if (data) {
+        if (data.full_name) setFullName(data.full_name);
         if (data.target_language) setTargetLanguage(data.target_language);
         if (data.proficiency_level) setProficiencyLevel(data.proficiency_level);
       }
@@ -64,6 +67,7 @@ export default function ProfileScreen() {
 
       const updates = {
         id: user.id,
+        full_name: fullName,
         target_language: targetLanguage,
         proficiency_level: proficiencyLevel,
         updated_at: new Date(),
@@ -93,7 +97,6 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.mainWrapper}>
-      {/* Background Image Layer - Made Sharp and Clear */}
       {Platform.OS === 'web' && (
         <div style={styles.bgImageWrapper}>
           <img src={require('../../assets/tutor_girl.png.png')} style={styles.bgImageStyle} alt="Background" />
@@ -109,8 +112,18 @@ export default function ProfileScreen() {
           </View>
 
           <Text style={styles.sectionSubtitle}>
-            Choose the language you want to master and your current proficiency level to personalize your AI sessions.
+            Update your profile name, target language, and current proficiency level to personalize your AI sessions.
           </Text>
+
+          {/* Profile Name Input */}
+          <Text style={styles.label}>Profile Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your full name"
+            placeholderTextColor="#888888"
+            value={fullName}
+            onChangeText={setFullName}
+          />
 
           {/* Target Languages Grid (7 Languages) */}
           <Text style={styles.label}>Select Target Language</Text>
@@ -193,7 +206,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    filter: 'none', // Removed blur so background is sharp and clear
+    filter: 'none',
     transform: 'scale(1)',
   },
   bgOverlay: {
@@ -202,7 +215,7 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(15, 23, 21, 0.45)', // Lighter overlay so background and text are vividly sharp
+    backgroundColor: 'rgba(15, 23, 21, 0.45)',
   },
   centerLoader: {
     flex: 1,
@@ -219,7 +232,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 720,
-    backgroundColor: 'rgba(24, 44, 37, 0.95)', // Solid sharp background for high readability
+    backgroundColor: 'rgba(24, 44, 37, 0.95)',
     borderRadius: 24,
     padding: 30,
     borderWidth: 2,
@@ -254,6 +267,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
   },
+  input: {
+    backgroundColor: '#0A1411',
+    borderWidth: 1.5,
+    borderColor: '#116466',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginBottom: 24,
+  },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -281,7 +305,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
   optionText: {
-    color: '#FFFFFF', // High contrast bright white for sharp readability
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
   },
@@ -309,7 +333,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFCB9A',
   },
   levelText: {
-    color: '#FFFFFF', // High contrast bright white for sharp readability
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
   },
