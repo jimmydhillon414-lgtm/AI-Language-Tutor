@@ -225,7 +225,7 @@ export default function ProfileScreen() {
             onPress={() => setOtherModalVisible(true)}
             activeOpacity={0.7}
           >
-            <Text style={styles.flagEmoji}>{isOtherSelected ? avatarType : '🚀'}</Text>
+            <Text style={styles.flagEmoji}>{isOtherSelected ? avatarType : ''}</Text>
             <Text style={[styles.optionText, isOtherSelected && styles.selectedOptionText]}>
               {isOtherSelected ? professionCategory : 'Other / Custom Role'}
             </Text>
