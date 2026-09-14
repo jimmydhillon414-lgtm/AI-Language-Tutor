@@ -65,7 +65,8 @@ export default function HomeScreen({ navigation }) {
           <div style={styles.trustDivider} />
           <div style={styles.trustBadgeItem}>
             <span style={styles.trustValue}>24/7</span>
-            <span style={styles.trustLabel}>Personal AI Tutor ★</span>
+            <span style={styles.trustValue}>★Personal AI Tutor ★</span>
+            // <span style={styles.trustLabel}>Personal AI Tutor ★</span>
           </div>
           <div style={styles.trustDivider} />
           <div style={styles.trustBadgeItem}>
@@ -95,7 +96,7 @@ export default function HomeScreen({ navigation }) {
             Your personal 1-on-1 voice and chat companion engineered for rapid conversational fluency at a <span style={{ color: '#FFCB9A', fontWeight: 'bold' }}>{userProfile.proficiency_level || 'Beginner'}</span> level.
           </p>
 
-        //   <div style={styles.heroBtnGroup}>
+          {/*  //   <div style={styles.heroBtnGroup}>
         //     <TouchableOpacity 
         //       style={styles.primaryButton}
         //       onPress={() => navigation.navigate('TutorChat')}
@@ -104,6 +105,7 @@ export default function HomeScreen({ navigation }) {
         //     </TouchableOpacity>
         //   </div>
         // </div>
+        */}
 
         {/* Interactive AI Tutor Video Demonstration */}
         <div style={styles.videoSectionCard}>
