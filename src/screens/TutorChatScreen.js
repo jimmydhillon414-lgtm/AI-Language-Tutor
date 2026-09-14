@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  FlatList,
-  Platform,
-  TextInput,
-  KeyboardAvoidingView,
-  Modal,
+StyleSheet,
+Text,
+View,
+TouchableOpacity,
+FlatList,
+Platform,
+TextInput,
+KeyboardAvoidingView,
+Modal,
 } from 'react-native';
 import { supabase } from '../api/supabase';
 import AppBackground from '../components/AppBackground';
@@ -16,166 +16,165 @@ import AppBackground from '../components/AppBackground';
 // Newly integrated components and services
 import RoleplaySelector from '../components/RoleplaySelector';
 import ImmersiveBackground from '../components/ImmersiveBackground';
-import speechService from '../utils/speechService';
-import sentimentAnalyzer from '../utils/sentimentAnalyzer';
+import speechService from '../services/speechService';
+import sentimentAnalyzer from '../services/sentimentAnalyzer';
 
 export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
-  const [userProfile, setUserProfile] = useState({ 
-    target_language: 'English', 
-    proficiency_level: 'Beginner',
-    learning_goal: null,
-    field_of_interest: null,
-    preferred_voice: null,
-    current_scenario: null,
-    scenario_objective: 'Initialize immersive roleplay simulation',
-    full_name: 'User',
-    avatar_type: '🎓',
-  });
-  
-  const currentDayNum = selectedDay || 1;
+const [userProfile, setUserProfile] = useState({ 
+target_language: 'English', 
+proficiency_level: 'Beginner',
+learning_goal: null,
+field_of_interest: null,
+preferred_voice: null,
+current_scenario: null,
+scenario_objective: 'Initialize immersive roleplay simulation',
+full_name: 'User',
+avatar_type: '🎓',
+});
 
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [listening, setListening] = useState(false);
-  
-  const [speechLang, setSpeechLang] = useState('en-US');
-  const [speakingId, setSpeakingId] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  
-  const [availableVoices, setAvailableVoices] = useState([]);
-  const [showVoiceModal, setShowVoiceModal] = useState(false);
+const currentDayNum = selectedDay || 1;
+
+const [messages, setMessages] = useState([]);
+const [input, setInput] = useState('');
+const [loading, setLoading] = useState(false);
+const [listening, setListening] = useState(false);
+
+const [speechLang, setSpeechLang] = useState('en-US');
+const [speakingId, setSpeakingId] = useState(null);
+const [isPlaying, setIsPlaying] = useState(false);
+
+const [availableVoices, setAvailableVoices] = useState([]);
+const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [showRoleplayModal, setShowRoleplayModal] = useState(false);
   const [sentimentTone, setSentimentTone] = useState('neutral');
-  
-  const speechQueueRef = useRef([]);
-  const activeUtteranceRef = useRef(null);
 
-  const flatListRef = useRef();
-  const recognitionRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const userIdRef = useRef(null);
+const speechQueueRef = useRef([]);
+const activeUtteranceRef = useRef(null);
 
-  useEffect(() => {
-    fetchUserAndProfile();
-    loadDeviceVoices();
+const flatListRef = useRef();
+const recognitionRef = useRef(null);
+const mediaRecorderRef = useRef(null);
+const userIdRef = useRef(null);
 
+useEffect(() => {
+fetchUserAndProfile();
+loadDeviceVoices();
+
+if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+window.speechSynthesis.onvoiceschanged = loadDeviceVoices;
+}
+
+return () => {
+if (recognitionRef.current) {
+try { recognitionRef.current.stop(); } catch (e) {}
+}
+stopAllSpeech();
+};
+}, [currentDayNum]);
+
+useEffect(() => {
+if (userProfile?.target_language) {
+      setSpeechLang(getLanguageCode(userProfile.target_language));
+      setSpeechLang(speechService.getLanguageCode ? speechService.getLanguageCode(userProfile.target_language) : getLanguageCode(userProfile.target_language));
+}
+}, [userProfile?.target_language]);
+
+const loadDeviceVoices = () => {
+if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+const voices = window.speechSynthesis.getVoices();
+setAvailableVoices(voices);
+}
+};
+
+const stopAllSpeech = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = loadDeviceVoices;
+      try { window.speechSynthesis.cancel(); } catch (e) {}
     }
-
-    return () => {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (e) {}
-      }
-      stopAllSpeech();
-    };
-  }, [currentDayNum]);
-
-  useEffect(() => {
-    if (userProfile?.target_language) {
-      const langCode = speechService?.getLanguageCode 
-        ? speechService.getLanguageCode(userProfile.target_language) 
-        : getLanguageCode(userProfile.target_language);
-      setSpeechLang(langCode);
-    }
-  }, [userProfile?.target_language]);
-
-  const loadDeviceVoices = () => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
-      const voices = window.speechSynthesis.getVoices();
-      setAvailableVoices(voices);
-    }
-  };
-
-  const stopAllSpeech = () => {
-    if (speechService?.stopAllSpeech) {
-      speechService.stopAllSpeech();
-    } else {
+    speechService.stopAllSpeech ? speechService.stopAllSpeech() : (() => {
       if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
         try { window.speechSynthesis.cancel(); } catch (e) {}
       }
-    }
-    speechQueueRef.current = [];
-    activeUtteranceRef.current = null;
-    setIsPlaying(false);
-    setSpeakingId(null);
-  };
+    })();
+speechQueueRef.current = [];
+activeUtteranceRef.current = null;
+setIsPlaying(false);
+setSpeakingId(null);
+};
 
-  async function fetchUserAndProfile() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      userIdRef.current = user.id;
+async function fetchUserAndProfile() {
+try {
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) return;
+userIdRef.current = user.id;
 
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
+const { data: profile } = await supabase
+.from('user_profiles')
+.select('*')
+.eq('id', user.id)
+.maybeSingle();
 
-      if (profile) {
-        setUserProfile(profile);
-        initializeDayCurriculumChat(profile, currentDayNum);
-      } else {
-        initializeDayCurriculumChat({ target_language: 'English' }, currentDayNum);
-      }
-    } catch (err) {
-      console.log('Error fetching user profile:', err);
-      initializeDayCurriculumChat({ target_language: 'English' }, currentDayNum);
-    }
-  }
+if (profile) {
+setUserProfile(profile);
+initializeDayCurriculumChat(profile, currentDayNum);
+} else {
+initializeDayCurriculumChat({ target_language: 'English' }, currentDayNum);
+}
+} catch (err) {
+console.log('Error fetching user profile:', err);
+initializeDayCurriculumChat({ target_language: 'English' }, currentDayNum);
+}
+}
 
-  const initializeDayCurriculumChat = (profile, dayNum) => {
-    const scenario = profile.current_scenario || 'Interactive Roleplay Simulation';
-    const objective = profile.scenario_objective || 'Introduce yourself, state your current goal, and let the session adapt to you.';
+const initializeDayCurriculumChat = (profile, dayNum) => {
+const scenario = profile.current_scenario || 'Interactive Roleplay Simulation';
+const objective = profile.scenario_objective || 'Introduce yourself, state your current goal, and let the session adapt to you.';
 
-    const welcomeMsg = {
-      id: '1',
-      role: 'model',
-      timestamp: getCurrentTimeString(),
-      message: JSON.stringify({
-        hasCorrection: false,
-        pronunciationScore: 90,
-        pronunciationTip: "Keep your pacing steady and clear.",
-        roleplayContext: scenario,
-        scenarioObjective: objective,
-        scenarioStage: 'Introduction',
-        reply: `Welcome to Day ${dayNum} simulation! I am your adaptive AI language coach. Tell me your name, what you want to achieve, or any topic you wish to practice. Let's begin!`,
-        isVoiceNote: false,
-      }),
-    };
-    setMessages([welcomeMsg]);
-  };
+const welcomeMsg = {
+id: '1',
+role: 'model',
+timestamp: getCurrentTimeString(),
+message: JSON.stringify({
+hasCorrection: false,
+pronunciationScore: 90,
+pronunciationTip: "Keep your pacing steady and clear.",
+roleplayContext: scenario,
+scenarioObjective: objective,
+scenarioStage: 'Introduction',
+reply: `Welcome to Day ${dayNum} simulation! I am your adaptive AI language coach. Tell me your name, what you want to achieve, or any topic you wish to practice. Let's begin!`,
+isVoiceNote: false,
+}),
+};
+setMessages([welcomeMsg]);
+};
 
-  const getLanguageCode = (lang) => {
-    const langMap = {
-      English: 'en-US',
-      German: 'de-DE',
-      Hindi: 'hi-IN',
-      Punjabi: 'pa-IN',
-      French: 'fr-FR',
-      Spanish: 'es-ES',
-      Italian: 'it-IT',
-    };
-    return langMap[lang] || 'en-US';
-  };
+const getLanguageCode = (lang) => {
+const langMap = {
+English: 'en-US',
+German: 'de-DE',
+Hindi: 'hi-IN',
+Punjabi: 'pa-IN',
+French: 'fr-FR',
+Spanish: 'es-ES',
+Italian: 'it-IT',
+};
+return langMap[lang] || 'en-US';
+};
 
-  const updatePreferredVoice = async (voiceName) => {
-    setUserProfile(prev => ({ ...prev, preferred_voice: voiceName }));
-    setShowVoiceModal(false);
+const updatePreferredVoice = async (voiceName) => {
+setUserProfile(prev => ({ ...prev, preferred_voice: voiceName }));
+setShowVoiceModal(false);
 
-    if (userIdRef.current) {
-      try {
-        await supabase
-          .from('user_profiles')
-          .update({ preferred_voice: voiceName, updated_at: new Date().toISOString() })
-          .eq('id', userIdRef.current);
-      } catch (err) {
-        console.log('Error saving preferred voice:', err);
-      }
-    }
-  };
+if (userIdRef.current) {
+try {
+await supabase
+.from('user_profiles')
+.update({ preferred_voice: voiceName, updated_at: new Date().toISOString() })
+.eq('id', userIdRef.current);
+} catch (err) {
+console.log('Error saving preferred voice:', err);
+}
+}
+};
 
   const handleSelectCustomScenario = async (selectedScenario) => {
     setShowRoleplayModal(false);
@@ -190,255 +189,256 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     await handleSendDirect(`Let's switch scenario to: ${selectedScenario.title}. Objective: ${selectedScenario.objective}`);
   };
 
-  const toggleVoiceInput = () => {
-    if (listening) {
-      stopVoiceInput();
-      return;
-    }
+const toggleVoiceInput = () => {
+if (listening) {
+stopVoiceInput();
+return;
+}
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      startMobileAudioFallback();
-      return;
-    }
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = speechLang;
+if (!SpeechRecognition) {
+startMobileAudioFallback();
+return;
+}
 
-      recognitionRef.current = recognition;
-      setListening(true);
+try {
+const recognition = new SpeechRecognition();
+recognition.continuous = false;
+recognition.interimResults = true;
+recognition.lang = speechLang;
 
-      recognition.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
+recognitionRef.current = recognition;
+setListening(true);
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const transcriptPiece = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcriptPiece;
-          } else {
-            interimTranscript += transcriptPiece;
-          }
-        }
+recognition.onresult = (event) => {
+let interimTranscript = '';
+let finalTranscript = '';
 
-        const currentText = finalTranscript || interimTranscript;
-        if (currentText.trim()) {
-          setInput(currentText.trim());
-        }
+for (let i = event.resultIndex; i < event.results.length; ++i) {
+const transcriptPiece = event.results[i][0].transcript;
+if (event.results[i].isFinal) {
+finalTranscript += transcriptPiece;
+} else {
+interimTranscript += transcriptPiece;
+}
+}
 
-        if (finalTranscript.trim()) {
-          stopVoiceInput();
-          handleSendDirect(finalTranscript.trim());
-        }
-      };
+const currentText = finalTranscript || interimTranscript;
+if (currentText.trim()) {
+setInput(currentText.trim());
+}
 
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        setListening(false);
-      };
+if (finalTranscript.trim()) {
+stopVoiceInput();
+handleSendDirect(finalTranscript.trim());
+}
+};
 
-      recognition.onend = () => {
-        setListening(false);
-      };
+recognition.onerror = (event) => {
+console.error('Speech recognition error:', event.error);
+setListening(false);
+};
 
-      recognition.start();
-    } catch (err) {
-      startMobileAudioFallback();
-    }
-  };
+recognition.onend = () => {
+setListening(false);
+};
 
-  const startMobileAudioFallback = async () => {
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('Microphone access is not supported on this mobile browser.');
-        setListening(false);
-        return;
-      }
+recognition.start();
+} catch (err) {
+startMobileAudioFallback();
+}
+};
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
+const startMobileAudioFallback = async () => {
+try {
+if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+alert('Microphone access is not supported on this mobile browser.');
+setListening(false);
+return;
+}
 
-      setListening(true);
+const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+const mediaRecorder = new MediaRecorder(stream);
+mediaRecorderRef.current = mediaRecorder;
 
-      mediaRecorder.onstop = async () => {
-        setListening(false);
-        stream.getTracks().forEach(track => track.stop());
-        setInput("Voice note recorded successfully. Tap send or type.");
-      };
+setListening(true);
 
-      mediaRecorder.start();
+mediaRecorder.onstop = async () => {
+setListening(false);
+stream.getTracks().forEach(track => track.stop());
+setInput("Voice note recorded successfully. Tap send or type.");
+};
 
-      setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          mediaRecorderRef.current.stop();
-        }
-      }, 6000);
-    } catch (err) {
-      alert('Please allow microphone permissions in your mobile browser settings.');
-      setListening(false);
-    }
-  };
+mediaRecorder.start();
 
-  const stopVoiceInput = () => {
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (e) {}
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      try { mediaRecorderRef.current.stop(); } catch (e) {}
-    }
-    setListening(false);
-  };
+setTimeout(() => {
+if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+mediaRecorderRef.current.stop();
+}
+}, 6000);
+} catch (err) {
+alert('Please allow microphone permissions in your mobile browser settings.');
+setListening(false);
+}
+};
 
-  const handlePlayPauseAudio = (text, messageId) => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
-      const synth = window.speechSynthesis;
+const stopVoiceInput = () => {
+if (recognitionRef.current) {
+try { recognitionRef.current.stop(); } catch (e) {}
+}
+if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+try { mediaRecorderRef.current.stop(); } catch (e) {}
+}
+setListening(false);
+};
 
-      if (speakingId === messageId) {
-        if (synth.speaking && !synth.paused) {
-          synth.pause();
-          setIsPlaying(false);
-          return;
-        }
-        if (synth.paused) {
-          synth.resume();
-          setIsPlaying(true);
-          return;
-        }
-      }
+const handlePlayPauseAudio = (text, messageId) => {
+if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
+const synth = window.speechSynthesis;
 
-      synth.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = getLanguageCode(userProfile?.target_language);
-      utterance.rate = 0.95;
+if (speakingId === messageId) {
+if (synth.speaking && !synth.paused) {
+synth.pause();
+setIsPlaying(false);
+return;
+}
+if (synth.paused) {
+synth.resume();
+setIsPlaying(true);
+return;
+}
+}
 
-      if (userProfile?.preferred_voice) {
-        const selectedVoiceObj = availableVoices.find(v => v.name === userProfile.preferred_voice);
-        if (selectedVoiceObj) {
-          utterance.voice = selectedVoiceObj;
-        }
-      }
-      
-      utterance.onstart = () => {
-        setSpeakingId(messageId);
-        setIsPlaying(true);
-      };
+synth.cancel();
 
-      utterance.onend = () => {
-        setSpeakingId(null);
-        setIsPlaying(false);
-        activeUtteranceRef.current = null;
-        processNextInQueue();
-      };
+const utterance = new SpeechSynthesisUtterance(text);
+utterance.lang = getLanguageCode(userProfile?.target_language);
+utterance.rate = 0.95;
 
-      utterance.onerror = () => {
-        setSpeakingId(null);
-        setIsPlaying(false);
-        activeUtteranceRef.current = null;
-      };
+if (userProfile?.preferred_voice) {
+const selectedVoiceObj = availableVoices.find(v => v.name === userProfile.preferred_voice);
+if (selectedVoiceObj) {
+utterance.voice = selectedVoiceObj;
+}
+}
 
-      activeUtteranceRef.current = utterance;
-      synth.speak(utterance);
-    }
-  };
+utterance.onstart = () => {
+setSpeakingId(messageId);
+setIsPlaying(true);
+};
 
-  const processNextInQueue = () => {
-    if (speechQueueRef.current.length > 0) {
-      const nextItem = speechQueueRef.current.shift();
-      handlePlayPauseAudio(nextItem.text, nextItem.id);
-    }
-  };
+utterance.onend = () => {
+setSpeakingId(null);
+setIsPlaying(false);
+activeUtteranceRef.current = null;
+processNextInQueue();
+};
 
-  const queueOrPlayAudio = (text, messageId) => {
-    if (isPlaying && speakingId !== messageId) {
-      speechQueueRef.current.push({ text, id: messageId });
-    } else {
-      handlePlayPauseAudio(text, messageId);
-    }
-  };
+utterance.onerror = () => {
+setSpeakingId(null);
+setIsPlaying(false);
+activeUtteranceRef.current = null;
+};
 
-  const getCurrentTimeString = () => {
-    const now = new Date();
-    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+activeUtteranceRef.current = utterance;
+synth.speak(utterance);
+}
+};
 
-  async function logGrammarCorrection(original, corrected, explanation) {
-    try {
-      if (!userIdRef.current) return;
-      await supabase.from('grammar_history').insert({
-        user_id: userIdRef.current,
-        original_text: original,
-        corrected_text: corrected,
-        explanation: explanation || 'Grammar correction during roleplay session.'
-      });
-    } catch (err) {
-      console.log('Error saving grammar history:', err);
-    }
-  }
+const processNextInQueue = () => {
+if (speechQueueRef.current.length > 0) {
+const nextItem = speechQueueRef.current.shift();
+handlePlayPauseAudio(nextItem.text, nextItem.id);
+}
+};
 
-  async function getAiResponse(promptText) {
-    const { data, error } = await supabase.functions.invoke('ai-proxy', {
-      body: { prompt: promptText },
-    });
+const queueOrPlayAudio = (text, messageId) => {
+if (isPlaying && speakingId !== messageId) {
+speechQueueRef.current.push({ text, id: messageId });
+} else {
+handlePlayPauseAudio(text, messageId);
+}
+};
 
-    if (error) throw new Error(error.message || 'Failed to communicate with AI proxy.');
-    if (data && data.error) throw new Error(data.error || 'AI service returned an error.');
-    return data.choices[0].message.content;
-  }
+const getCurrentTimeString = () => {
+const now = new Date();
+return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
 
-  const parseAiResponse = (responseText) => {
-    try {
-      const cleanedString = responseText.replace(/```json\s*([\s\S]*?)\s*```/g, '$1').trim();
-      return JSON.parse(cleanedString);
-    } catch (e) {
-      return {
-        hasCorrection: false,
-        pronunciationScore: 85,
-        pronunciationTip: "Good articulation. Maintain conversational flow.",
-        roleplayContext: "Interactive Simulation",
-        scenarioObjective: "Continue practicing key vocabulary.",
-        scenarioStage: "Active Practice",
-        reply: responseText || 'Let us continue the roleplay simulation!',
-      };
-    }
-  };
+async function logGrammarCorrection(original, corrected, explanation) {
+try {
+if (!userIdRef.current) return;
+await supabase.from('grammar_history').insert({
+user_id: userIdRef.current,
+original_text: original,
+corrected_text: corrected,
+explanation: explanation || 'Grammar correction during roleplay session.'
+});
+} catch (err) {
+console.log('Error saving grammar history:', err);
+}
+}
 
-  async function handleSendDirect(textToSend) {
-    const messageValue = typeof textToSend === 'string' ? textToSend : input;
-    if (!messageValue || !messageValue.trim() || loading) return;
+async function getAiResponse(promptText) {
+const { data, error } = await supabase.functions.invoke('ai-proxy', {
+body: { prompt: promptText },
+});
 
-    stopVoiceInput();
-    setInput('');
-    stopAllSpeech();
+if (error) throw new Error(error.message || 'Failed to communicate with AI proxy.');
+if (data && data.error) throw new Error(data.error || 'AI service returned an error.');
+return data.choices[0].message.content;
+}
 
+const parseAiResponse = (responseText) => {
+try {
+const cleanedString = responseText.replace(/```json\s*([\s\S]*?)\s*```/g, '$1').trim();
+return JSON.parse(cleanedString);
+} catch (e) {
+return {
+hasCorrection: false,
+pronunciationScore: 85,
+pronunciationTip: "Good articulation. Maintain conversational flow.",
+roleplayContext: "Interactive Simulation",
+scenarioObjective: "Continue practicing key vocabulary.",
+scenarioStage: "Active Practice",
+reply: responseText || 'Let us continue the roleplay simulation!',
+};
+}
+};
+
+async function handleSendDirect(textToSend) {
+const messageValue = typeof textToSend === 'string' ? textToSend : input;
+if (!messageValue || !messageValue.trim() || loading) return;
+
+stopVoiceInput();
+setInput('');
+stopAllSpeech();
+
+    // Analyze sentiment of user input using sentimentAnalyzer service
     if (sentimentAnalyzer && sentimentAnalyzer.analyze) {
       const tone = sentimentAnalyzer.analyze(messageValue.trim());
       setSentimentTone(tone);
     }
 
-    const timeStr = getCurrentTimeString();
-    const tempUserMsg = {
-      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      role: 'user',
-      timestamp: timeStr,
-      message: messageValue.trim(),
-    };
+const timeStr = getCurrentTimeString();
+const tempUserMsg = {
+id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+role: 'user',
+timestamp: timeStr,
+message: messageValue.trim(),
+};
 
-    setMessages((prev) => [...prev, tempUserMsg]);
-    setLoading(true);
+setMessages((prev) => [...prev, tempUserMsg]);
+setLoading(true);
 
-    try {
-      const targetLang = userProfile?.target_language || 'English';
-      const currentInterest = userProfile?.field_of_interest || 'General Communication';
-      const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
-      const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
+try {
+const targetLang = userProfile?.target_language || 'English';
+const currentInterest = userProfile?.field_of_interest || 'General Communication';
+const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
+const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
 
-      const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
+const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
 Current Training Roadmap Day: Day ${currentDayNum}.
 Previously Saved User Interest/Topic: "${currentInterest}".
 Active Simulation Scenario: "${currentScenario}".
@@ -454,304 +454,313 @@ CRITICAL INSTRUCTIONS FOR INTENT & GOAL SWITCHING:
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
-  "hasCorrection": true/false,
-  "originalText": "${messageValue.trim()}",
-  "correctedText": "Corrected sentence if error exists, otherwise empty string",
-  "explanation": "Grammar feedback explanation",
-  "pronunciationScore": 88,
-  "pronunciationTip": "Tip for spoken rhythm",
-  "roleplayContext": "Updated roleplay context matching user's new goal/interest",
-  "scenarioObjective": "Next clear mission objective based on user's input",
-  "scenarioStage": "Current phase (e.g. Core Drill)",
-  "new_field_of_interest": "Extracted new field of interest or goal from user message",
-  "learning_goal": "Updated learning goal if changed",
-  "reply": "Your strict in-character conversational response acknowledging their goal and continuing the session"
+ "hasCorrection": true/false,
+ "originalText": "${messageValue.trim()}",
+ "correctedText": "Corrected sentence if error exists, otherwise empty string",
+ "explanation": "Grammar feedback explanation",
+ "pronunciationScore": 88,
+ "pronunciationTip": "Tip for spoken rhythm",
+ "roleplayContext": "Updated roleplay context matching user's new goal/interest",
+ "scenarioObjective": "Next clear mission objective based on user's input",
+ "scenarioStage": "Current phase (e.g. Core Drill)",
+ "new_field_of_interest": "Extracted new field of interest or goal from user message",
+ "learning_goal": "Updated learning goal if changed",
+ "reply": "Your strict in-character conversational response acknowledging their goal and continuing the session"
 }`;
 
-      const responseText = await getAiResponse(prompt);
-      const parsedData = parseAiResponse(responseText);
+const responseText = await getAiResponse(prompt);
+const parsedData = parseAiResponse(responseText);
 
-      if (!parsedData.pronunciationScore) parsedData.pronunciationScore = 85;
-      if (!parsedData.pronunciationTip) parsedData.pronunciationTip = "Good rhythm and articulation.";
-      if (!parsedData.roleplayContext) parsedData.roleplayContext = currentScenario;
-      if (!parsedData.scenarioObjective) parsedData.scenarioObjective = currentObj;
-      if (!parsedData.scenarioStage) parsedData.scenarioStage = 'Active Practice';
+if (!parsedData.pronunciationScore) parsedData.pronunciationScore = 85;
+if (!parsedData.pronunciationTip) parsedData.pronunciationTip = "Good rhythm and articulation.";
+if (!parsedData.roleplayContext) parsedData.roleplayContext = currentScenario;
+if (!parsedData.scenarioObjective) parsedData.scenarioObjective = currentObj;
+if (!parsedData.scenarioStage) parsedData.scenarioStage = 'Active Practice';
 
-      if (parsedData.hasCorrection && parsedData.correctedText) {
-        await logGrammarCorrection(
-          parsedData.originalText || messageValue.trim(),
-          parsedData.correctedText,
-          parsedData.explanation
-        );
-      }
+if (parsedData.hasCorrection && parsedData.correctedText) {
+await logGrammarCorrection(
+parsedData.originalText || messageValue.trim(),
+parsedData.correctedText,
+parsedData.explanation
+);
+}
 
-      const updatedFields = {
-        field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || currentInterest,
-        learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'Simulation practice',
-        current_scenario: parsedData.roleplayContext,
-        scenario_objective: parsedData.scenarioObjective,
-        updated_at: new Date().toISOString()
-      };
+const updatedFields = {
+field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || currentInterest,
+learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'Simulation practice',
+current_scenario: parsedData.roleplayContext,
+scenario_objective: parsedData.scenarioObjective,
+updated_at: new Date().toISOString()
+};
 
-      if (userIdRef.current) {
-        const { error: updateErr } = await supabase
-          .from('user_profiles')
-          .update(updatedFields)
-          .eq('id', userIdRef.current);
+if (userIdRef.current) {
+const { error: updateErr } = await supabase
+.from('user_profiles')
+.update(updatedFields)
+.eq('id', userIdRef.current);
 
-        if (!updateErr) {
-          setUserProfile(prev => ({ ...prev, ...updatedFields }));
-        }
-      }
+if (!updateErr) {
+setUserProfile(prev => ({ ...prev, ...updatedFields }));
+}
+}
 
-      const aiMsgObj = { 
-        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, 
-        role: 'model', 
-        timestamp: getCurrentTimeString(), 
-        message: JSON.stringify(parsedData) 
-      };
+const aiMsgObj = { 
+id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, 
+role: 'model', 
+timestamp: getCurrentTimeString(), 
+message: JSON.stringify(parsedData) 
+};
 
-      setMessages((prev) => [...prev, aiMsgObj]);
-      if (parsedData.reply) {
-        queueOrPlayAudio(parsedData.reply, aiMsgObj.id);
-      }
-    } catch (err) {
-      console.log('AI Simulation Error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
+setMessages((prev) => [...prev, aiMsgObj]);
+if (parsedData.reply) {
+queueOrPlayAudio(parsedData.reply, aiMsgObj.id);
+}
+} catch (err) {
+console.log('AI Simulation Error:', err);
+} finally {
+setLoading(false);
+}
+}
 
-  const renderMessageItem = ({ item }) => {
-    const isUser = item.role === 'user';
-    
-    if (isUser) {
-      const displayName = userProfile?.full_name?.trim() ? userProfile.full_name : 'User';
-      const displayAvatar = userProfile?.avatar_type || '🎓';
+const renderMessageItem = ({ item }) => {
+const isUser = item.role === 'user';
 
-      return (
-        <View style={styles.userBubbleRow}>
-          <View style={styles.userBubble}>
-            <View style={styles.chatProfileHeader}>
-              <Text style={styles.chatSenderName} numberOfLines={1}>{displayName}</Text>
-              <View style={styles.chatMiniAvatar}>
-                <Text style={styles.miniEmoji}>{displayAvatar}</Text>
-              </View>
-            </View>
+if (isUser) {
+const displayName = userProfile?.full_name?.trim() ? userProfile.full_name : 'User';
+const displayAvatar = userProfile?.avatar_type || '👤';
 
-            <Text style={styles.userText}>{item.message}</Text>
-            
-            <View style={styles.timeAndAvatarRowUser}>
-              <Text style={styles.timestampText}>{item.timestamp}</Text>
-            </View>
-          </View>
-        </View>
-      );
-    }
+return (
+<View style={styles.userBubbleRow}>
+<View style={styles.userBubble}>
+{/* User Name & Avatar Header inside User Bubble */}
+<View style={styles.chatProfileHeader}>
+<Text style={styles.chatSenderName} numberOfLines={1}>{displayName}</Text>
+<View style={styles.chatMiniAvatar}>
+<Text style={styles.miniEmoji}>{displayAvatar}</Text>
+</View>
+</View>
 
-    let parsedData = { 
-      reply: item.message, 
-      hasCorrection: false, 
-      explanation: '', 
-      correctedText: '', 
-      pronunciationScore: 85, 
-      pronunciationTip: 'Keep pacing steady.',
-      roleplayContext: userProfile.current_scenario || 'Simulation',
-      scenarioObjective: userProfile.scenario_objective || 'Complete the task',
-      scenarioStage: 'Active Practice'
-    };
-    
-    try {
-      parsedData = JSON.parse(item.message);
-    } catch (e) {}
+<Text style={styles.userText}>{item.message}</Text>
 
-    const isThisSpeaking = speakingId === item.id && isPlaying;
+<View style={styles.timeAndAvatarRowUser}>
+<Text style={styles.timestampText}>{item.timestamp}</Text>
+</View>
+</View>
+</View>
+);
+}
 
-    return (
-      <View style={styles.aiBubbleRow}>
-        <View style={styles.aiBubble}>
-          <View style={styles.badgeRow}>
-            {parsedData.roleplayContext ? (
-              <View style={styles.roleplayBadge}>
-                <Text style={styles.roleplayBadgeText}>🎭 {parsedData.roleplayContext}</Text>
-              </View>
-            ) : null}
-            {parsedData.scenarioStage ? (
-              <View style={styles.stageBadge}>
-                <Text style={styles.stageBadgeText}>📌 {parsedData.scenarioStage}</Text>
-              </View>
-            ) : null}
-          </View>
+let parsedData = { 
+reply: item.message, 
+hasCorrection: false, 
+explanation: '', 
+correctedText: '', 
+pronunciationScore: 85, 
+pronunciationTip: 'Keep pacing steady.',
+roleplayContext: userProfile.current_scenario || 'Simulation',
+scenarioObjective: userProfile.scenario_objective || 'Complete the task',
+scenarioStage: 'Active Practice'
+};
 
-          <View style={styles.aiSenderHeader}>
-            <Text style={styles.buddyLabel}>⚡ DAY {currentDayNum} SIMULATION AI</Text>
-            <TouchableOpacity onPress={() => queueOrPlayAudio(parsedData.reply, item.id)}>
-              <Text style={{ fontSize: 12 }}>{isThisSpeaking ? '⏸️' : '🔊'}</Text>
-            </TouchableOpacity>
-          </View>
+try {
+parsedData = JSON.parse(item.message);
+} catch (e) {}
 
-          {parsedData.scenarioObjective ? (
-            <View style={styles.objectiveBox}>
-              <Text style={styles.objectiveTitle}>🎯 Current Mission Objective:</Text>
-              <Text style={styles.objectiveText}>{parsedData.scenarioObjective}</Text>
-            </View>
-          ) : null}
+const isThisSpeaking = speakingId === item.id && isPlaying;
 
-          {parsedData.hasCorrection && parsedData.correctedText ? (
-            <View style={styles.correctionBox}>
-              <Text style={styles.correctionTitle}>💡 Grammar Correction Tip:</Text>
-              <Text style={styles.correctionText}>❌ <Text style={{textDecorationLine: 'line-through'}}>{parsedData.originalText}</Text></Text>
-              <Text style={styles.correctionText}>✅ <Text style={{fontWeight: 'bold', color: '#FFCB9A'}}>{parsedData.correctedText}</Text></Text>
-              {parsedData.explanation ? (
-                <Text style={styles.explanationText}>{parsedData.explanation}</Text>
-              ) : null}
-            </View>
-          ) : null}
+return (
+<View style={styles.aiBubbleRow}>
+<View style={styles.aiBubble}>
+<View style={styles.badgeRow}>
+{parsedData.roleplayContext ? (
+<View style={styles.roleplayBadge}>
+<Text style={styles.roleplayBadgeText}>🎭 {parsedData.roleplayContext}</Text>
+</View>
+) : null}
+{parsedData.scenarioStage ? (
+<View style={styles.stageBadge}>
+<Text style={styles.stageBadgeText}>📌 {parsedData.scenarioStage}</Text>
+</View>
+) : null}
+</View>
 
-          <View style={styles.pronunciationBox}>
-            <Text style={styles.pronunciationText}>
-              ⚡ Pronunciation: <Text style={{color: '#FFCB9A', fontWeight: 'bold'}}>{parsedData.pronunciationScore || 85}/100</Text>
-            </Text>
-            {parsedData.pronunciationTip ? (
-              <Text style={styles.explanationText}>Tip: {parsedData.pronunciationTip}</Text>
-            ) : null}
-          </View>
+<View style={styles.aiSenderHeader}>
+<Text style={styles.buddyLabel}>⚡ DAY {currentDayNum} SIMULATION AI</Text>
+<TouchableOpacity onPress={() => queueOrPlayAudio(parsedData.reply, item.id)}>
+<Text style={{ fontSize: 12 }}>{isThisSpeaking ? '⏸️' : '🔊'}</Text>
+</TouchableOpacity>
+</View>
 
-          <Text style={styles.aiText}>{parsedData.reply}</Text>
-          
-          <View style={styles.timeAndAvatarRowAi}>
-            <View style={styles.miniAvatarContainerAi}>
-              <Text style={{ fontSize: 10 }}>🤖</Text>
-            </View>
-            <Text style={styles.timestampText}>{item.timestamp}</Text>
-          </View>
-        </View>
-      </View>
-    );
-  };
+{parsedData.scenarioObjective ? (
+<View style={styles.objectiveBox}>
+<Text style={styles.objectiveTitle}>🎯 Current Mission Objective:</Text>
+<Text style={styles.objectiveText}>{parsedData.scenarioObjective}</Text>
+</View>
+) : null}
 
-  return (
+{parsedData.hasCorrection && parsedData.correctedText ? (
+<View style={styles.correctionBox}>
+<Text style={styles.correctionTitle}>💡 Grammar Correction Tip:</Text>
+<Text style={styles.correctionText}>❌ <Text style={{textDecorationLine: 'line-through'}}>{parsedData.originalText}</Text></Text>
+<Text style={styles.correctionText}>✅ <Text style={{fontWeight: 'bold', color: '#FFCB9A'}}>{parsedData.correctedText}</Text></Text>
+{parsedData.explanation ? (
+<Text style={styles.explanationText}>{parsedData.explanation}</Text>
+) : null}
+</View>
+) : null}
+
+<View style={styles.pronunciationBox}>
+<Text style={styles.pronunciationText}>
+⚡ Pronunciation: <Text style={{color: '#FFCB9A', fontWeight: 'bold'}}>{parsedData.pronunciationScore || 85}/100</Text>
+</Text>
+{parsedData.pronunciationTip ? (
+<Text style={styles.explanationText}>Tip: {parsedData.pronunciationTip}</Text>
+) : null}
+</View>
+
+<Text style={styles.aiText}>{parsedData.reply}</Text>
+
+<View style={styles.timeAndAvatarRowAi}>
+<View style={styles.miniAvatarContainerAi}>
+<Text style={{ fontSize: 10 }}>🤖</Text>
+</View>
+<Text style={styles.timestampText}>{item.timestamp}</Text>
+</View>
+</View>
+</View>
+);
+};
+
+return (
+    <AppBackground>
     <ImmersiveBackground tone={sentimentTone}>
-      <View style={styles.headerBar}>
-        <View style={styles.headerLeftGroup}>
-          {onBack && (
-            <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.8}>
-              <Text style={styles.backButtonText}>← Back</Text>
-            </TouchableOpacity>
-          )}
-          
-          <TouchableOpacity style={[styles.voiceConfigBtn, { marginLeft: 8 }]} onPress={() => setShowVoiceModal(true)}>
-            <Text style={styles.voiceConfigBtnText}>🎙️ Voice</Text>
-          </TouchableOpacity>
+<View style={styles.headerBar}>
+<View style={styles.headerLeftGroup}>
+{onBack && (
+<TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.8}>
+<Text style={styles.backButtonText}>← Back</Text>
+</TouchableOpacity>
+)}
+
+<TouchableOpacity style={[styles.voiceConfigBtn, { marginLeft: 8 }]} onPress={() => setShowVoiceModal(true)}>
+<Text style={styles.voiceConfigBtnText}>🎙️ Voice</Text>
+</TouchableOpacity>
 
           <TouchableOpacity style={[styles.voiceConfigBtn, { marginLeft: 6 }]} onPress={() => setShowRoleplayModal(true)}>
             <Text style={styles.voiceConfigBtnText}>🎭 Scenarios</Text>
           </TouchableOpacity>
-        </View>
+</View>
 
-        <View style={styles.langSelectorContainer}>
-          {[
-            { code: 'en-US', label: 'EN' },
-            { code: 'hi-IN', label: 'HI' },
-            { code: 'pa-IN', label: 'PA' }
-          ].map((item) => (
-            <TouchableOpacity
-              key={item.code}
-              style={[styles.langToggleBtn, speechLang === item.code && styles.activeLangToggle]}
-              onPress={() => setSpeechLang(item.code)}
-            >
-              <Text style={[styles.langToggleText, speechLang === item.code && { color: '#1B2A26' }]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+<View style={styles.langSelectorContainer}>
+{[
+{ code: 'en-US', label: 'EN' },
+{ code: 'hi-IN', label: 'HI' },
+{ code: 'pa-IN', label: 'PA' }
+].map((item) => (
+<TouchableOpacity
+key={item.code}
+style={[styles.langToggleBtn, speechLang === item.code && styles.activeLangToggle]}
+onPress={() => setSpeechLang(item.code)}
+>
+<Text style={[styles.langToggleText, speechLang === item.code && { color: '#1B2A26' }]}>
+{item.label}
+</Text>
+</TouchableOpacity>
+))}
+</View>
 
-        <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
-      </View>
+<Text style={styles.headerTitle}>Day {currentDayNum}</Text>
+</View>
 
-      <View style={styles.activeObjectiveBanner}>
-        <Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
-        <Text style={styles.bannerText} numberOfLines={1}>
-          {userProfile?.scenario_objective || 'Immersive Roleplay Simulation in progress...'}
-        </Text>
-      </View>
+{/* Live Scenario Objective Banner */}
+<View style={styles.activeObjectiveBanner}>
+<Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
+<Text style={styles.bannerText} numberOfLines={1}>
+{userProfile?.scenario_objective || 'Immersive Roleplay Simulation in progress...'}
+</Text>
+</View>
 
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.chatArea}>
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.messageListContainer}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            renderItem={renderMessageItem}
-          />
-        </View>
+<KeyboardAvoidingView 
+style={styles.container} 
+behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+>
+<View style={styles.chatArea}>
+<View style={styles.chatOverlay}>
+<FlatList
+ref={flatListRef}
+data={messages}
+keyExtractor={(item) => item.id}
+contentContainerStyle={styles.messageListContainer}
+onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+renderItem={renderMessageItem}
+/>
+</View>
+</View>
 
-        <View style={styles.inputBar}>
-          <TextInput
-            style={styles.textInput}
-            value={input}
-            onChangeText={setInput}
-            placeholder={`Reply in simulation (Day ${currentDayNum})...`}
-            placeholderTextColor="#A3B8B0"
-            onSubmitEditing={() => handleSendDirect(input)}
-            returnKeyType="send"
-          />
+<View style={styles.inputBar}>
+<TextInput
+style={styles.textInput}
+value={input}
+onChangeText={setInput}
+placeholder={`Reply in simulation (Day ${currentDayNum})...`}
+placeholderTextColor="#A3B8B0"
+onSubmitEditing={() => handleSendDirect(input)}
+returnKeyType="send"
+/>
 
-          <TouchableOpacity 
-            style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
-            onPress={toggleVoiceInput}
-          >
-            <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
-          </TouchableOpacity>
+<TouchableOpacity 
+style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
+onPress={toggleVoiceInput}
+>
+<Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
+</TouchableOpacity>
 
-          <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
-            <Text style={{ fontSize: 16, color: '#1B2A26', fontWeight: 'bold' }}>➤</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+<TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
+<Text style={{ fontSize: 16, color: '#1B2A26', fontWeight: 'bold' }}>➤</Text>
+</TouchableOpacity>
+</View>
+</KeyboardAvoidingView>
 
-      <Modal visible={showVoiceModal} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Choose Tutor Voice & Accent</Text>
-            <Text style={styles.modalSubtitle}>Select an available accent profile for your device:</Text>
+      {/* Voice Selection Modal */}
+<Modal visible={showVoiceModal} animationType="slide" transparent={true}>
+<View style={styles.modalOverlay}>
+<View style={styles.modalContainer}>
+<Text style={styles.modalTitle}>Choose Tutor Voice & Accent</Text>
+<Text style={styles.modalSubtitle}>Select an available accent profile for your device:</Text>
 
-            <FlatList
-              data={availableVoices}
-              keyExtractor={(item, index) => `${item.name}-${index}`}
-              style={{ maxHeight: 250, marginVertical: 10 }}
-              renderItem={({ item }) => {
-                const isSelected = userProfile?.preferred_voice === item.name;
-                return (
-                  <TouchableOpacity 
-                    style={[styles.voiceOptionItem, isSelected && styles.voiceOptionSelected]}
-                    onPress={() => updatePreferredVoice(item.name)}
-                  >
-                    <Text style={[styles.voiceOptionText, isSelected && { color: '#FFCB9A', fontWeight: 'bold' }]}>
-                      {item.name} ({item.lang})
-                    </Text>
-                    {isSelected && <Text style={{ color: '#FFCB9A' }}>✓</Text>}
-                  </TouchableOpacity>
-                );
-              }}
-            />
+<FlatList
+data={availableVoices}
+keyExtractor={(item, index) => `${item.name}-${index}`}
+style={{ maxHeight: 250, marginVertical: 10 }}
+renderItem={({ item }) => {
+const isSelected = userProfile?.preferred_voice === item.name;
+return (
+<TouchableOpacity 
+style={[styles.voiceOptionItem, isSelected && styles.voiceOptionSelected]}
+onPress={() => updatePreferredVoice(item.name)}
+>
+<Text style={[styles.voiceOptionText, isSelected && { color: '#FFCB9A', fontWeight: 'bold' }]}>
+{item.name} ({item.lang})
+</Text>
+{isSelected && <Text style={{ color: '#FFCB9A' }}>✓</Text>}
+</TouchableOpacity>
+);
+}}
+/>
 
-            <TouchableOpacity 
-              style={styles.modalCloseButton} 
-              onPress={() => setShowVoiceModal(false)}
-            >
-              <Text style={styles.modalCloseText}>Done</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+<TouchableOpacity 
+style={styles.modalCloseButton} 
+onPress={() => setShowVoiceModal(false)}
+>
+<Text style={styles.modalCloseText}>Done</Text>
+</TouchableOpacity>
+</View>
+</View>
+</Modal>
+    </AppBackground>
 
+      {/* Roleplay Selector Modal */}
       <Modal visible={showRoleplayModal} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -766,388 +775,457 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
       </Modal>
     </ImmersiveBackground>
-  );
+);
 }
 
 const styles = StyleSheet.create({
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(11, 25, 23, 0.95)',
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#116466',
-  },
-  headerLeftGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backButton: {
-    backgroundColor: '#116466',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
-  },
-  backButtonText: {
-    color: '#FFCB9A',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  voiceConfigBtn: {
-    backgroundColor: '#1C312B',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
-  },
-  voiceConfigBtnText: {
-    color: '#FFCB9A',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  langSelectorContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#121E1A',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#116466',
-    padding: 2,
-    gap: 2,
-  },
-  langToggleBtn: {
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  activeLangToggle: {
-    backgroundColor: '#FFCB9A',
-  },
-  langToggleText: {
-    color: '#FFCB9A',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  activeObjectiveBanner: {
-    backgroundColor: '#142C28',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#116466',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bannerLabel: {
-    color: '#FFCB9A',
-    fontSize: 11,
-    fontWeight: 'bold',
-    marginRight: 6,
-  },
-  bannerText: {
-    color: '#E2E8F0',
-    fontSize: 12,
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  chatArea: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  messageListContainer: {
-    padding: 16,
-    paddingBottom: 24,
-  },
-  aiBubbleRow: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    justifyContent: 'flex-start',
-  },
-  userBubbleRow: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    justifyContent: 'flex-end',
-  },
-  aiBubble: {
-    backgroundColor: '#116466',
-    padding: 15,
-    borderRadius: 16,
-    borderTopLeftRadius: 4,
-    maxWidth: '82%',
-    borderWidth: 1.5,
-    borderColor: '#FFCB9A',
-  },
-  userBubble: {
-    backgroundColor: '#1C312B',
-    padding: 15,
-    borderRadius: 16,
-    borderTopRightRadius: 4,
-    maxWidth: '82%',
-    borderWidth: 1.5,
-    borderColor: '#116466',
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 8,
-  },
-  roleplayBadge: {
-    backgroundColor: 'rgba(255, 203, 154, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
-  },
-  roleplayBadgeText: {
-    color: '#FFCB9A',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  stageBadge: {
-    backgroundColor: 'rgba(110, 231, 183, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#6EE7B7',
-  },
-  stageBadgeText: {
-    color: '#6EE7B7',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  aiSenderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  buddyLabel: {
-    color: '#FFCB9A',
-    fontSize: 11,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
-  aiText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    lineHeight: 22,
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  userText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    lineHeight: 22,
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  objectiveBox: {
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    padding: 8,
-    borderRadius: 6,
-    marginBottom: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#FFCB9A',
-  },
-  objectiveTitle: {
-    color: '#FFCB9A',
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  objectiveText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-  },
-  correctionBox: {
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: '#FFCB9A',
-  },
-  correctionTitle: {
-    color: '#FFCB9A',
-    fontSize: 11,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  correctionText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  explanationText: {
-    color: '#E2E8F0',
-    fontSize: 11,
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  pronunciationBox: {
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    padding: 8,
-    borderRadius: 6,
-    marginBottom: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#6EE7B7',
-  },
-  pronunciationText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-  },
-  timeAndAvatarRowUser: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 6,
-  },
-  timeAndAvatarRowAi: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  miniAvatarContainerAi: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timestampText: {
-    color: '#A3B8B0',
-    fontSize: 10,
-  },
-  chatProfileHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  chatSenderName: {
-    color: '#FFCB9A',
-    fontSize: 11,
-    fontWeight: 'bold',
-    maxWidth: '80%',
-  },
-  chatMiniAvatar: {
+headerBar: {
+flexDirection: 'row',
+alignItems: 'center',
+justifyContent: 'space-between',
+paddingHorizontal: 12,
+paddingVertical: 12,
+backgroundColor: 'rgba(11, 25, 23, 0.95)',
+borderBottomWidth: 1.5,
+borderBottomColor: '#116466',
+},
+headerLeftGroup: {
+flexDirection: 'row',
+alignItems: 'center',
+},
+backButton: {
+backgroundColor: '#116466',
+paddingHorizontal: 8,
+paddingVertical: 6,
+borderRadius: 8,
+borderWidth: 1,
+borderColor: '#FFCB9A',
+},
+backButtonText: {
+color: '#FFCB9A',
+fontSize: 11,
+fontWeight: '700',
+},
+headerTitle: {
+color: '#FFFFFF',
+fontSize: 13,
+fontWeight: 'bold',
+},
+voiceConfigBtn: {
+backgroundColor: '#1C312B',
+paddingHorizontal: 8,
+paddingVertical: 6,
+borderRadius: 8,
+borderWidth: 1,
+borderColor: '#FFCB9A',
+},
+voiceConfigBtnText: {
+color: '#FFCB9A',
+fontSize: 10,
+fontWeight: '700',
+},
+langSelectorContainer: {
+flexDirection: 'row',
+backgroundColor: '#121E1A',
+borderRadius: 6,
+borderWidth: 1,
+borderColor: '#116466',
+padding: 2,
+gap: 2,
+},
+langToggleBtn: {
+paddingHorizontal: 6,
+paddingVertical: 4,
+borderRadius: 4,
+},
+activeLangToggle: {
+backgroundColor: '#FFCB9A',
+},
+langToggleText: {
+color: '#FFCB9A',
+fontSize: 10,
+fontWeight: 'bold',
+},
+activeObjectiveBanner: {
+backgroundColor: '#142C28',
+paddingHorizontal: 14,
+paddingVertical: 8,
+borderBottomWidth: 1,
+borderBottomColor: '#116466',
+flexDirection: 'row',
+alignItems: 'center',
+},
+bannerLabel: {
+color: '#FFCB9A',
+fontSize: 11,
+fontWeight: 'bold',
+marginRight: 6,
+},
+bannerText: {
+color: '#E2E8F0',
+fontSize: 12,
+flex: 1,
+},
+container: {
+flex: 1,
+backgroundColor: 'transparent',
+...(Platform.OS === 'web' ? { 
+display: 'flex',
+flexDirection: 'column',
+height: '100%',
+maxHeight: 'calc(100dvh - 150px)',
+overflow: 'hidden' 
+} : {}),
+},
+chatArea: {
+flex: 1,
+backgroundColor: 'transparent',
+overflow: 'hidden',
+},
+chatOverlay: {
+flex: 1,
+backgroundColor: 'transparent',
+},
+messageListContainer: {
+padding: 16,
+paddingBottom: 24,
+},
+aiBubbleRow: {
+flexDirection: 'row',
+marginBottom: 16,
+justifyContent: 'flex-start',
+},
+userBubbleRow: {
+flexDirection: 'row',
+marginBottom: 16,
+justifyContent: 'flex-end',
+},
+aiBubble: {
+backgroundColor: '#116466',
+padding: 15,
+borderRadius: 16,
+borderTopLeftRadius: 4,
+maxWidth: '82%',
+borderWidth: 1.5,
+borderColor: '#FFCB9A',
+},
+userBubble: {
+backgroundColor: '#1C312B',
+padding: 15,
+borderRadius: 16,
+borderTopRightRadius: 4,
+maxWidth: '82%',
+borderWidth: 1.5,
+borderColor: '#116466',
+},
+badgeRow: {
+flexDirection: 'row',
+flexWrap: 'wrap',
+gap: 6,
+marginBottom: 8,
+},
+roleplayBadge: {
+backgroundColor: 'rgba(255, 203, 154, 0.2)',
+paddingHorizontal: 8,
+paddingVertical: 4,
+borderRadius: 6,
+borderWidth: 1,
+borderColor: '#FFCB9A',
+},
+roleplayBadgeText: {
+color: '#FFCB9A',
+fontSize: 10,
+fontWeight: 'bold',
+},
+stageBadge: {
+backgroundColor: 'rgba(110, 231, 183, 0.2)',
+paddingHorizontal: 8,
+paddingVertical: 4,
+borderRadius: 6,
+borderWidth: 1,
+borderColor: '#6EE7B7',
+},
+stageBadgeText: {
+color: '#6EE7B7',
+fontSize: 10,
+fontWeight: 'bold',
+},
+aiSenderHeader: {
+flexDirection: 'row',
+justifyContent: 'space-between',
+marginBottom: 6,
+},
+buddyLabel: {
+color: '#FFCB9A',
+fontSize: 11,
+fontWeight: 'bold',
+letterSpacing: 1,
+},
+aiText: {
+color: '#FFFFFF',
+fontSize: 14,
+lineHeight: 22,
+fontWeight: '500',
+marginTop: 4,
+},
+userText: {
+color: '#FFFFFF',
+fontSize: 14,
+lineHeight: 22,
+fontWeight: '500',
+marginTop: 4,
+},
+objectiveBox: {
+backgroundColor: 'rgba(0, 0, 0, 0.2)',
+padding: 8,
+borderRadius: 6,
+marginBottom: 8,
+borderLeftWidth: 3,
+borderLeftColor: '#FFCB9A',
+},
+objectiveTitle: {
+color: '#FFCB9A',
+fontSize: 10,
+fontWeight: 'bold',
+marginBottom: 2,
+},
+objectiveText: {
+color: '#FFFFFF',
+fontSize: 12,
+},
+correctionBox: {
+backgroundColor: 'rgba(0, 0, 0, 0.25)',
+padding: 10,
+borderRadius: 8,
+marginBottom: 10,
+borderLeftWidth: 3,
+borderLeftColor: '#FFCB9A',
+},
+pronunciationBox: {
+backgroundColor: 'rgba(0, 0, 0, 0.25)',
+padding: 10,
+borderRadius: 8,
+marginBottom: 10,
+borderLeftWidth: 3,
+borderLeftColor: '#6EE7B7',
+},
+correctionTitle: {
+color: '#FFCB9A',
+fontSize: 11,
+fontWeight: 'bold',
+marginBottom: 4,
+},
+correctionText: {
+color: '#FFFFFF',
+fontSize: 13,
+marginBottom: 2,
+},
+pronunciationText: {
+color: '#FFFFFF',
+fontSize: 13,
+marginBottom: 2,
+},
+explanationText: {
+color: '#E2E8F0',
+fontSize: 12,
+fontStyle: 'italic',
+marginTop: 4,
+},
+timeAndAvatarRowUser: {
+flexDirection: 'row',
+alignItems: 'center',
+justifyContent: 'flex-end',
+marginTop: 6,
+},
+timeAndAvatarRowAi: {
+flexDirection: 'row',
+alignItems: 'center',
+justifyContent: 'flex-start',
+marginTop: 6,
+},
+timestampText: {
+color: '#94A3B8',
+fontSize: 10,
+marginHorizontal: 4,
+},
+  miniAvatarContainerUser: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#116466',
+    backgroundColor: '#0A1411',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  miniEmoji: {
-    fontSize: 10,
-  },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+miniEmoji: {
+fontSize: 11,
+},
+chatProfileHeader: {
+flexDirection: 'row',
+alignItems: 'center',
+justifyContent: 'flex-end',
+gap: 6,
+marginBottom: 4,
+borderBottomWidth: 1,
+borderBottomColor: 'rgba(255, 203, 154, 0.2)',
+paddingBottom: 4,
+},
+chatSenderName: {
+color: '#FFCB9A',
+fontSize: 12,
+fontWeight: '700',
+},
+chatMiniAvatar: {
+width: 20,
+height: 20,
+borderRadius: 10,
+backgroundColor: '#0A1411',
+justifyContent: 'center',
+alignItems: 'center',
+},
+miniAvatarContainerAi: {
+width: 20,
+height: 20,
+borderRadius: 10,
+backgroundColor: '#182C25',
+alignItems: 'center',
+justifyContent: 'center',
+borderWidth: 1,
+    borderColor: '#FFCB9A',
+    borderColor: '#116466'
+},
+inputBar: {
+flexDirection: 'row',
+alignItems: 'center',
+    backgroundColor: 'rgba(24, 44, 37, 0.98)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderTopWidth: 2,
     padding: 10,
     backgroundColor: 'rgba(11, 25, 23, 0.95)',
     borderTopWidth: 1,
-    borderTopColor: '#116466',
-  },
-  textInput: {
-    flex: 1,
-    backgroundColor: '#121E1A',
+borderTopColor: '#116466',
+    ...(Platform.OS === 'web' ? { 
+      position: 'sticky', 
+      bottom: 0, 
+      left: 0, 
+      right: 0, 
+      zIndex: 999,
+      width: '100%',
+      pointerEvents: 'auto' 
+    } : {}),
+},
+textInput: {
+flex: 1,
+    backgroundColor: '#0A1411',
+    backgroundColor: '#1C312B',
     color: '#FFFFFF',
     paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+borderWidth: 1,
+borderColor: '#116466',
+    borderRadius: 12,
+    paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 20,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#116466',
-  },
-  micButton: {
+    color: '#FFFFFF',
+fontSize: 14,
+},
+micButton: {
+    backgroundColor: '#116466',
+    padding: 10,
+    borderRadius: 10,
+    marginHorizontal: 6,
     marginLeft: 8,
     backgroundColor: '#1C312B',
-    padding: 10,
-    borderRadius: 20,
+    padding: 8,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#116466',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendPlaneButton: {
-    marginLeft: 6,
-    backgroundColor: '#FFCB9A',
-    paddingHorizontal: 12,
+justifyContent: 'center',
+alignItems: 'center',
+},
+sendPlaneButton: {
+    marginLeft: 8,
+backgroundColor: '#FFCB9A',
+    paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+justifyContent: 'center',
+alignItems: 'center',
+},
+modalOverlay: {
+flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContainer: {
-    backgroundColor: '#121E1A',
-    width: '100%',
-    maxWidth: 400,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+justifyContent: 'center',
+alignItems: 'center',
+padding: 20,
+},
+modalContainer: {
+width: '100%',
+maxWidth: 400,
+    backgroundColor: '#12221D',
     borderRadius: 16,
-    padding: 20,
-    borderWidth: 1.5,
-    borderColor: '#116466',
-  },
-  modalTitle: {
-    color: '#FFCB9A',
-    fontSize: 16,
-    fontWeight: 'bold',
+    backgroundColor: '#112521',
+    borderRadius: 12,
+borderWidth: 1.5,
+borderColor: '#116466',
+padding: 20,
+},
+modalTitle: {
+color: '#FFCB9A',
+fontSize: 16,
+fontWeight: 'bold',
+    marginBottom: 6,
     marginBottom: 4,
-  },
-  modalSubtitle: {
-    color: '#A3B8B0',
-    fontSize: 12,
+},
+modalSubtitle: {
+color: '#A3B8B0',
+fontSize: 12,
+    marginBottom: 12,
     marginBottom: 10,
-  },
-  voiceOptionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1C312B',
-  },
-  voiceOptionSelected: {
-    backgroundColor: 'rgba(255, 203, 154, 0.1)',
-  },
-  voiceOptionText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-  },
-  modalCloseButton: {
+},
+voiceOptionItem: {
+flexDirection: 'row',
+justifyContent: 'space-between',
+alignItems: 'center',
+paddingVertical: 10,
+paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 6,
+    backgroundColor: '#0A1411',
+    borderRadius: 6,
+    marginBottom: 4,
+    backgroundColor: '#1C312B',
+},
+voiceOptionSelected: {
+    backgroundColor: '#1C312B',
+    backgroundColor: '#163832',
+borderWidth: 1,
+borderColor: '#FFCB9A',
+},
+voiceOptionText: {
+color: '#E2E8F0',
+fontSize: 13,
+},
+modalCloseButton: {
+    backgroundColor: '#FFCB9A',
+    paddingVertical: 12,
+    borderRadius: 10,
     backgroundColor: '#116466',
     paddingVertical: 10,
     borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  modalCloseText: {
+alignItems: 'center',
+marginTop: 10,
+},
+modalCloseText: {
+    color: '#12221D',
     color: '#FFCB9A',
-    fontWeight: 'bold',
-    fontSize: 14,
+fontWeight: 'bold',
+fontSize: 14,
   },
+  }
 });
