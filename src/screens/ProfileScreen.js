@@ -31,7 +31,8 @@ const PROFESSIONS = [
   { id: 'Business / Entrepreneur', name: 'Business / Entrepreneur', emoji: '💼' },
   { id: 'Teacher / Educator', name: 'Teacher / Educator', emoji: '📚' },
   { id: 'Artist / Designer', name: 'Artist / Designer', emoji: '🎨' },
-  { id: 'Other', name: 'Other', emoji: '🚀' },
+  { id: 'Other', name: 'Other', emoji:
+    },
 ];
 
 export default function ProfileScreen() {
@@ -167,7 +168,7 @@ export default function ProfileScreen() {
           <View style={styles.gridContainer}>
             {PROFESSIONS.map((prof) => {
               const isSelected = professionCategory === prof.name;
-              const isOther = prof.id === 'Other';
+              
               return (
                 <TouchableOpacity
                   key={prof.id}
