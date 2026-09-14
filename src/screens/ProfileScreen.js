@@ -23,10 +23,24 @@ const LANGUAGES = [
 
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
+// Pre-defined Professions & Matching Avatar Emojis
+const PROFESSIONS = [
+  { id: 'Student', name: 'Student', emoji: '🎓' },
+  { id: 'Software Engineer', name: 'Software Engineer', emoji: '💻' },
+  { id: 'Doctor / Medical', name: 'Doctor / Medical', emoji: '🩺' },
+  { id: 'Business / Entrepreneur', name: 'Business / Entrepreneur', emoji: '💼' },
+  { id: 'Teacher / Educator', name: 'Teacher / Educator', emoji: '📚' },
+  { id: 'Artist / Designer', name: 'Artist / Designer', emoji: '🎨' },
+  { id: 'Other', name: 'Other', emoji: '🚀' },
+];
+
 export default function ProfileScreen() {
   const [fullName, setFullName] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('English');
   const [proficiencyLevel, setProficiencyLevel] = useState('Beginner');
+  const [professionCategory, setProfessionCategory] = useState('Student');
+  const [avatarType, setAvatarType] = useState('🎓');
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -50,12 +64,20 @@ export default function ProfileScreen() {
         if (data.full_name) setFullName(data.full_name);
         if (data.target_language) setTargetLanguage(data.target_language);
         if (data.proficiency_level) setProficiencyLevel(data.proficiency_level);
+        if (data.profession_category) setProfessionCategory(data.profession_category);
+        if (data.avatar_type) setAvatarType(data.avatar_type);
       }
     } catch (err) {
       console.log('Error loading profile:', err);
     } finally {
       setLoading(false);
     }
+  }
+
+  // Handle profession selection and auto-assign matching avatar emoji
+  function handleSelectProfession(prof) {
+    setProfessionCategory(prof.name);
+    setAvatarType(prof.emoji);
   }
 
   async function handleSavePreferences() {
@@ -70,6 +92,8 @@ export default function ProfileScreen() {
         full_name: fullName,
         target_language: targetLanguage,
         proficiency_level: proficiencyLevel,
+        profession_category: professionCategory,
+        avatar_type: avatarType,
         updated_at: new Date(),
       };
 
@@ -112,7 +136,7 @@ export default function ProfileScreen() {
           </View>
 
           <Text style={styles.sectionSubtitle}>
-            Update your profile name, target language, and current proficiency level to personalize your AI sessions.
+            Update your profile name, profession, avatar, and language preferences to personalize your AI sessions.
           </Text>
 
           {/* Profile Name Input */}
@@ -125,7 +149,28 @@ export default function ProfileScreen() {
             onChangeText={setFullName}
           />
 
-          {/* Target Languages Grid (7 Languages) */}
+          {/* Profession & Avatar Selection */}
+          <Text style={styles.label}>Select Profession & Avatar ({avatarType})</Text>
+          <View style={styles.gridContainer}>
+            {PROFESSIONS.map((prof) => {
+              const isSelected = professionCategory === prof.name;
+              return (
+                <TouchableOpacity
+                  key={prof.id}
+                  style={[styles.optionCard, isSelected && styles.selectedOptionCard]}
+                  onPress={() => handleSelectProfession(prof)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.flagEmoji}>{prof.emoji}</Text>
+                  <Text style={[styles.optionText, isSelected && styles.selectedOptionText]}>
+                    {prof.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Target Languages Grid */}
           <Text style={styles.label}>Select Target Language</Text>
           <View style={styles.gridContainer}>
             {LANGUAGES.map((lang) => {
@@ -308,6 +353,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+    textAlign: 'center',
   },
   selectedOptionText: {
     color: '#FFCB9A',
@@ -330,7 +376,7 @@ const styles = StyleSheet.create({
   },
   selectedLevelCard: {
     backgroundColor: 'rgba(255, 203, 154, 0.2)',
-    borderColor: '#FFCB9A',
+    borderColor: '#FFCB9A50',
   },
   levelText: {
     color: '#FFFFFF',
