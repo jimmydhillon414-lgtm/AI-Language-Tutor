@@ -20,7 +20,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     learning_goal: null,
     field_of_interest: null,
     preferred_voice: null,
-    current_scenario: null
+    current_scenario: null,
+    scenario_objective: 'Initialize immersive roleplay simulation'
   });
   
   const currentDayNum = selectedDay || 1;
@@ -42,7 +43,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
-  const silenceTimerRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const userIdRef = useRef(null);
 
@@ -58,7 +58,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (e) {}
       }
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       stopAllSpeech();
     };
   }, [currentDayNum]);
@@ -113,7 +112,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const initializeDayCurriculumChat = (profile, dayNum) => {
     const targetLang = profile.target_language || 'English';
     const interest = profile.field_of_interest || 'General Communication';
-    const scenario = profile.current_scenario || 'Interactive Practice';
+    const scenario = profile.current_scenario || 'Interactive Roleplay Simulation';
+    const objective = profile.scenario_objective || 'Introduce yourself and state your primary goal for this session.';
 
     const welcomeMsg = {
       id: '1',
@@ -124,7 +124,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         pronunciationScore: 90,
         pronunciationTip: "Keep your pacing steady and clear.",
         roleplayContext: scenario,
-        reply: `Welcome to Day ${dayNum} of your ${targetLang} training! Current Scenario: "${scenario}". Let's start practicing based on your interest in "${interest}". Send a sentence or reply to begin!`,
+        scenarioObjective: objective,
+        scenarioStage: 'Introduction',
+        reply: `Welcome to Day ${dayNum} simulation! Role: Expert mentor for "${interest}". Your current mission: ${objective}. Let's begin!`,
         isVoiceNote: false,
       }),
     };
@@ -175,7 +177,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const recognition = new SpeechRecognition();
-      // Non-continuous mode prevents mobile browsers from duplicating/looping past transcripts
       recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = speechLang;
@@ -256,7 +257,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   };
 
   const stopVoiceInput = () => {
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
@@ -346,7 +346,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         user_id: userIdRef.current,
         original_text: original,
         corrected_text: corrected,
-        explanation: explanation || 'Grammar correction during chat session.'
+        explanation: explanation || 'Grammar correction during roleplay session.'
       });
     } catch (err) {
       console.log('Error saving grammar history:', err);
@@ -371,9 +371,11 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       return {
         hasCorrection: false,
         pronunciationScore: 85,
-        pronunciationTip: "Good articulation. Keep practicing.",
-        roleplayContext: "Interactive Practice",
-        reply: responseText || 'Let us continue practicing!',
+        pronunciationTip: "Good articulation. Maintain conversational flow.",
+        roleplayContext: "Interactive Simulation",
+        scenarioObjective: "Continue practicing key vocabulary.",
+        scenarioStage: "Active Practice",
+        reply: responseText || 'Let us continue the roleplay simulation!',
       };
     }
   };
@@ -399,39 +401,47 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const targetLang = userProfile?.target_language || 'English';
-      const currentInterest = userProfile?.field_of_interest || 'General';
+      const currentInterest = userProfile?.field_of_interest || 'General Communication';
+      const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
+      const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
 
-      const prompt = `You are an expert, proactive ${targetLang} language tutor coaching a student through an immersive **Dynamic Roleplay Scenario**.
+      const prompt = `You are an expert, immersive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
 Current Training Roadmap Day: Day ${currentDayNum}.
-Current User Interest/Topic: "${currentInterest}".
-Current User Input: "${messageValue.trim()}".
+User Interest/Topic: "${currentInterest}".
+Active Simulation Scenario: "${currentScenario}".
+Current Scenario Objective: "${currentObj}".
+User's Latest Spoken Input: "${messageValue.trim()}".
 
-Your tasks:
-1. **Roleplay Context**: Assume a realistic roleplay character matching the user's interest "${currentInterest}". Generate or maintain a short scenario title under "roleplayContext".
-2. **Grammar & Sentence Analysis**: Check if the user's input contains any mistakes. If there is a mistake, set "hasCorrection": true, provide "originalText", "correctedText", and a clear "explanation".
-3. **Pronunciation & Fluency Score (MANDATORY)**: Evaluate the user's input with a realistic score from 50 to 100 as "pronunciationScore" and a concise tip under "pronunciationTip".
-4. **Interest & Goal Updates**: Extract any new interest under "new_field_of_interest" if applicable, otherwise null.
+Your strict operational rules:
+1. **In-Character Immersion**: Stay fully inside your roleplay persona matching "${currentInterest}" and "${currentScenario}". Never break character or speak like a generic AI assistant.
+2. **Scenario Progression**: Evaluate if the user achieved the current objective or if the conversation should advance. Provide a new or updated "scenarioObjective" and "scenarioStage" (e.g., 'Introduction', 'Core Drill', 'Challenge Round', 'Debrief').
+3. **Grammar & Fluency Analysis**: Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
+4. **Pronunciation & Fluency Score (MANDATORY)**: Score from 50 to 100 as "pronunciationScore" with a short constructive "pronunciationTip".
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
   "hasCorrection": true/false,
   "originalText": "${messageValue.trim()}",
-  "correctedText": "Corrected sentence if there is an error, otherwise empty string",
-  "explanation": "Clear explanation of grammar correction",
-  "pronunciationScore": 85,
-  "pronunciationTip": "Tip to improve spoken clarity",
-  "roleplayContext": "Short label of current scenario",
-  "new_field_of_interest": "Extracted new topic if user changed interest, otherwise null",
-  "learning_goal": "Updated or current learning goal",
-  "reply": "Your in-character conversational response continuing the roleplay"
+  "correctedText": "Corrected sentence if error exists, otherwise empty string",
+  "explanation": "Grammar feedback explanation",
+  "pronunciationScore": 88,
+  "pronunciationTip": "Tip for spoken rhythm",
+  "roleplayContext": "${currentScenario}",
+  "scenarioObjective": "Next clear mission objective for the user",
+  "scenarioStage": "Current phase (e.g. Core Drill)",
+  "new_field_of_interest": null,
+  "learning_goal": "Updated learning goal if changed",
+  "reply": "Your strict in-character conversational response continuing the roleplay scenario"
 }`;
 
       const responseText = await getAiResponse(prompt);
       const parsedData = parseAiResponse(responseText);
 
       if (!parsedData.pronunciationScore) parsedData.pronunciationScore = 85;
-      if (!parsedData.pronunciationTip) parsedData.pronunciationTip = "Good rhythm and phrasing.";
-      if (!parsedData.roleplayContext) parsedData.roleplayContext = "Interactive Practice";
+      if (!parsedData.pronunciationTip) parsedData.pronunciationTip = "Good rhythm and articulation.";
+      if (!parsedData.roleplayContext) parsedData.roleplayContext = currentScenario;
+      if (!parsedData.scenarioObjective) parsedData.scenarioObjective = currentObj;
+      if (!parsedData.scenarioStage) parsedData.scenarioStage = 'Active Practice';
 
       if (parsedData.hasCorrection && parsedData.correctedText) {
         await logGrammarCorrection(
@@ -442,9 +452,10 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       }
 
       const updatedFields = {
-        field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || 'General',
-        learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'General practice',
+        field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || currentInterest,
+        learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'Simulation practice',
         current_scenario: parsedData.roleplayContext,
+        scenario_objective: parsedData.scenarioObjective,
         updated_at: new Date().toISOString()
       };
 
@@ -471,7 +482,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         queueOrPlayAudio(parsedData.reply, aiMsgObj.id);
       }
     } catch (err) {
-      console.log('AI Error:', err);
+      console.log('AI Simulation Error:', err);
     } finally {
       setLoading(false);
     }
@@ -502,8 +513,10 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       explanation: '', 
       correctedText: '', 
       pronunciationScore: 85, 
-      pronunciationTip: 'Keep your pacing steady and clear.',
-      roleplayContext: 'Interactive Practice'
+      pronunciationTip: 'Keep pacing steady.',
+      roleplayContext: userProfile.current_scenario || 'Simulation',
+      scenarioObjective: userProfile.scenario_objective || 'Complete the task',
+      scenarioStage: 'Active Practice'
     };
     
     try {
@@ -515,18 +528,32 @@ You MUST reply ONLY with a valid JSON object in this exact format:
     return (
       <View style={styles.aiBubbleRow}>
         <View style={styles.aiBubble}>
-          {parsedData.roleplayContext ? (
-            <View style={styles.roleplayBadge}>
-              <Text style={styles.roleplayBadgeText}>🎭 {parsedData.roleplayContext}</Text>
-            </View>
-          ) : null}
+          <View style={styles.badgeRow}>
+            {parsedData.roleplayContext ? (
+              <View style={styles.roleplayBadge}>
+                <Text style={styles.roleplayBadgeText}>🎭 {parsedData.roleplayContext}</Text>
+              </View>
+            ) : null}
+            {parsedData.scenarioStage ? (
+              <View style={styles.stageBadge}>
+                <Text style={styles.stageBadgeText}>📌 {parsedData.scenarioStage}</Text>
+              </View>
+            ) : null}
+          </View>
 
           <View style={styles.aiSenderHeader}>
-            <Text style={styles.buddyLabel}>⚡ DAY {currentDayNum} TUTOR AI</Text>
+            <Text style={styles.buddyLabel}>⚡ DAY {currentDayNum} SIMULATION AI</Text>
             <TouchableOpacity onPress={() => queueOrPlayAudio(parsedData.reply, item.id)}>
               <Text style={{ fontSize: 12 }}>{isThisSpeaking ? '⏸️' : '🔊'}</Text>
             </TouchableOpacity>
           </View>
+
+          {parsedData.scenarioObjective ? (
+            <View style={styles.objectiveBox}>
+              <Text style={styles.objectiveTitle}>🎯 Current Mission Objective:</Text>
+              <Text style={styles.objectiveText}>{parsedData.scenarioObjective}</Text>
+            </View>
+          ) : null}
 
           {parsedData.hasCorrection && parsedData.correctedText ? (
             <View style={styles.correctionBox}>
@@ -597,6 +624,14 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
+      {/* Live Scenario Objective Banner */}
+      <View style={styles.activeObjectiveBanner}>
+        <Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
+        <Text style={styles.bannerText} numberOfLines={1}>
+          {userProfile?.scenario_objective || 'Immersive Roleplay Simulation in progress...'}
+        </Text>
+      </View>
+
       <KeyboardAvoidingView 
         style={styles.container} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -620,7 +655,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder={`Type reply for Day ${currentDayNum}...`}
+            placeholder={`Reply in simulation (Day ${currentDayNum})...`}
             placeholderTextColor="#A3B8B0"
             onSubmitEditing={() => handleSendDirect(input)}
             returnKeyType="send"
@@ -746,6 +781,26 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
+  activeObjectiveBanner: {
+    backgroundColor: '#142C28',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#116466',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bannerLabel: {
+    color: '#FFCB9A',
+    fontSize: 11,
+    fontWeight: 'bold',
+    marginRight: 6,
+  },
+  bannerText: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -753,7 +808,7 @@ const styles = StyleSheet.create({
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      maxHeight: 'calc(100dvh - 110px)',
+      maxHeight: 'calc(100dvh - 150px)',
       overflow: 'hidden' 
     } : {}),
   },
@@ -785,7 +840,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 16,
     borderTopLeftRadius: 4,
-    maxWidth: '78%',
+    maxWidth: '82%',
     borderWidth: 1.5,
     borderColor: '#FFCB9A',
   },
@@ -794,22 +849,39 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 16,
     borderTopRightRadius: 4,
-    maxWidth: '78%',
+    maxWidth: '82%',
     borderWidth: 1.5,
     borderColor: '#116466',
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 8,
   },
   roleplayBadge: {
     backgroundColor: 'rgba(255, 203, 154, 0.2)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
     borderWidth: 1,
     borderColor: '#FFCB9A',
   },
   roleplayBadgeText: {
     color: '#FFCB9A',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  stageBadge: {
+    backgroundColor: 'rgba(110, 231, 183, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#6EE7B7',
+  },
+  stageBadgeText: {
+    color: '#6EE7B7',
     fontSize: 10,
     fontWeight: 'bold',
   },
@@ -836,6 +908,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
+  },
+  objectiveBox: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#FFCB9A',
+  },
+  objectiveTitle: {
+    color: '#FFCB9A',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  objectiveText: {
+    color: '#FFFFFF',
+    fontSize: 12,
   },
   correctionBox: {
     backgroundColor: 'rgba(0, 0, 0, 0.25)',
