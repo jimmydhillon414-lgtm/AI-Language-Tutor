@@ -66,7 +66,6 @@ export default function HomeScreen({ navigation }) {
           <div style={styles.trustBadgeItem}>
             <span style={styles.trustValue}>24/7</span>
             <span style={styles.trustValue}>★Personal AI Tutor ★</span>
-{/* <span style={styles.trustLabel}>Personal AI Tutor ★</span> */}
           </div>
           <div style={styles.trustDivider} />
           <div style={styles.trustBadgeItem}>
@@ -92,32 +91,17 @@ export default function HomeScreen({ navigation }) {
           <h1 style={styles.heroTitle}>
             Master <span style={{ color: '#FFCB9A' }}>{userProfile.target_language || 'English'}</span> Fast with AI
           </h1>
-               <View style={styles.heroCenteredContainer}>
-           <Text style={styles.heroSubtitleStylish}>
-           Your personal 1-on-1 voice & chat companion engineered for rapid fluency at a{' '}
-           <Text style={styles.highlightBadge}>
-           {userProfile.proficiency_level || 'Beginner'}
-          </Text>{' '}
-          level.
-         </Text>
+          
+          <View style={styles.heroCenteredContainer}>
+            <Text style={styles.heroSubtitleStylish}>
+              Your personal 1-on-1 voice & chat companion engineered for rapid fluency at a{' '}
+              <Text style={styles.highlightBadge}>
+                {userProfile.proficiency_level || 'Beginner'}
+              </Text>{' '}
+              level.
+            </Text>
           </View>
-
-
-         {/*  <p style={styles.heroSubtitle}>
-            Your personal 1-on-1 voice and chat companion engineered for rapid conversational fluency at a <span style={{ color: '#FFCB9A', fontWeight: 'bold' }}>{userProfile.proficiency_level || 'Beginner'}</span> level.
-          </p>
-
-           //   <div style={styles.heroBtnGroup}>
-        //     <TouchableOpacity 
-        //       style={styles.primaryButton}
-        //       onPress={() => navigation.navigate('TutorChat')}
-        //     >
-        //       <Text style={styles.primaryButtonText}>Start Practicing Now 🚀</Text>
-        //     </TouchableOpacity>
-        //   </div>
-         */}
-         </div>
-       
+        </div>
 
         {/* Interactive AI Tutor Video Demonstration */}
         <div style={styles.videoSectionCard}>
@@ -227,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 21, 0.82)',
   },
   container: {
-    padding: '24px 16px 60px 16px', // Extra bottom padding taaki koi button cut na ho
+    padding: '24px 16px 60px 16px',
     alignItems: 'center',
     position: 'relative',
     zIndex: 1,
@@ -320,38 +304,32 @@ const styles = StyleSheet.create({
     marginBottom: '12px',
     lineHeight: '1.2',
   },
-  heroSubtitle: {
-    color: '#D1E8E2',
-    fontSize: '15px',
-    textAlign: 'center',
-    lineHeight: '22px',
-    marginBottom: '28px',
-    maxWidth: '600px',
-  },
-  heroBtnGroup: {
-    width: '100%',
-    maxWidth: '380px',
-  },
-  primaryButton: {
-    width: '100%',
-    backgroundColor: '#FFCB9A',
-    paddingVertical: '16px',
-    borderRadius: '14px',
-    alignItems: 'center',
+  heroCenteredContainer: {
+    flex: 1,
     justifyContent: 'center',
-    shadowColor: '#FFCB9A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 6,
-    cursor: 'pointer',
-    border: 'none',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    width: '100%',
   },
-  primaryButtonText: {
-    color: '#121E1A',
-    fontSize: '16px',
-    fontWeight: '800',
-    letterSpacing: '0.5px',
+  heroSubtitleStylish: {
+    fontSize: 15,
+    color: '#E2E8F0',
+    textAlign: 'center',
+    lineHeight: 24,
+    letterSpacing: 0.3,
+    fontWeight: '400',
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  highlightBadge: {
+    color: '#FFCB9A',
+    fontWeight: 'bold',
+    backgroundColor: 'rgba(255, 203, 154, 0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   videoSectionCard: {
     width: '100%',
@@ -438,7 +416,6 @@ const styles = StyleSheet.create({
     border: '1.5px solid #116466',
     alignItems: 'center',
     cursor: 'pointer',
-    transition: 'transform 0.2s',
     boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
   },
   statIcon: {
@@ -471,33 +448,6 @@ const styles = StyleSheet.create({
     cursor: 'pointer',
     boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
   },
-  heroCenteredContainer: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  paddingHorizontal: 20,
-  width: '100%',
-},
-heroSubtitleStylish: {
-  fontSize: 15,
-  color: '#E2E8F0',
-  textAlign: 'center',
-  lineHeight: 24,
-  letterSpacing: 0.3,
-  fontWeight: '400',
-  textShadowColor: 'rgba(0, 0, 0, 0.4)',
-  textShadowOffset: { width: 0, height: 1 },
-  textShadowRadius: 3,
-},
-highlightBadge: {
-  color: '#FFCB9A',
-  fontWeight: 'bold',
-  backgroundColor: 'rgba(255, 203, 154, 0.1)',
-  paddingHorizontal: 6,
-  paddingVertical: 2,
-  borderRadius: 4,
-  overflow: 'hidden',
-}
   secondaryButtonText: {
     color: '#D1E8E2',
     fontSize: '14px',
