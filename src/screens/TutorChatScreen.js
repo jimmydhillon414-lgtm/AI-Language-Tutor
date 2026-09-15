@@ -410,6 +410,12 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const currentInterest = userProfile?.field_of_interest || 'General Communication';
       const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
       const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
+     const updatedFields = {
+      field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || currentInterest,
+      learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'Simulation practice',
+      current_scenario: parsedData.roleplayContext,
+      updated_at: new Date().toISOString()
+    };
 
       const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
 Current Training Roadmap Day: Day ${currentDayNum}.
