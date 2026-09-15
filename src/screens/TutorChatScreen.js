@@ -723,7 +723,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       {/* Gemini Multimodal Live WebSocket Voice Modal */}
       {showLiveVoiceModal && (
         <VoiceLiveModal 
-          apiKey={process.env.EXPO_PUBLIC_GEMINI_API_KEY || "YOUR_GEMINI_API_KEY"} 
+          apiKey={process.env.EXPO_PUBLIC_GEMINI_API_KEY || "AQ.Ab8RN6J5VBxdLnmuYpq28cfipY8Bb4Jrw39UmIWF5sT5aU2w0Q"} 
           onClose={() => setShowLiveVoiceModal(false)} 
         />
       )}
