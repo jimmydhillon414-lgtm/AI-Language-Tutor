@@ -724,7 +724,10 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       {showLiveVoiceModal && (
         <VoiceLiveModal 
           apiKey={process.env.EXPO_PUBLIC_GEMINI_API_KEY || "AQ.Ab8RN6J5VBxdLnmuYpq28cfipY8Bb4Jrw39UmIWF5sT5aU2w0Q"} 
-          onClose={() => setShowLiveVoiceModal(false)} 
+          onClose={() => {
+            console.log("Closing live voice modal...");
+            setShowLiveVoiceModal(false);
+          }}
         />
       )}
     </AppBackground>
