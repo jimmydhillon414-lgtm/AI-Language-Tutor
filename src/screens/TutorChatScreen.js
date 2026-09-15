@@ -388,7 +388,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
 
-    // Optional usage of sentiment analyzer to understand user tone
     const userSentiment = sentimentAnalyzer ? sentimentAnalyzer.analyze(messageValue) : null;
 
     stopVoiceInput();
@@ -648,7 +647,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </Text>
       </View>
 
-      {/* Roleplay Selector Component Integration */}
       <RoleplaySelector 
         onSelectScenario={(selectedScenario) => {
           setUserProfile(prev => ({ ...prev, current_scenario: selectedScenario }));
@@ -1006,14 +1004,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginHorizontal: 4,
   },
-  miniAvatarContainerUser: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#0A1411',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   miniEmoji: {
     fontSize: 11,
   },
@@ -1027,20 +1017,23 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontSize: 11,
     fontWeight: 'bold',
-    flex: 1,
-    marginRight: 6,
   },
   chatMiniAvatar: {
     width: 18,
     height: 18,
+    borderRadius: 9,
+    backgroundColor: '#11221E',
     alignItems: 'center',
     justifyContent: 'center',
   },
   miniAvatarContainerAi: {
     width: 18,
     height: 18,
+    borderRadius: 9,
+    backgroundColor: '#1B312B',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 4,
   },
   inputBar: {
     flexDirection: 'row',
@@ -1053,7 +1046,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#121E1A',
+    backgroundColor: '#142C28',
     borderWidth: 1,
     borderColor: '#116466',
     borderRadius: 20,
@@ -1061,24 +1054,24 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: '#FFFFFF',
     fontSize: 13,
-    maxHeight: 100,
+    maxHeight: 90,
   },
   micButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     backgroundColor: '#1C312B',
-    borderWidth: 1,
-    borderColor: '#116466',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
   },
   sendPlaneButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     backgroundColor: '#FFCB9A',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
@@ -1091,26 +1084,24 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContainer: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: '#0F221F',
+    backgroundColor: '#11221E',
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#116466',
+    width: '100%',
+    maxWidth: 400,
     padding: 20,
   },
   modalTitle: {
-    color: '#FFCB9A',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
-    textAlign: 'center',
+    marginBottom: 6,
   },
   modalSubtitle: {
-    color: '#94A3B8',
+    color: '#A3B8B0',
     fontSize: 12,
     marginBottom: 12,
-    textAlign: 'center',
   },
   voiceOptionItem: {
     flexDirection: 'row',
@@ -1120,28 +1111,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     marginBottom: 6,
-    backgroundColor: '#142C28',
+    backgroundColor: '#17302A',
     borderWidth: 1,
-    borderColor: '#116466',
+    borderColor: '#1F4037',
   },
   voiceOptionSelected: {
-    backgroundColor: '#1C312B',
     borderColor: '#FFCB9A',
+    backgroundColor: '#1E3A32',
   },
   voiceOptionText: {
-    color: '#FFFFFF',
+    color: '#E2E8F0',
     fontSize: 13,
   },
   modalCloseButton: {
-    marginTop: 10,
-    backgroundColor: '#FFCB9A',
+    backgroundColor: '#116466',
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
   },
   modalCloseText: {
-    color: '#1B2A26',
-    fontSize: 14,
+    color: '#FFCB9A',
     fontWeight: 'bold',
+    fontSize: 13,
   },
 });
