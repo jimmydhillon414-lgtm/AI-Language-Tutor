@@ -92,11 +92,22 @@ export default function HomeScreen({ navigation }) {
           <h1 style={styles.heroTitle}>
             Master <span style={{ color: '#FFCB9A' }}>{userProfile.target_language || 'English'}</span> Fast with AI
           </h1>
-          <p style={styles.heroSubtitle}>
+               <View style={styles.heroCenteredContainer}>
+           <Text style={styles.heroSubtitleStylish}>
+           Your personal 1-on-1 voice & chat companion engineered for rapid fluency at a{' '}
+           <Text style={styles.highlightBadge}>
+           {userProfile.proficiency_level || 'Beginner'}
+          </Text>{' '}
+          level.
+         </Text>
+          </View>
+
+
+         {/*  <p style={styles.heroSubtitle}>
             Your personal 1-on-1 voice and chat companion engineered for rapid conversational fluency at a <span style={{ color: '#FFCB9A', fontWeight: 'bold' }}>{userProfile.proficiency_level || 'Beginner'}</span> level.
           </p>
 
-          {/*  //   <div style={styles.heroBtnGroup}>
+           //   <div style={styles.heroBtnGroup}>
         //     <TouchableOpacity 
         //       style={styles.primaryButton}
         //       onPress={() => navigation.navigate('TutorChat')}
@@ -460,6 +471,33 @@ const styles = StyleSheet.create({
     cursor: 'pointer',
     boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
   },
+  heroCenteredContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+  width: '100%',
+},
+heroSubtitleStylish: {
+  fontSize: 15,
+  color: '#E2E8F0',
+  textAlign: 'center',
+  lineHeight: 24,
+  letterSpacing: 0.3,
+  fontWeight: '400',
+  textShadowColor: 'rgba(0, 0, 0, 0.4)',
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 3,
+},
+highlightBadge: {
+  color: '#FFCB9A',
+  fontWeight: 'bold',
+  backgroundColor: 'rgba(255, 203, 154, 0.1)',
+  paddingHorizontal: 6,
+  paddingVertical: 2,
+  borderRadius: 4,
+  overflow: 'hidden',
+}
   secondaryButtonText: {
     color: '#D1E8E2',
     fontSize: '14px',
