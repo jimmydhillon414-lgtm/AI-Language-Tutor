@@ -16,6 +16,7 @@ import ImmersiveBackground from '../components/ImmersiveBackground';
 import RoleplaySelector from '../components/RoleplaySelector';
 import speechService from '../utils/speechService';
 import sentimentAnalyzer from '../utils/sentimentAnalyzer';
+import VoiceLiveModal from '../components/VoiceLiveModal'; // <-- Integrated Live Voice Modal
 
 export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
   const [userProfile, setUserProfile] = useState({ 
@@ -43,6 +44,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   
   const [availableVoices, setAvailableVoices] = useState([]);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
+  
+  // State for Gemini Multimodal Live Voice Modal
+  const [showLiveVoiceModal, setShowLiveVoiceModal] = useState(false);
   
   const speechQueueRef = useRef([]);
   const activeUtteranceRef = useRef(null);
@@ -375,8 +379,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     try {
       const cleanedString = responseText.replace(/```json\s*([\s\S]*?)\s*```/g, '$1').trim();
       const parsed = JSON.parse(cleanedString);
-    console.log("AI Parsed Output:", parsed);
-    return parsed;
+      return parsed;
     } catch (e) {
       return {
         hasCorrection: false,
@@ -478,16 +481,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         updatedFields.learning_goal = parsedData.learning_goal;
       }
       setUserProfile(prev => ({ ...prev, ...updatedFields }));
-      {/* if (userIdRef.current) {
-        const { error: updateErr } = await supabase
-          .from('user_profiles')
-          .update(updatedFields)
-          .eq('id', userIdRef.current);
-
-        if (!updateErr) {
-          setUserProfile(prev => ({ ...prev, ...updatedFields }));
-        }
-      } */}
 
       const aiMsgObj = { 
         id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, 
@@ -625,39 +618,23 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             </TouchableOpacity>
           )}
           
+          {/* Voice configuration modal toggle */}
           <TouchableOpacity style={[styles.voiceConfigBtn, { marginLeft: 8 }]} onPress={() => setShowVoiceModal(true)}>
-            <Text style={styles.voiceConfigBtnText}>🎙️ Voice</Text>
+            <Text style={styles.voiceConfigBtnText}>🎙️ Accents</Text>
+          </TouchableOpacity>
+
+          {/* Multimodal Live Voice Tutor Mode Button */}
+          <TouchableOpacity 
+            style={[styles.voiceConfigBtn, { marginLeft: 8, backgroundColor: '#4338CA', borderColor: '#818CF8' }]} 
+            onPress={() => setShowLiveVoiceModal(true)}
+          >
+            <Text style={[styles.voiceConfigBtnText, { color: '#FFFFFF' }]}>⚡ Live Voice</Text>
           </TouchableOpacity>
         </View>
 
-{/* <View style={styles.langSelectorContainer}>
-          {[
-            { code: 'en-US', label: 'EN' },
-            { code: 'hi-IN', label: 'HI' },
-            { code: 'pa-IN', label: 'PA' }
-          ].map((item) => (
-            <TouchableOpacity
-              key={item.code}
-              style={[styles.langToggleBtn, speechLang === item.code && styles.activeLangToggle]}
-              onPress={() => setSpeechLang(item.code)}
-            >
-              <Text style={[styles.langToggleText, speechLang === item.code && { color: '#1B2A26' }]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-*/}
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
-{/*  <View style={styles.activeObjectiveBanner}>
-        <Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
-        <Text style={styles.bannerText} numberOfLines={1}>
-          {userProfile?.scenario_objective || 'Immersive Roleplay Simulation in progress...'}
-        </Text>
-      </View>
-*/}
       <RoleplaySelector 
         onSelectScenario={(selectedScenario) => {
           setUserProfile(prev => ({ ...prev, current_scenario: selectedScenario }));
@@ -706,6 +683,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
       </KeyboardAvoidingView>
 
+      {/* Voice Selection Modal */}
       <Modal visible={showVoiceModal} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -741,6 +719,14 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </View>
         </View>
       </Modal>
+
+      {/* Gemini Multimodal Live WebSocket Voice Modal */}
+      {showLiveVoiceModal && (
+        <VoiceLiveModal 
+          apiKey={process.env.EXPO_PUBLIC_GEMINI_API_KEY || "YOUR_GEMINI_API_KEY"} 
+          onClose={() => setShowLiveVoiceModal(false)} 
+        />
+      )}
     </AppBackground>
   );
 }
@@ -790,48 +776,6 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontSize: 10,
     fontWeight: '700',
-  },
-  langSelectorContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#121E1A',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#116466',
-    padding: 2,
-    gap: 2,
-  },
-  langToggleBtn: {
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  activeLangToggle: {
-    backgroundColor: '#FFCB9A',
-  },
-  langToggleText: {
-    color: '#FFCB9A',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  activeObjectiveBanner: {
-    backgroundColor: '#142C28',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#116466',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bannerLabel: {
-    color: '#FFCB9A',
-    fontSize: 11,
-    fontWeight: 'bold',
-    marginRight: 6,
-  },
-  bannerText: {
-    color: '#E2E8F0',
-    fontSize: 12,
-    flex: 1,
   },
   container: {
     flex: 1,
@@ -1027,69 +971,73 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   chatMiniAvatar: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   miniEmoji: {
     fontSize: 10,
   },
   miniAvatarContainerAi: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   inputBar: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
+    padding: 12,
     backgroundColor: 'rgba(11, 25, 23, 0.95)',
-    borderTopWidth: 1,
+    borderTopWidth: 1.5,
     borderTopColor: '#116466',
+    alignItems: 'center',
+    gap: 8,
   },
   textInput: {
     flex: 1,
     backgroundColor: '#1C312B',
-    color: '#FFFFFF',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    fontSize: 13,
     borderWidth: 1,
     borderColor: '#116466',
-    marginRight: 8,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    color: '#FFFFFF',
+    fontSize: 14,
   },
   micButton: {
     backgroundColor: '#1C312B',
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    width: 38,
-    height: 38,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 6,
     borderWidth: 1,
     borderColor: '#116466',
   },
   sendPlaneButton: {
     backgroundColor: '#FFCB9A',
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    width: 38,
-    height: 38,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
     width: '85%',
-    backgroundColor: '#121E1A',
-    borderRadius: 12,
+    maxWidth: 380,
+    backgroundColor: '#142C28',
+    borderRadius: 16,
     padding: 20,
     borderWidth: 1.5,
     borderColor: '#116466',
@@ -1098,25 +1046,27 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   modalSubtitle: {
     color: '#A3B8B0',
     fontSize: 12,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   voiceOptionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1C312B',
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 6,
+    backgroundColor: '#1C312B',
   },
   voiceOptionSelected: {
-    backgroundColor: 'rgba(255, 203, 154, 0.1)',
-    borderRadius: 6,
+    backgroundColor: '#116466',
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
   },
   voiceOptionText: {
     color: '#E2E8F0',
@@ -1134,6 +1084,6 @@ const styles = StyleSheet.create({
   modalCloseText: {
     color: '#FFCB9A',
     fontWeight: 'bold',
-    fontSize: 13,
+    fontSize: 14,
   },
 });
