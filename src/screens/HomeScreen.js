@@ -66,7 +66,7 @@ export default function HomeScreen({ navigation }) {
           <div style={styles.trustBadgeItem}>
             <span style={styles.trustValue}>24/7</span>
             <span style={styles.trustValue}>★Personal AI Tutor ★</span>
-            // <span style={styles.trustLabel}>Personal AI Tutor ★</span>
+{/* <span style={styles.trustLabel}>Personal AI Tutor ★</span> */}
           </div>
           <div style={styles.trustDivider} />
           <div style={styles.trustBadgeItem}>
