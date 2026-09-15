@@ -1,11 +1,10 @@
-
 /**
  * GeminiLiveClient - Manages WebSocket connection, Real-time audio streaming (Mic -> Gemini),
  * and audio playback queue (Gemini -> Speaker) for Gemini Multimodal Live API.
  */
 export class GeminiLiveClient {
   constructor(apiKey, options = {}) {
-    this.apiKey = apiKey;
+    this.apiKey = apiKey ? apiKey.trim() : '';
     this.ws = null;
     this.audioContext = null;
     this.mediaStream = null;
@@ -18,11 +17,16 @@ export class GeminiLiveClient {
     
     // Audio playback queue management
     this.nextPlayTime = 0;
-    this.isPlaying = false;
   }
 
   async connect() {
     try {
+      if (!this.apiKey) {
+        console.error("GeminiLiveClient Error: API Key is missing or empty.");
+        this.onStatusChange('error');
+        return;
+      }
+
       this.onStatusChange('connecting');
       
       // Gemini Multimodal Live WebSocket endpoint (v1alpha protocol)
@@ -30,10 +34,10 @@ export class GeminiLiveClient {
       
       this.ws = new WebSocket(wssUrl);
 
-      this.ws.onopen = () => {
+      this.ws.onopen = async () => {
         console.log("Gemini Live WebSocket Connected successfully.");
         this.sendInitialSetup();
-        this.startMicrophoneStreaming();
+        await this.startMicrophoneStreaming();
         this.onStatusChange('connected');
       };
 
@@ -42,12 +46,12 @@ export class GeminiLiveClient {
       };
 
       this.ws.onerror = (error) => {
-        console.error("Gemini Live WebSocket Error:", error);
+        console.error("Gemini Live WebSocket Error Details:", error);
         this.onStatusChange('error');
       };
 
       this.ws.onclose = (event) => {
-        console.log("Gemini Live WebSocket Closed:", event.reason);
+        console.log(`Gemini Live WebSocket Closed. Code: ${event.code}, Reason: ${event.reason}`);
         this.disconnect();
         this.onStatusChange('disconnected');
       };
@@ -61,15 +65,14 @@ export class GeminiLiveClient {
   sendInitialSetup() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
-    // Send session configuration instruction
     const setupMessage = {
       setup: {
-        model: "models/gemini-2.5-flash", // Valid multimodal live model
+        model: "models/gemini-2.5-flash",
         generationConfig: {
-          responseModalities: ["AUDIO"], // Direct native audio generation
+          responseModalities: ["AUDIO"],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: "Puck" } // Options: Puck, Charon, Kore, Fenrir, Aoede
+              prebuiltVoiceConfig: { voiceName: "Puck" }
             }
           }
         },
@@ -86,16 +89,28 @@ export class GeminiLiveClient {
 
   async startMicrophoneStreaming() {
     try {
-      // Initialize AudioContext at 16kHz sample rate required by Live API
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      // 1. Initialize AudioContext at 16kHz sample rate required by Live API
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      this.audioContext = new AudioContextClass({ sampleRate: 16000 });
+
+      // Crucial Fix: Handle browser autoplay policy restrictions
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
       
+      // 2. Request microphone access with constraints
       this.mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        audio: { channelCount: 1, sampleRate: 16000 } 
+        audio: { 
+          channelCount: 1, 
+          sampleRate: 16000,
+          echoCancellation: true,
+          noiseSuppression: true
+        } 
       });
 
       this.audioInputSource = this.audioContext.createMediaStreamSource(this.mediaStream);
       
-      // Using ScriptProcessor for capturing raw PCM chunks (Buffer size: 4096)
+      // 3. Using ScriptProcessor for capturing raw PCM chunks (Buffer size: 4096)
       this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
 
       this.processor.onaudioprocess = (e) => {
@@ -116,10 +131,11 @@ export class GeminiLiveClient {
       };
 
       this.audioInputSource.connect(this.processor);
+      // Connect to a silent gain node or destination without causing feedback loop
       this.processor.connect(this.audioContext.destination);
 
     } catch (err) {
-      console.error("Microphone access denied or error:", err);
+      console.error("Microphone access denied or audio stream error:", err);
       this.onStatusChange('mic_error');
     }
   }
@@ -133,7 +149,8 @@ export class GeminiLiveClient {
     }
     const bytes = new Uint8Array(buffer);
     let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
       binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);
@@ -149,10 +166,10 @@ export class GeminiLiveClient {
         responseData = JSON.parse(event.data);
       }
 
-      // Handle Model Audio Output
+      // Handle Model Audio Output & Transcriptions
       if (responseData.serverContent?.modelTurn?.parts) {
         for (const part of responseData.serverContent.modelTurn.parts) {
-          if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
+          if (part.inlineData && part.inlineData.mimeType?.startsWith("audio/")) {
             this.playAudioChunk(part.inlineData.data);
           }
           if (part.text) {
@@ -167,7 +184,11 @@ export class GeminiLiveClient {
 
   async playAudioChunk(base64Audio) {
     try {
-      if (!this.audioContext) return;
+      if (!this.audioContext || this.audioContext.state === 'closed') return;
+
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
 
       const binaryString = atob(base64Audio);
       const len = binaryString.length;
@@ -204,20 +225,33 @@ export class GeminiLiveClient {
   }
 
   disconnect() {
-    if (this.processor && this.audioInputSource) {
-      this.processor.disconnect();
-      this.audioInputSource.disconnect();
+    try {
+      if (this.processor) {
+        this.processor.disconnect();
+        this.processor.onaudioprocess = null;
+      }
+      if (this.audioInputSource) {
+        this.audioInputSource.disconnect();
+      }
+      if (this.mediaStream) {
+        this.mediaStream.getTracks().forEach(track => track.stop());
+      }
+      if (this.audioContext && this.audioContext.state !== 'closed') {
+        this.audioContext.close();
+      }
+      if (this.ws) {
+        if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+          this.ws.close();
+        }
+      }
+    } catch (err) {
+      console.error("Error during GeminiLiveClient cleanup:", err);
+    } finally {
+      this.ws = null;
+      this.audioContext = null;
+      this.mediaStream = null;
+      this.processor = null;
+      console.log("GeminiLiveClient session terminated cleanly.");
     }
-    if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop());
-    }
-    if (this.audioContext && this.audioContext.state !== 'closed') {
-      this.audioContext.close();
-    }
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.close();
-    }
-    this.ws = null;
-    console.log("GeminiLiveClient session terminated cleanly.");
   }
 }
