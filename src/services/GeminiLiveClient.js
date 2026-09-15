@@ -131,7 +131,6 @@ export class GeminiLiveClient {
       };
 
       this.audioInputSource.connect(this.processor);
-      // Connect to a silent gain node or destination without causing feedback loop
       this.processor.connect(this.audioContext.destination);
 
     } catch (err) {
@@ -166,17 +165,23 @@ export class GeminiLiveClient {
         responseData = JSON.parse(event.data);
       }
 
-      // Handle Model Audio Output & Transcriptions
+      // 1. Handle Model Audio Output & AI Transcriptions
       if (responseData.serverContent?.modelTurn?.parts) {
         for (const part of responseData.serverContent.modelTurn.parts) {
           if (part.inlineData && part.inlineData.mimeType?.startsWith("audio/")) {
             this.playAudioChunk(part.inlineData.data);
           }
           if (part.text) {
-            this.onTranscription(part.text);
+            this.onTranscription(part.text, 'ai'); // Tagged explicitly as 'ai'
           }
         }
       }
+
+      // 2. Handle User Speech Transcription (if returned by server turn completion)
+      if (responseData.serverContent?.turnComplete) {
+        // Optional hook if model signals turn completion
+      }
+
     } catch (err) {
       console.error("Error parsing server WebSocket message:", err);
     }
