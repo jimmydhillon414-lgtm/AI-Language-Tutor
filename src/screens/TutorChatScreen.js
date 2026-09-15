@@ -464,12 +464,17 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       }
 
       const updatedFields = {
-        field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || currentInterest,
-        learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'Simulation practice',
-        current_scenario: parsedData.roleplayContext,
-        scenario_objective: parsedData.scenarioObjective,
+        current_scenario: parsedData.roleplayContext || currentScenario,
+        scenario_objective: parsedData.scenarioObjective || currentObj,
         updated_at: new Date().toISOString()
       };
+
+      if (parsedData.new_field_of_interest) {
+        updatedFields.field_of_interest = parsedData.new_field_of_interest;
+      }
+      if (parsedData.learning_goal) {
+        updatedFields.learning_goal = parsedData.learning_goal;
+      }
 
       if (userIdRef.current) {
         const { error: updateErr } = await supabase
