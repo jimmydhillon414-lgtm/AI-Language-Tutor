@@ -1,10 +1,11 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { GeminiLiveClient } from '../services/GeminiLiveClient';
 
 export default function VoiceLiveModal({ apiKey, onClose }) {
   const [status, setStatus] = useState('connecting'); // connecting, connected, error, disconnected
-  const [transcription, setTranscription] = useState('Initializing voice session...');
+  const [conversation, setConversation] = useState([
+    { sender: 'system', text: 'Initializing live voice session...' }
+  ]);
   const clientRef = useRef(null);
 
   useEffect(() => {
@@ -13,15 +14,16 @@ export default function VoiceLiveModal({ apiKey, onClose }) {
       onStatusChange: (newStatus) => {
         setStatus(newStatus);
         if (newStatus === 'connected') {
-          setTranscription('Listening... Speak now to your AI tutor.');
+          setConversation(prev => [...prev, { sender: 'system', text: 'Connected! Speak freely with your AI tutor.' }]);
         } else if (newStatus === 'connecting') {
-          setTranscription('Connecting to Gemini Live...');
+          setConversation(prev => [...prev, { sender: 'system', text: 'Connecting to Gemini Live...' }]);
         } else if (newStatus === 'error') {
-          setTranscription('Connection error. Please try again.');
+          setConversation(prev => [...prev, { sender: 'system', text: 'Connection error. Please try reconnecting.' }]);
         }
       },
-      onTranscription: (text) => {
-        setTranscription(text);
+      onTranscription: (text, sender = 'ai') => {
+        // Append incoming transcriptions to maintain continuous flow instead of overwriting
+        setConversation(prev => [...prev, { sender, text }]);
       }
     });
 
@@ -54,17 +56,37 @@ export default function VoiceLiveModal({ apiKey, onClose }) {
           </span>
         </div>
 
-        {/* Visualizer / Status Area */}
+        {/* Dynamic Purple Waveform Visualizer Bars */}
         <div style={styles.visualizerContainer}>
-          <div className="pulse-ring" style={styles.pulseRing}></div>
+          <div style={styles.waveformWrapper}>
+            {[...Array(16)].map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  ...styles.waveBar,
+                  height: status === 'connected' ? `${Math.max(15, Math.sin(i + Date.now() / 200) * 45 + 30)}px` : '10px',
+                  backgroundColor: status === 'connected' ? '#A78BFA' : '#4B5563',
+                  animationDelay: `${i * 0.08}s`
+                }}
+              />
+            ))}
+          </div>
           <div style={styles.micIconCircle}>
             🎙️
           </div>
         </div>
 
-        {/* Live Transcription / Chat Bubble */}
+        {/* Continuous Chat / Transcription Stream */}
         <div style={styles.transcriptBox}>
-          <p style={styles.transcriptText}>{transcription}</p>
+          {conversation.slice(-3).map((item, index) => (
+            <p key={index} style={{
+              ...styles.transcriptText,
+              color: item.sender === 'ai' ? '#C4B5FD' : item.sender === 'user' ? '#34D399' : '#94A3B8'
+            }}>
+              <strong>{item.sender === 'ai' ? 'Tutor: ' : item.sender === 'user' ? 'You: ' : ''}</strong>
+              {item.text}
+            </p>
+          ))}
         </div>
 
         {/* Controls */}
@@ -110,7 +132,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '30px',
+    marginBottom: '20px',
   },
   title: {
     color: '#FFFFFF',
@@ -127,41 +149,56 @@ const styles = {
   },
   visualizerContainer: {
     position: 'relative',
-    height: '120px',
+    height: '110px',
+    width: '100%',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: '20px',
   },
+  waveformWrapper: {
+    position: 'absolute',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    height: '60px',
+    zIndex: 1,
+  },
+  waveBar: {
+    width: '4px',
+    borderRadius: '4px',
+    transition: 'height 0.15s ease-in-out',
+  },
   micIconCircle: {
-    width: '70px',
-    height: '70px',
+    width: '55px',
+    height: '55px',
     backgroundColor: '#4338CA',
     borderRadius: '50%',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    fontSize: '28px',
+    fontSize: '22px',
     zIndex: 2,
     boxShadow: '0 0 20px rgba(99, 102, 241, 0.5)',
   },
   transcriptBox: {
     width: '100%',
-    minHeight: '80px',
+    minHeight: '90px',
+    maxHeight: '120px',
+    overflowY: 'auto',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: '12px',
     padding: '12px 16px',
-    marginBottom: '30px',
+    marginBottom: '20px',
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    textAlign: 'center',
+    flexDirection: 'column',
+    gap: '6px',
+    justifyContent: 'flex-start',
   },
   transcriptText: {
-    color: '#E2E8F0',
-    fontSize: '14px',
+    fontSize: '13px',
     margin: 0,
-    lineHeight: '1.5',
+    lineHeight: '1.4',
   },
   controls: {
     width: '100%',
