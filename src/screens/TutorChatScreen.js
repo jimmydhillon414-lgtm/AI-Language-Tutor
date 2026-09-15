@@ -646,7 +646,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
                 justifyContent: 'center',
                 userSelect: 'none'
               }}
-            >
+{/* >
               <Text style={[styles.voiceConfigBtnText, { color: '#FFFFFF' }]}>⚡ Live Voice</Text>
             </div>
           ) : (
@@ -661,7 +661,48 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             </TouchableOpacity>
           )}
         </View>
-
+*/}
+{Platform.OS === 'web' ? (
+              <div
+                onClick={() => {
+                  console.log("Live Voice button clicked successfully!");
+                  setShowLiveVoiceModal(true);
+                }}
+                style={{
+                  backgroundColor: '#4338CA',
+                  paddingLeft: 10,
+                  paddingRight: 10,
+                  paddingBottom: 6,
+                  paddingTop: 6,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: '#818CF8',
+                  cursor: 'pointer',
+                  marginLeft: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 99999,
+                  position: 'relative',
+                  pointerEvents: 'auto',
+                  userSelect: 'none',
+                }}
+              >
+                <Text style={{ ...styles.voiceConfigBtnText, color: '#FFFFFF' }}>
+                  Live Voice
+                </Text>
+              </div>
+            ) : (
+              <TouchableOpacity
+                style={[styles.voiceConfigBtn, { marginLeft: 8, backgroundColor: '#4338CA', borderColor: '#818CF8' }]}
+                onPress={() => {
+                  console.log("Live Voice button clicked successfully!");
+                  setShowLiveVoiceModal(true);
+                }}
+              >
+                <Text style={styles.voiceConfigBtnText}> Live Voice</Text>
+              </TouchableOpacity>
+            )}
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
