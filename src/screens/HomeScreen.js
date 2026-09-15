@@ -55,7 +55,9 @@ export default function HomeScreen({ navigation }) {
         </div>
       )}
 
+      {/* ScrollView with proper bottom spacing so nothing cuts off */}
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={true}>
+        
         {/* Play Store Style Trust & Rating Header Banner */}
         <div style={styles.trustBanner}>
           <div style={styles.trustBadgeItem}>
@@ -65,7 +67,7 @@ export default function HomeScreen({ navigation }) {
           <div style={styles.trustDivider} />
           <div style={styles.trustBadgeItem}>
             <span style={styles.trustValue}>24/7</span>
-            <span style={styles.trustValue}>★Personal AI Tutor ★</span>
+            <span style={styles.trustValue}>★ Personal AI Tutor ★</span>
           </div>
           <div style={styles.trustDivider} />
           <div style={styles.trustBadgeItem}>
@@ -142,7 +144,7 @@ export default function HomeScreen({ navigation }) {
           </p>
         </div>
 
-        {/* 🌟 4 Horizontal Advantage Boxes in a Single Row */}
+        {/* 🌟 4 Horizontal Advantage Boxes (Properly visible now) */}
         <div style={styles.advantagesSection}>
           <div style={styles.advantagesHeader}>
             <span style={{ fontSize: '16px' }}>💎</span>
@@ -172,6 +174,45 @@ export default function HomeScreen({ navigation }) {
               <span style={styles.cardEmoji}>⚡</span>
               <h3 style={styles.cardTitle}>Rapid Fluency</h3>
               <p style={styles.cardText}>Focus entirely on real-world spoken vocabulary.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 🌟 Modern Trending Footer Section */}
+        <div style={styles.footerContainer}>
+          <div style={styles.footerContentTop}>
+            <div style={styles.footerBrandCol}>
+              <h2 style={styles.footerLogoText}>Solarin AI 🚀</h2>
+              <p style={styles.footerBrandDesc}>
+                Empowering millions to speak English fluently and confidently with advanced conversational AI technology.
+              </p>
+            </div>
+
+            <div style={styles.footerLinksCol}>
+              <h4 style={styles.footerColTitle}>Quick Links</h4>
+              <span style={styles.footerLink}>About Us</span>
+              <span style={styles.footerLink}>Features</span>
+              <span style={styles.footerLink}>Success Stories</span>
+            </div>
+
+            <div style={styles.footerLinksCol}>
+              <h4 style={styles.footerColTitle}>Support</h4>
+              <span style={styles.footerLink}>Help Center</span>
+              <span style={styles.footerLink}>Contact Us</span>
+              <span style={styles.footerLink}>Privacy Policy</span>
+            </div>
+          </div>
+
+          <div style={styles.footerDivider} />
+
+          <div style={styles.footerBottomRow}>
+            <p style={styles.copyrightText}>
+              © 2026 Solarin AI Technologies. All rights reserved.
+            </p>
+            <div style={styles.socialIconsRow}>
+              <span style={styles.socialIcon}>🌍</span>
+              <span style={styles.socialIcon}>💬</span>
+              <span style={styles.socialIcon}>📷</span>
             </div>
           </div>
         </div>
@@ -210,10 +251,10 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(15, 23, 21, 0.82)',
+    backgroundColor: 'rgba(15, 23, 21, 0.85)',
   },
   container: {
-    padding: '24px 16px 60px 16px',
+    padding: '24px 16px 100px 16px', // 👈 Increased bottom padding so boxes never get cut!
     alignItems: 'center',
     position: 'relative',
     zIndex: 1,
@@ -320,9 +361,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     letterSpacing: 0.3,
     fontWeight: '400',
-    textShadowColor: 'rgba(0, 0, 0, 0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   highlightBadge: {
     color: '#FFCB9A',
@@ -402,10 +440,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: '18px',
   },
-  /* 🌟 4 Horizontal Square Cards in a Single Row */
   advantagesSection: {
     width: '100%',
     maxWidth: '820px',
+    marginBottom: '30px',
   },
   advantagesHeader: {
     display: 'flex',
@@ -457,5 +495,86 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: '11px',
     lineHeight: '15px',
+  },
+  /* 🌟 Modern Trending Footer Styles */
+  footerContainer: {
+    width: '100%',
+    maxWidth: '820px',
+    backgroundColor: '#111E1A',
+    borderRadius: '24px',
+    padding: '30px 24px',
+    border: '1.5px solid #116466',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+  },
+  footerContentTop: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '24px',
+    marginBottom: '20px',
+  },
+  footerBrandCol: {
+    flex: 2,
+    minWidth: '220px',
+  },
+  footerLogoText: {
+    color: '#FFFFFF',
+    fontSize: '18px',
+    fontWeight: '900',
+    marginBottom: '8px',
+  },
+  footerBrandDesc: {
+    color: '#94A3B8',
+    fontSize: '12px',
+    lineHeight: '18px',
+  },
+  footerLinksCol: {
+    flex: 1,
+    minWidth: '120px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  footerColTitle: {
+    color: '#FFCB9A',
+    fontSize: '13px',
+    fontWeight: '800',
+    marginBottom: '4px',
+  },
+  footerLink: {
+    color: '#CBD5E1',
+    fontSize: '12px',
+    cursor: 'pointer',
+  },
+  footerDivider: {
+    width: '100%',
+    height: '1px',
+    backgroundColor: '#116466',
+    marginBottom: '16px',
+  },
+  footerBottomRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '12px',
+  },
+  copyrightText: {
+    color: '#64748B',
+    fontSize: '11px',
+  },
+  socialIconsRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '12px',
+  },
+  socialIcon: {
+    fontSize: '14px',
+    backgroundColor: 'rgba(17, 100, 102, 0.3)',
+    padding: '6px',
+    borderRadius: '8px',
+    border: '1px solid #116466',
   },
 });
