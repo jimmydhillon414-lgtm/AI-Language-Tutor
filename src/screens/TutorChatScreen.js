@@ -630,7 +630,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </TouchableOpacity>
         </View>
 
-        <View style={styles.langSelectorContainer}>
+{/* <View style={styles.langSelectorContainer}>
           {[
             { code: 'en-US', label: 'EN' },
             { code: 'hi-IN', label: 'HI' },
@@ -647,7 +647,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             </TouchableOpacity>
           ))}
         </View>
-
+*/}
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
