@@ -54,7 +54,6 @@ export default function AppNavigator() {
     return false;
   });
 
-  // Active Tab ko bhi sessionStorage se persist karein taaki History/Profile refresh par na khoye
   const [activeTab, setActiveTab] = useState(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       return sessionStorage.getItem('ai_tutor_active_tab') || 'AI Tutor';
@@ -183,10 +182,10 @@ export default function AppNavigator() {
             onSignOut={handleSignOut}
           />
         );
-      case 'History': // Navbar ke label ke mutabiq check karein ('History' ya 'Grammar History')
+      case 'History': 
       case 'Grammar History':
         return <GrammarHistoryScreen />;
-      case 'Profile': // Navbar ke label ke mutabiq check karein ('Profile' ya 'Profile Settings')
+      case 'Profile': 
       case 'Profile Settings':
         return <ProfileScreen user={user} selectedPlan={selectedPlan} />;
       default:
@@ -235,11 +234,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#070D10',
-    ...(Platform.OS === 'web' ? { height: '100dvh', maxHeight: '100dvh', overflow: 'hidden' } : {}),
+    // 👈 'overflow: hidden' yahan se hata diya hai taaki scrollbar block na ho
+    ...(Platform.OS === 'web' ? { height: '100dvh', maxHeight: '100dvh', overflowY: 'auto' } : {}),
   },
   content: {
     flex: 1,
     backgroundColor: 'transparent',
-    overflow: 'hidden',
+    // 👈 Yahan se bhi 'overflow: 'hidden'' hata diya hai
+    overflowY: 'visible', 
   },
 });
