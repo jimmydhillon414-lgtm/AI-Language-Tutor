@@ -293,6 +293,10 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       utterance.lang = getLanguageCode(userProfile?.target_language);
       utterance.rate = 0.95;
 
+      if (availableVoices.length === 0) {
+        loadDeviceVoices();
+      }
+
       if (userProfile?.preferred_voice) {
         const selectedVoiceObj = availableVoices.find(v => v.name === userProfile.preferred_voice);
         if (selectedVoiceObj) {
