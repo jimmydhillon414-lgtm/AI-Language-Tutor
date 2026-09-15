@@ -182,7 +182,7 @@ export default function HomeScreen({ navigation }) {
         <div style={styles.footerContainer}>
           <div style={styles.footerContentTop}>
             <div style={styles.footerBrandCol}>
-              <h2 style={styles.footerLogoText}>Solarin AI 🚀</h2>
+              <h2 style={styles.footerLogoText}>AI LANGUAGE TUTUOR</h2>
               <p style={styles.footerBrandDesc}>
                 Empowering millions to speak English fluently and confidently with advanced conversational AI technology.
               </p>
@@ -207,7 +207,7 @@ export default function HomeScreen({ navigation }) {
 
           <div style={styles.footerBottomRow}>
             <p style={styles.copyrightText}>
-              © 2026 Solarin AI Technologies. All rights reserved.
+              © 2026 AI Technologies. All rights reserved.
             </p>
             <div style={styles.socialIconsRow}>
               <span style={styles.socialIcon}>🌍</span>
