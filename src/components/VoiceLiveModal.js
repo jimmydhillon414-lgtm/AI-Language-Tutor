@@ -6,9 +6,15 @@ export default function VoiceLiveModal({ apiKey, onClose }) {
   const [conversation, setConversation] = useState([
     { sender: 'system', text: 'Initializing live voice session...' }
   ]);
+  const [tick, setTick] = useState(0); // For animating waveform bars
   const clientRef = useRef(null);
 
   useEffect(() => {
+    // Animation ticker for waveform visualizer
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+    }, 100);
+
     // Initialize Gemini Live Client
     const client = new GeminiLiveClient(apiKey, {
       onStatusChange: (newStatus) => {
@@ -22,7 +28,6 @@ export default function VoiceLiveModal({ apiKey, onClose }) {
         }
       },
       onTranscription: (text, sender = 'ai') => {
-        // Append incoming transcriptions to maintain continuous flow instead of overwriting
         setConversation(prev => [...prev, { sender, text }]);
       }
     });
@@ -30,8 +35,8 @@ export default function VoiceLiveModal({ apiKey, onClose }) {
     clientRef.current = client;
     client.connect();
 
-    // Cleanup on unmount
     return () => {
+      clearInterval(interval);
       if (clientRef.current) {
         clientRef.current.disconnect();
       }
@@ -64,9 +69,8 @@ export default function VoiceLiveModal({ apiKey, onClose }) {
                 key={i}
                 style={{
                   ...styles.waveBar,
-                  height: status === 'connected' ? `${Math.max(15, Math.sin(i + Date.now() / 200) * 45 + 30)}px` : '10px',
+                  height: status === 'connected' ? `${Math.max(15, Math.sin(i + tick * 0.5) * 45 + 30)}px` : '10px',
                   backgroundColor: status === 'connected' ? '#A78BFA' : '#4B5563',
-                  animationDelay: `${i * 0.08}s`
                 }}
               />
             ))}
@@ -100,20 +104,21 @@ export default function VoiceLiveModal({ apiKey, onClose }) {
   );
 }
 
-// Inline Styles for clean modular rendering
+// Updated Styles with absolute root layering to avoid clipping
 const styles = {
   overlay: {
-    position: 'fixed',
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000,
-    backdropFilter: 'blur(5px)',
+    zIndex: 99999,
+    width: '100%',
+    height: '100%',
   },
   modalContainer: {
     width: '90%',
@@ -121,11 +126,11 @@ const styles = {
     backgroundColor: '#1E1B4B',
     borderRadius: '24px',
     padding: '24px',
-    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    border: '1.5px solid rgba(255, 255, 255, 0.2)',
   },
   header: {
     width: '100%',
@@ -167,7 +172,7 @@ const styles = {
   waveBar: {
     width: '4px',
     borderRadius: '4px',
-    transition: 'height 0.15s ease-in-out',
+    transition: 'height 0.1s ease-in-out',
   },
   micIconCircle: {
     width: '55px',
