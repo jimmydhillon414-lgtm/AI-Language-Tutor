@@ -374,7 +374,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const parseAiResponse = (responseText) => {
     try {
       const cleanedString = responseText.replace(/```json\s*([\s\S]*?)\s*```/g, '$1').trim();
-      return JSON.parse(cleanedString);
+      const parsed = JSON.parse(cleanedString);
+    console.log("AI Parsed Output:", parsed);
+    return parsed;
     } catch (e) {
       return {
         hasCorrection: false,
