@@ -2,10 +2,8 @@ import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Slash `/` ya `/rest/v1/` ke bina clean base URL:
-const SUPABASE_URL = 'https://ytdfynurvqvfmuxyupxm.supabase.co'; 
-
-const SUPABASE_ANON_KEY = 'sb_publishable_qbZeidiMdqCpbMuLDPIhKA_kOW4lXG6'; // Aapki full publishable key
+const SUPABASE_URL = 'https://ytdfynurvqvfmuxyupxm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_qbZeidiMdqCpbMuLDPIhKA_kOW4lXG6';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -13,5 +11,10 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+  },
+  global: {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+    },
   },
 });
