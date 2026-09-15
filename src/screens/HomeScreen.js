@@ -142,36 +142,38 @@ export default function HomeScreen({ navigation }) {
           </p>
         </div>
 
-        {/* 🌟 REPLACED SECTION: Quick Action Hub / AI Practice Modes */}
-        <div style={styles.quickActionContainer}>
-          <div style={styles.quickActionHeader}>
-            <span style={{ fontSize: '18px' }}>🎯</span>
-            <span style={styles.quickActionTitle}>CHOOSE YOUR AI PRACTICE MODE</span>
+        {/* 🌟 4 Horizontal Advantage Boxes in a Single Row */}
+        <div style={styles.advantagesSection}>
+          <div style={styles.advantagesHeader}>
+            <span style={{ fontSize: '16px' }}>💎</span>
+            <span style={styles.advantagesHeaderText}>WHY LEARN WITH SOLARIN AI</span>
           </div>
 
-          <TouchableOpacity 
-            style={styles.modeCard}
-            onPress={() => navigation.navigate('Chat')} // Yahan apna target screen route rakh sakte hain
-          >
-            <div style={styles.modeIconBox}>🗣️</div>
-            <div style={{ flex: 1 }}>
-              <Text style={styles.modeTitle}>1-on-1 Live Voice Conversation</Text>
-              <Text style={styles.modeDesc}>Practice real-time speaking with instant pronunciation correction.</Text>
+          <div style={styles.horizontalRow}>
+            <div style={styles.horizontalSquareCard}>
+              <span style={styles.cardEmoji}>🎯</span>
+              <h3 style={styles.cardTitle}>Instant Correction</h3>
+              <p style={styles.cardText}>Real-time feedback on your pronunciation & grammar.</p>
             </div>
-            <span style={styles.modeArrow}>➔</span>
-          </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.modeCard}
-            onPress={() => navigation.navigate('Profile')}
-          >
-            <div style={styles.modeIconBox}>⚡</div>
-            <div style={{ flex: 1 }}>
-              <Text style={styles.modeTitle}>Quick Daily Vocabulary Challenge</Text>
-              <Text style={styles.modeDesc}>Master 10 new high-frequency words tailored for your level.</Text>
+            <div style={styles.horizontalSquareCard}>
+              <span style={styles.cardEmoji}>🛡️</span>
+              <h3 style={styles.cardTitle}>Zero Judgement</h3>
+              <p style={styles.cardText}>Practice stress-free without any hesitation.</p>
             </div>
-            <span style={styles.modeArrow}>➔</span>
-          </TouchableOpacity>
+
+            <div style={styles.horizontalSquareCard}>
+              <span style={styles.cardEmoji}>📈</span>
+              <h3 style={styles.cardTitle}>Adaptive Pace</h3>
+              <p style={styles.cardText}>Lessons automatically scale to your speed.</p>
+            </div>
+
+            <div style={styles.horizontalSquareCard}>
+              <span style={styles.cardEmoji}>⚡</span>
+              <h3 style={styles.cardTitle}>Rapid Fluency</h3>
+              <p style={styles.cardText}>Focus entirely on real-world spoken vocabulary.</p>
+            </div>
+          </div>
         </div>
 
       </ScrollView>
@@ -218,7 +220,7 @@ const styles = StyleSheet.create({
   },
   trustBanner: {
     width: '100%',
-    maxWidth: '720px',
+    maxWidth: '820px',
     backgroundColor: '#182C25',
     borderRadius: '16px',
     padding: '14px 20px',
@@ -251,7 +253,7 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     width: '100%',
-    maxWidth: '720px',
+    maxWidth: '820px',
     backgroundColor: '#182C25',
     borderRadius: '24px',
     padding: '36px 30px',
@@ -333,7 +335,7 @@ const styles = StyleSheet.create({
   },
   videoSectionCard: {
     width: '100%',
-    maxWidth: '720px',
+    maxWidth: '820px',
     backgroundColor: '#182C25',
     borderRadius: '24px',
     padding: '24px',
@@ -400,12 +402,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: '18px',
   },
-  /* 🌟 Styles for New Quick Action Hub */
-  quickActionContainer: {
+  /* 🌟 4 Horizontal Square Cards in a Single Row */
+  advantagesSection: {
     width: '100%',
-    maxWidth: '720px',
+    maxWidth: '820px',
   },
-  quickActionHeader: {
+  advantagesHeader: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -413,47 +415,47 @@ const styles = StyleSheet.create({
     marginBottom: '14px',
     paddingLeft: '4px',
   },
-  quickActionTitle: {
+  advantagesHeaderText: {
     color: '#FFCB9A',
     fontSize: '12px',
     fontWeight: '900',
     letterSpacing: '1.2px',
   },
-  modeCard: {
-    width: '100%',
-    backgroundColor: '#182C25',
-    borderRadius: '18px',
-    padding: '18px 20px',
-    border: '1.5px solid #116466',
+  horizontalRow: {
     display: 'flex',
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: '16px',
-    marginBottom: '14px',
-    cursor: 'pointer',
-    boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
+    gap: '12px',
+    width: '100%',
   },
-  modeIconBox: {
-    fontSize: '26px',
+  horizontalSquareCard: {
+    flex: 1,
+    backgroundColor: '#182C25',
+    borderRadius: '18px',
+    padding: '16px 12px',
+    border: '1.5px solid #116466',
+    boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    minHeight: '150px',
+  },
+  cardEmoji: {
+    fontSize: '22px',
+    marginBottom: '10px',
     backgroundColor: 'rgba(17, 100, 102, 0.3)',
-    padding: '12px',
-    borderRadius: '14px',
+    padding: '8px',
+    borderRadius: '10px',
     border: '1px solid #116466',
   },
-  modeTitle: {
+  cardTitle: {
     color: '#FFFFFF',
-    fontSize: '15px',
-    fontWeight: 'bold',
-    marginBottom: '3px',
+    fontSize: '13px',
+    fontWeight: '800',
+    marginBottom: '4px',
   },
-  modeDesc: {
+  cardText: {
     color: '#94A3B8',
-    fontSize: '12px',
-    lineHeight: '16px',
-  },
-  modeArrow: {
-    color: '#FFCB9A',
-    fontSize: '18px',
-    fontWeight: 'bold',
+    fontSize: '11px',
+    lineHeight: '15px',
   },
 });
