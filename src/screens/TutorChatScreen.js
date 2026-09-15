@@ -660,8 +660,9 @@ You MUST reply ONLY with a valid JSON object in this exact format:
               <Text style={[styles.voiceConfigBtnText, { color: '#FFFFFF' }]}>⚡ Live Voice</Text>
             </TouchableOpacity>
           )}
+          */}
         </View>
-*/}
+
 {Platform.OS === 'web' ? (
               <div
                 onClick={() => {
