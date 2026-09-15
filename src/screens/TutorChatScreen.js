@@ -475,8 +475,8 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       if (parsedData.learning_goal) {
         updatedFields.learning_goal = parsedData.learning_goal;
       }
-
-      if (userIdRef.current) {
+      setUserProfile(prev => ({ ...prev, ...updatedFields }));
+      {/* if (userIdRef.current) {
         const { error: updateErr } = await supabase
           .from('user_profiles')
           .update(updatedFields)
@@ -485,7 +485,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         if (!updateErr) {
           setUserProfile(prev => ({ ...prev, ...updatedFields }));
         }
-      }
+      } */}
 
       const aiMsgObj = { 
         id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, 
