@@ -182,10 +182,10 @@ export default function HomeScreen({ navigation }) {
         <div style={styles.footerContainer}>
           <div style={styles.footerContentTop}>
             <div style={styles.footerBrandCol}>
-        {/* <h2 style={styles.footerLogoText}>AI LANGUAGE TUTUOR</h2> */}
+        {/* <h2 style={styles.footerLogoText}>AI LANGUAGE TUTOR</h2> */}
                <div style={styles.aiBadge}>
             <span style={{ fontSize: '12px' }}>⚡</span>
-            <span style={styles.aiBadgeText}>AI LANGUAGE TUTUOR</span>
+            <span style={styles.aiBadgeText}>AI LANGUAGE TUTOR</span>
           </div>
 
           
