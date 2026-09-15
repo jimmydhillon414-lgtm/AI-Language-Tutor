@@ -624,7 +624,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </TouchableOpacity>
 
           {/* Multimodal Live Voice Tutor Mode Button (Web Safe div + Mobile TouchableOpacity) */}
-          {Platform.OS === 'web' ? (
+       {/*   {Platform.OS === 'web' ? (
             <div
               onClick={() => {
                 console.log("⚡ Live Voice Web Clicked Successfully!");
@@ -646,7 +646,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
                 justifyContent: 'center',
                 userSelect: 'none'
               }}
-{/* >
+ >
               <Text style={[styles.voiceConfigBtnText, { color: '#FFFFFF' }]}>⚡ Live Voice</Text>
             </div>
           ) : (
