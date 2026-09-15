@@ -623,16 +623,43 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             <Text style={styles.voiceConfigBtnText}>🎙️ Accents</Text>
           </TouchableOpacity>
 
-          {/* Multimodal Live Voice Tutor Mode Button */}
-          <TouchableOpacity 
-            style={[styles.voiceConfigBtn, { marginLeft: 8, backgroundColor: '#4338CA', borderColor: '#818CF8' }]} 
-           onPress={() => {
-            console.log("Live Voice button clicked successfully!");
-            setShowLiveVoiceModal(true);
-          }}
-          >
-            <Text style={[styles.voiceConfigBtnText, { color: '#FFFFFF' }]}>⚡ Live Voice</Text>
-          </TouchableOpacity>
+          {/* Multimodal Live Voice Tutor Mode Button (Web Safe div + Mobile TouchableOpacity) */}
+          {Platform.OS === 'web' ? (
+            <div
+              onClick={() => {
+                console.log("⚡ Live Voice Web Clicked Successfully!");
+                setShowLiveVoiceModal(true);
+              }}
+              style={{
+                backgroundColor: '#4338CA',
+                paddingLeft: 8,
+                paddingRight: 8,
+                paddingTop: 6,
+                paddingBottom: 6,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: '#818CF8',
+                cursor: 'pointer',
+                marginLeft: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                userSelect: 'none'
+              }}
+            >
+              <Text style={[styles.voiceConfigBtnText, { color: '#FFFFFF' }]}>⚡ Live Voice</Text>
+            </div>
+          ) : (
+            <TouchableOpacity 
+              style={[styles.voiceConfigBtn, { marginLeft: 8, backgroundColor: '#4338CA', borderColor: '#818CF8' }]} 
+              onPress={() => {
+                console.log("Live Voice button clicked successfully!");
+                setShowLiveVoiceModal(true);
+              }}
+            >
+              <Text style={[styles.voiceConfigBtnText, { color: '#FFFFFF' }]}>⚡ Live Voice</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
@@ -1013,83 +1040,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     color: '#FFFFFF',
-    fontSize: 14,
-  },
-  micButton: {
-    backgroundColor: '#1C312B',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#116466',
-  },
-  sendPlaneButton: {
-    backgroundColor: '#FFCB9A',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: '85%',
-    maxWidth: 380,
-    backgroundColor: '#142C28',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1.5,
-    borderColor: '#116466',
-  },
-  modalTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 6,
-  },
-  modalSubtitle: {
-    color: '#A3B8B0',
-    fontSize: 12,
-    marginBottom: 12,
-  },
-  voiceOptionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginBottom: 6,
-    backgroundColor: '#1C312B',
-  },
-  voiceOptionSelected: {
-    backgroundColor: '#116466',
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
-  },
-  voiceOptionText: {
-    color: '#E2E8F0',
-    fontSize: 13,
-  },
-  modalCloseButton: {
-    backgroundColor: '#116466',
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#FFCB9A',
-  },
-  modalCloseText: {
-    color: '#FFCB9A',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
+  }
 });
