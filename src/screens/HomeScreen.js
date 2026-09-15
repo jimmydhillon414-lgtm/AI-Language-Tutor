@@ -142,35 +142,35 @@ export default function HomeScreen({ navigation }) {
           </p>
         </div>
 
-        {/* Dynamic Metric Grid */}
-        <div style={styles.gridContainer}>
-          <div style={styles.statCard} onClick={() => navigation.navigate('Profile')}>
-            <span style={styles.statIcon}>🎯</span>
-            <span style={styles.statTitle}>Target Language</span>
-            <span style={styles.statValue}>{userProfile.target_language || 'English'}</span>
+        {/* 🌟 REPLACED SECTION: Quick Action Hub / AI Practice Modes */}
+        <div style={styles.quickActionContainer}>
+          <div style={styles.quickActionHeader}>
+            <span style={{ fontSize: '18px' }}>🎯</span>
+            <span style={styles.quickActionTitle}>CHOOSE YOUR AI PRACTICE MODE</span>
           </div>
 
-          <div style={styles.statCard} onClick={() => navigation.navigate('Profile')}>
-            <span style={styles.statIcon}>📈</span>
-            <span style={styles.statTitle}>Proficiency Level</span>
-            <span style={styles.statValue}>{userProfile.proficiency_level || 'Beginner'}</span>
-          </div>
-        </div>
-
-        {/* Action Navigation Deck */}
-        <div style={styles.actionSection}>
           <TouchableOpacity 
-            style={styles.secondaryButton}
-            onPress={() => navigation.navigate('History')}
+            style={styles.modeCard}
+            onPress={() => navigation.navigate('Chat')} // Yahan apna target screen route rakh sakte hain
           >
-            <Text style={styles.secondaryButtonText}>📊 View Learning History & Analytics</Text>
+            <div style={styles.modeIconBox}>🗣️</div>
+            <div style={{ flex: 1 }}>
+              <Text style={styles.modeTitle}>1-on-1 Live Voice Conversation</Text>
+              <Text style={styles.modeDesc}>Practice real-time speaking with instant pronunciation correction.</Text>
+            </div>
+            <span style={styles.modeArrow}>➔</span>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.secondaryButton}
+            style={styles.modeCard}
             onPress={() => navigation.navigate('Profile')}
           >
-            <Text style={styles.secondaryButtonText}>⚙️ Update Tutor Preferences & Goals</Text>
+            <div style={styles.modeIconBox}>⚡</div>
+            <div style={{ flex: 1 }}>
+              <Text style={styles.modeTitle}>Quick Daily Vocabulary Challenge</Text>
+              <Text style={styles.modeDesc}>Master 10 new high-frequency words tailored for your level.</Text>
+            </div>
+            <span style={styles.modeArrow}>➔</span>
           </TouchableOpacity>
         </div>
 
@@ -400,57 +400,60 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: '18px',
   },
-  gridContainer: {
+  /* 🌟 Styles for New Quick Action Hub */
+  quickActionContainer: {
+    width: '100%',
+    maxWidth: '720px',
+  },
+  quickActionHeader: {
     display: 'flex',
     flexDirection: 'row',
-    width: '100%',
-    maxWidth: '720px',
-    gap: '16px',
-    marginBottom: '20px',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '14px',
+    paddingLeft: '4px',
   },
-  statCard: {
-    flex: 1,
+  quickActionTitle: {
+    color: '#FFCB9A',
+    fontSize: '12px',
+    fontWeight: '900',
+    letterSpacing: '1.2px',
+  },
+  modeCard: {
+    width: '100%',
     backgroundColor: '#182C25',
     borderRadius: '18px',
-    padding: '20px',
+    padding: '18px 20px',
     border: '1.5px solid #116466',
+    display: 'flex',
+    flexDirection: 'row',
     alignItems: 'center',
-    cursor: 'pointer',
-    boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
-  },
-  statIcon: {
-    fontSize: '28px',
-    marginBottom: '8px',
-  },
-  statTitle: {
-    color: '#94A3B8',
-    fontSize: '12px',
-    marginBottom: '4px',
-    fontWeight: '500',
-  },
-  statValue: {
-    color: '#FFCB9A',
-    fontSize: '16px',
-    fontWeight: 'bold',
-  },
-  actionSection: {
-    width: '100%',
-    maxWidth: '720px',
-  },
-  secondaryButton: {
-    backgroundColor: '#182C25',
-    paddingVertical: '16px',
-    paddingHorizontal: '20px',
-    borderRadius: '16px',
-    border: '1.5px solid #116466',
-    alignItems: 'center',
+    gap: '16px',
     marginBottom: '14px',
     cursor: 'pointer',
     boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
   },
-  secondaryButtonText: {
-    color: '#D1E8E2',
-    fontSize: '14px',
-    fontWeight: '600',
+  modeIconBox: {
+    fontSize: '26px',
+    backgroundColor: 'rgba(17, 100, 102, 0.3)',
+    padding: '12px',
+    borderRadius: '14px',
+    border: '1px solid #116466',
+  },
+  modeTitle: {
+    color: '#FFFFFF',
+    fontSize: '15px',
+    fontWeight: 'bold',
+    marginBottom: '3px',
+  },
+  modeDesc: {
+    color: '#94A3B8',
+    fontSize: '12px',
+    lineHeight: '16px',
+  },
+  modeArrow: {
+    color: '#FFCB9A',
+    fontSize: '18px',
+    fontWeight: 'bold',
   },
 });
