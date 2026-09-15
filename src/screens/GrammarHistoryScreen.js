@@ -16,7 +16,6 @@ export default function GrammarHistoryScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fixed: Querying 'grammar_history' where TutorChatScreen actually saves corrections
       const { data, error } = await supabase
         .from('grammar_history')
         .select('*')
@@ -149,10 +148,11 @@ export default function GrammarHistoryScreen() {
 const styles = {
   backgroundImage: {
     minHeight: '100vh',
+    height: '100vh', // 👈 Fixed height to viewport
+    overflowY: 'auto', // 👈 Enables smooth vertical scrolling
     backgroundColor: '#0F1715',
     position: 'relative',
-    overflowX: 'hidden',
-    padding: '24px 16px',
+    padding: '24px 16px 80px 16px', // 👈 Extra bottom padding so last card is fully visible
     boxSizing: 'border-box',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   },
@@ -262,6 +262,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
+    paddingBottom: '40px',
   },
   card: {
     backgroundColor: 'rgba(24, 44, 37, 0.95)',
