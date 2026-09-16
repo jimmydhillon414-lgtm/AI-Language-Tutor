@@ -1,8 +1,12 @@
 export const getTutorResponse = async (userMessage, targetLanguage = 'English', level = 'Beginner') => {
   try {
     const apiKey = process.env.EXPO_PUBLIC_GEMINI_AI_KEY;
+    
+    // Debug log to confirm key loading status safely
+    console.log("API Key Status:", apiKey ? "Loaded Successfully" : "MISSING!");
+
     if (!apiKey) {
-      throw new Error('Gemini API key is missing.');
+      throw new Error('API key is missing in environment variables.');
     }
 
     const systemPrompt = `You are a friendly, encouraging AI Language Tutor teaching ${targetLanguage} to a ${level} level student. 
@@ -13,37 +17,37 @@ export const getTutorResponse = async (userMessage, targetLanguage = 'English', 
 
     const promptText = `${systemPrompt}\n\nStudent: "${userMessage}"`;
 
-    // Direct fetch use kar rahe hain taaki AQ. token / Bearer token properly pass ho sake
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey.trim()}`
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: promptText }]
-            }
-          ]
-        })
-      }
-    );
+    // Official SpeakToSpeak Platform API Endpoint
+    const API_ENDPOINT = 'https://ais-dev-pa7vdb7vpc7uuazieliwsu-669284669137.asia-southeast1.run.app/api/speak-to-speak';
+
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey.trim()}`
+      },
+      body: JSON.stringify({
+        text: promptText,
+        language: targetLanguage.toLowerCase() === 'punjabi' ? 'pa' : 'en',
+        accentStyle: 'Majhi Desi (ਅੰਮ੍ਰਿਤਸਰੀ ਲਹਿਜਾ - ਹਾਂਜੀ ਭਾਊ)',
+        voiceName: 'Puck',
+        humanMannerisms: true,
+        speakingPace: 'normal'
+      })
+    });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error?.message || 'Failed to communicate with AI service.');
+      throw new Error(data.error?.message || `Platform API failed with status ${response.status}`);
     }
 
-    // Gemini API response structure se text extract karna
-    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    // Extract response safely based on potential payload structures
+    const aiText = data?.response || data?.text || data?.choices?.[0]?.message?.content || data?.candidates?.[0]?.content?.parts?.[0]?.text;
     return aiText || 'No response generated.';
 
   } catch (error) {
-    console.error('Gemini API Error:', error);
+    console.error('SpeakToSpeak API Error:', error);
     return `Sorry, I am having trouble connecting right now. (${error.message})`;
   }
 };
