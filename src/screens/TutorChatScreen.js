@@ -345,7 +345,7 @@ const toggleVoiceInput = () => {
     }
   };
 
-  const stopVoiceInput = () => {
+  {/* const stopVoiceInput = () => {
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
@@ -354,7 +354,7 @@ const toggleVoiceInput = () => {
     }
     setListening(false);
   };
-
+ */}
   const handlePlayPauseAudio = (text, messageId) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       const synth = window.speechSynthesis;
