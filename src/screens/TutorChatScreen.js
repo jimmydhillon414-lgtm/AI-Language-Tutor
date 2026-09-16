@@ -16,7 +16,6 @@ import ImmersiveBackground from '../components/ImmersiveBackground';
 import RoleplaySelector from '../components/RoleplaySelector';
 import speechService from '../utils/speechService';
 import sentimentAnalyzer from '../utils/sentimentAnalyzer';
-import VoiceLiveModal from '../components/VoiceLiveModal'; // <-- Integrated Live Voice Modal
 
 export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
   const [userProfile, setUserProfile] = useState({ 
@@ -44,9 +43,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   
   const [availableVoices, setAvailableVoices] = useState([]);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
-  
-  // State for Gemini Multimodal Live Voice Modal
-  const [showLiveVoiceModal, setShowLiveVoiceModal] = useState(false);
   
   const speechQueueRef = useRef([]);
   const activeUtteranceRef = useRef(null);
@@ -170,7 +166,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
   };
 
-  {/* const toggleVoiceInput = () => {
+  const toggleVoiceInput = () => {
     if (listening) {
       stopVoiceInput();
       return;
@@ -230,108 +226,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       startMobileAudioFallback();
     }
   };
-*/}
-const toggleVoiceInput = () => {
-    if (listening) {
-      stopVoiceInput();
-      return;
-    }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      startMobileAudioFallback();
-      return;
-    }
-
-    try {
-      // 1. Pehle ki chal rahi recognition ko aggressively stop karo
-      if (recognitionRef.current) {
-        try { 
-          recognitionRef.current.onresult = null;
-          recognitionRef.current.onerror = null;
-          recognitionRef.current.onend = null;
-          recognitionRef.current.stop(); 
-        } catch (e) {}
-        recognitionRef.current = null;
-      }
-
-      setListening(true);
-
-      // 2. Thoda sa delay do taaki browser audio hardware ko fully release kar sake
-      setTimeout(() => {
-        try {
-          const recognition = new SpeechRecognition();
-          recognition.continuous = false;
-          recognition.interimResults = true;
-          recognition.lang = speechLang;
-
-          recognitionRef.current = recognition;
-
-          recognition.onresult = (event) => {
-            let interimTranscript = '';
-            let finalTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-              const transcriptPiece = event.results[i][0].transcript;
-              if (event.results[i].isFinal) {
-                finalTranscript += transcriptPiece;
-              } else {
-                interimTranscript += transcriptPiece;
-              }
-            }
-
-            const currentText = finalTranscript || interimTranscript;
-            if (currentText.trim()) {
-              setInput(currentText.trim());
-            }
-
-            if (finalTranscript.trim()) {
-              stopVoiceInput();
-              handleSendDirect(finalTranscript.trim());
-            }
-          };
-
-          recognition.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
-            setListening(false);
-          };
-
-          recognition.onend = () => {
-            setListening(false);
-          };
-
-          recognition.start();
-        } catch (innerErr) {
-          console.log("Inner recognition start error:", innerErr);
-          setListening(false);
-          startMobileAudioFallback();
-        }
-      }, 150); // 150ms delay handles hardware busy state
-
-    } catch (err) {
-      console.log("Recognition start error:", err);
-      setListening(false);
-      startMobileAudioFallback();
-    }
-  };
-
-  const stopVoiceInput = () => {
-    if (recognitionRef.current) {
-      try { 
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.onerror = null;
-        recognitionRef.current.onend = null;
-        recognitionRef.current.stop(); 
-      } catch (e) {}
-      recognitionRef.current = null;
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      try { mediaRecorderRef.current.stop(); } catch (e) {}
-    }
-    setListening(false);
-  };
-  
   const startMobileAudioFallback = async () => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -365,7 +260,7 @@ const toggleVoiceInput = () => {
     }
   };
 
-  {/* const stopVoiceInput = () => {
+  const stopVoiceInput = () => {
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
@@ -374,7 +269,7 @@ const toggleVoiceInput = () => {
     }
     setListening(false);
   };
- */}
+
   const handlePlayPauseAudio = (text, messageId) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
       const synth = window.speechSynthesis;
@@ -397,10 +292,6 @@ const toggleVoiceInput = () => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = getLanguageCode(userProfile?.target_language);
       utterance.rate = 0.95;
-
-      if (availableVoices.length === 0) {
-        loadDeviceVoices();
-      }
 
       if (userProfile?.preferred_voice) {
         const selectedVoiceObj = availableVoices.find(v => v.name === userProfile.preferred_voice);
@@ -479,8 +370,7 @@ const toggleVoiceInput = () => {
   const parseAiResponse = (responseText) => {
     try {
       const cleanedString = responseText.replace(/```json\s*([\s\S]*?)\s*```/g, '$1').trim();
-      const parsed = JSON.parse(cleanedString);
-      return parsed;
+      return JSON.parse(cleanedString);
     } catch (e) {
       return {
         hasCorrection: false,
@@ -498,6 +388,7 @@ const toggleVoiceInput = () => {
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
 
+    // Optional usage of sentiment analyzer to understand user tone
     const userSentiment = sentimentAnalyzer ? sentimentAnalyzer.analyze(messageValue) : null;
 
     stopVoiceInput();
@@ -570,18 +461,23 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       }
 
       const updatedFields = {
-        current_scenario: parsedData.roleplayContext || currentScenario,
-        scenario_objective: parsedData.scenarioObjective || currentObj,
+        field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || currentInterest,
+        learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'Simulation practice',
+        current_scenario: parsedData.roleplayContext,
+        scenario_objective: parsedData.scenarioObjective,
         updated_at: new Date().toISOString()
       };
 
-      if (parsedData.new_field_of_interest) {
-        updatedFields.field_of_interest = parsedData.new_field_of_interest;
+      if (userIdRef.current) {
+        const { error: updateErr } = await supabase
+          .from('user_profiles')
+          .update(updatedFields)
+          .eq('id', userIdRef.current);
+
+        if (!updateErr) {
+          setUserProfile(prev => ({ ...prev, ...updatedFields }));
+        }
       }
-      if (parsedData.learning_goal) {
-        updatedFields.learning_goal = parsedData.learning_goal;
-      }
-      setUserProfile(prev => ({ ...prev, ...updatedFields }));
 
       const aiMsgObj = { 
         id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, 
@@ -719,95 +615,40 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             </TouchableOpacity>
           )}
           
-          {/* Voice configuration modal toggle */}
           <TouchableOpacity style={[styles.voiceConfigBtn, { marginLeft: 8 }]} onPress={() => setShowVoiceModal(true)}>
-            <Text style={styles.voiceConfigBtnText}>🎙️ Accents</Text>
+            <Text style={styles.voiceConfigBtnText}>🎙️ Voice</Text>
           </TouchableOpacity>
-
-          {/* Multimodal Live Voice Tutor Mode Button (Web Safe div + Mobile TouchableOpacity) */}
-       {/*   {Platform.OS === 'web' ? (
-            <div
-              onClick={() => {
-                console.log("⚡ Live Voice Web Clicked Successfully!");
-                setShowLiveVoiceModal(true);
-              }}
-              style={{
-                backgroundColor: '#4338CA',
-                paddingLeft: 8,
-                paddingRight: 8,
-                paddingTop: 6,
-                paddingBottom: 6,
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: '#818CF8',
-                cursor: 'pointer',
-                marginLeft: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                userSelect: 'none'
-              }}
- >
-              <Text style={[styles.voiceConfigBtnText, { color: '#FFFFFF' }]}>⚡ Live Voice</Text>
-            </div>
-          ) : (
-            <TouchableOpacity 
-              style={[styles.voiceConfigBtn, { marginLeft: 8, backgroundColor: '#4338CA', borderColor: '#818CF8' }]} 
-              onPress={() => {
-                console.log("Live Voice button clicked successfully!");
-                setShowLiveVoiceModal(true);
-              }}
-            >
-              <Text style={[styles.voiceConfigBtnText, { color: '#FFFFFF' }]}>⚡ Live Voice</Text>
-            </TouchableOpacity>
-          )}
-          */}
         </View>
 
-{Platform.OS === 'web' ? (
-              <div
-                onClick={() => {
-                  console.log("Live Voice button clicked successfully!");
-                  setShowLiveVoiceModal(true);
-                }}
-                style={{
-                  backgroundColor: '#4338CA',
-                  paddingLeft: 10,
-                  paddingRight: 10,
-                  paddingBottom: 6,
-                  paddingTop: 6,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: '#818CF8',
-                  cursor: 'pointer',
-                  marginLeft: 8,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 99999,
-                  position: 'relative',
-                  pointerEvents: 'auto',
-                  userSelect: 'none',
-                }}
-              >
-                <Text style={{ ...styles.voiceConfigBtnText, color: '#FFFFFF' }}>
-                  Live Voice
-                </Text>
-              </div>
-            ) : (
-              <TouchableOpacity
-                style={[styles.voiceConfigBtn, { marginLeft: 8, backgroundColor: '#4338CA', borderColor: '#818CF8' }]}
-                onPress={() => {
-                  console.log("Live Voice button clicked successfully!");
-                  setShowLiveVoiceModal(true);
-                }}
-              >
-                <Text style={styles.voiceConfigBtnText}> Live Voice</Text>
-              </TouchableOpacity>
-            )}
+        <View style={styles.langSelectorContainer}>
+          {[
+            { code: 'en-US', label: 'EN' },
+            { code: 'hi-IN', label: 'HI' },
+            { code: 'pa-IN', label: 'PA' }
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.code}
+              style={[styles.langToggleBtn, speechLang === item.code && styles.activeLangToggle]}
+              onPress={() => setSpeechLang(item.code)}
+            >
+              <Text style={[styles.langToggleText, speechLang === item.code && { color: '#1B2A26' }]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
+      <View style={styles.activeObjectiveBanner}>
+        <Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
+        <Text style={styles.bannerText} numberOfLines={1}>
+          {userProfile?.scenario_objective || 'Immersive Roleplay Simulation in progress...'}
+        </Text>
+      </View>
+
+      {/* Roleplay Selector Component Integration */}
       <RoleplaySelector 
         onSelectScenario={(selectedScenario) => {
           setUserProfile(prev => ({ ...prev, current_scenario: selectedScenario }));
@@ -856,7 +697,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </View>
       </KeyboardAvoidingView>
 
-      {/* Voice Selection Modal */}
       <Modal visible={showVoiceModal} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -892,17 +732,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </View>
         </View>
       </Modal>
-
-      {/* Gemini Multimodal Live WebSocket Voice Modal */}
-      {showLiveVoiceModal && (
-        <VoiceLiveModal 
-          apiKey={process.env.EXPO_PUBLIC_GEMINI_API_KEY || "AQ.Ab8RN6J5VBxdLnmuYpq28cfipY8Bb4Jrw39UmIWF5sT5aU2w0Q"} 
-          onClose={() => {
-            console.log("Closing live voice modal...");
-            setShowLiveVoiceModal(false);
-          }}
-        />
-      )}
     </AppBackground>
   );
 }
@@ -952,6 +781,48 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontSize: 10,
     fontWeight: '700',
+  },
+  langSelectorContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#121E1A',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#116466',
+    padding: 2,
+    gap: 2,
+  },
+  langToggleBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  activeLangToggle: {
+    backgroundColor: '#FFCB9A',
+  },
+  langToggleText: {
+    color: '#FFCB9A',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  activeObjectiveBanner: {
+    backgroundColor: '#142C28',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#116466',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bannerLabel: {
+    color: '#FFCB9A',
+    fontSize: 11,
+    fontWeight: 'bold',
+    marginRight: 6,
+  },
+  bannerText: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    flex: 1,
   },
   container: {
     flex: 1,
@@ -1135,53 +1006,142 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginHorizontal: 4,
   },
+  miniAvatarContainerUser: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#0A1411',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  miniEmoji: {
+    fontSize: 11,
+  },
   chatProfileHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 4,
   },
   chatSenderName: {
     color: '#FFCB9A',
     fontSize: 11,
     fontWeight: 'bold',
+    flex: 1,
+    marginRight: 6,
   },
   chatMiniAvatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center',
+    width: 18,
+    height: 18,
     alignItems: 'center',
-  },
-  miniEmoji: {
-    fontSize: 10,
+    justifyContent: 'center',
   },
   miniAvatarContainerAi: {
     width: 18,
     height: 18,
-    borderRadius: 9,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   inputBar: {
     flexDirection: 'row',
-    padding: 12,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     backgroundColor: 'rgba(11, 25, 23, 0.95)',
     borderTopWidth: 1.5,
     borderTopColor: '#116466',
-    alignItems: 'center',
-    gap: 8,
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#1C312B',
+    backgroundColor: '#121E1A',
     borderWidth: 1,
     borderColor: '#116466',
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     color: '#FFFFFF',
-  }
+    fontSize: 13,
+    maxHeight: 100,
+  },
+  micButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#1C312B',
+    borderWidth: 1,
+    borderColor: '#116466',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  sendPlaneButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFCB9A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#0F221F',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#116466',
+    padding: 20,
+  },
+  modalTitle: {
+    color: '#FFCB9A',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    color: '#94A3B8',
+    fontSize: 12,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  voiceOptionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 6,
+    backgroundColor: '#142C28',
+    borderWidth: 1,
+    borderColor: '#116466',
+  },
+  voiceOptionSelected: {
+    backgroundColor: '#1C312B',
+    borderColor: '#FFCB9A',
+  },
+  voiceOptionText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+  },
+  modalCloseButton: {
+    marginTop: 10,
+    backgroundColor: '#FFCB9A',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    color: '#1B2A26',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
 });
