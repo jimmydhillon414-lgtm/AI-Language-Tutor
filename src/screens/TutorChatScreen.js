@@ -618,9 +618,9 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
         <View style={styles.langSelectorContainer}>
           {[
-            { code: 'en-US', label: 'EN' },
-            { code: 'hi-IN', label: 'HIoo' },
-            { code: 'pa-IN', label: 'PA' }
+            { code: 'en-US', label: '' },
+            { code: 'hi-IN', label: '' },
+            { code: 'pa-IN', label: '' }
           ].map((item) => (
             <TouchableOpacity
               key={item.code}
