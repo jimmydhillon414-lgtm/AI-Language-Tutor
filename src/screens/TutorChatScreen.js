@@ -170,7 +170,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
   };
 
-  const toggleVoiceInput = () => {
+  {/* const toggleVoiceInput = () => {
     if (listening) {
       stopVoiceInput();
       return;
@@ -230,7 +230,88 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       startMobileAudioFallback();
     }
   };
+*/}
+const toggleVoiceInput = () => {
+    if (listening) {
+      stopVoiceInput();
+      return;
+    }
 
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      startMobileAudioFallback();
+      return;
+    }
+
+    try {
+      // Pehle se agar koi instance chal rahi hai toh use rok do
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+        recognitionRef.current = null;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = speechLang;
+
+      recognitionRef.current = recognition;
+      setListening(true);
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const transcriptPiece = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcriptPiece;
+          } else {
+            interimTranscript += transcriptPiece;
+          }
+        }
+
+        const currentText = finalTranscript || interimTranscript;
+        if (currentText.trim()) {
+          setInput(currentText.trim());
+        }
+
+        if (finalTranscript.trim()) {
+          stopVoiceInput();
+          handleSendDirect(finalTranscript.trim());
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setListening(false);
+      };
+
+      recognition.onend = () => {
+        setListening(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.log("Recognition start error:", err);
+      startMobileAudioFallback();
+    }
+  };
+
+  const stopVoiceInput = () => {
+    if (recognitionRef.current) {
+      try { 
+        recognitionRef.current.stop(); 
+      } catch (e) {}
+      recognitionRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      try { mediaRecorderRef.current.stop(); } catch (e) {}
+    }
+    setListening(false);
+  };
+  
   const startMobileAudioFallback = async () => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
