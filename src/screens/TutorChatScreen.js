@@ -245,56 +245,73 @@ const toggleVoiceInput = () => {
     }
 
     try {
-      // Pehle se agar koi instance chal rahi hai toh use rok do
+      // 1. Pehle ki chal rahi recognition ko aggressively stop karo
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (e) {}
+        try { 
+          recognitionRef.current.onresult = null;
+          recognitionRef.current.onerror = null;
+          recognitionRef.current.onend = null;
+          recognitionRef.current.stop(); 
+        } catch (e) {}
         recognitionRef.current = null;
       }
 
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = speechLang;
-
-      recognitionRef.current = recognition;
       setListening(true);
 
-      recognition.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
+      // 2. Thoda sa delay do taaki browser audio hardware ko fully release kar sake
+      setTimeout(() => {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = false;
+          recognition.interimResults = true;
+          recognition.lang = speechLang;
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const transcriptPiece = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcriptPiece;
-          } else {
-            interimTranscript += transcriptPiece;
-          }
+          recognitionRef.current = recognition;
+
+          recognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              const transcriptPiece = event.results[i][0].transcript;
+              if (event.results[i].isFinal) {
+                finalTranscript += transcriptPiece;
+              } else {
+                interimTranscript += transcriptPiece;
+              }
+            }
+
+            const currentText = finalTranscript || interimTranscript;
+            if (currentText.trim()) {
+              setInput(currentText.trim());
+            }
+
+            if (finalTranscript.trim()) {
+              stopVoiceInput();
+              handleSendDirect(finalTranscript.trim());
+            }
+          };
+
+          recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            setListening(false);
+          };
+
+          recognition.onend = () => {
+            setListening(false);
+          };
+
+          recognition.start();
+        } catch (innerErr) {
+          console.log("Inner recognition start error:", innerErr);
+          setListening(false);
+          startMobileAudioFallback();
         }
+      }, 150); // 150ms delay handles hardware busy state
 
-        const currentText = finalTranscript || interimTranscript;
-        if (currentText.trim()) {
-          setInput(currentText.trim());
-        }
-
-        if (finalTranscript.trim()) {
-          stopVoiceInput();
-          handleSendDirect(finalTranscript.trim());
-        }
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        setListening(false);
-      };
-
-      recognition.onend = () => {
-        setListening(false);
-      };
-
-      recognition.start();
     } catch (err) {
       console.log("Recognition start error:", err);
+      setListening(false);
       startMobileAudioFallback();
     }
   };
@@ -302,6 +319,9 @@ const toggleVoiceInput = () => {
   const stopVoiceInput = () => {
     if (recognitionRef.current) {
       try { 
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onend = null;
         recognitionRef.current.stop(); 
       } catch (e) {}
       recognitionRef.current = null;
