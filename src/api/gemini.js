@@ -6,13 +6,12 @@ export const getTutorResponse = async (userMessage, targetLanguage = 'English', 
     2. If the student makes a grammar or vocabulary mistake, politely correct it first in brackets like [Correction: ...].
     3. Always end with a short question to keep the practice going.`;
 
-    // Your Supabase Edge Function URL from the screenshot
+    // Direct Supabase Edge Function AI Proxy Endpoint
     const PROXY_URL = 'https://ytdfynurvqvfmuxuyuxm.supabase.co/functions/v1/ai-proxy';
     
-    // Optional: Supabase anon key for authorization header if required by your edge function setup
     const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
-    console.log("Calling Supabase AI Proxy...");
+    console.log("Calling Supabase AI Proxy from gemini.js...");
 
     const response = await fetch(PROXY_URL, {
       method: 'POST',
@@ -21,7 +20,7 @@ export const getTutorResponse = async (userMessage, targetLanguage = 'English', 
         ...(supabaseAnonKey ? { 'Authorization': `Bearer ${supabaseAnonKey}` } : {})
       },
       body: JSON.stringify({
-        prompt: `${systemPrompt}\n\nStudent: "${userMessage}"`
+        prompt:typeof userMessage === 'string' ? `${systemPrompt}\n\n${userMessage}` : `${systemPrompt}\n\nStudent: "${JSON.stringify(userMessage)}"`
       })
     });
 
@@ -31,7 +30,6 @@ export const getTutorResponse = async (userMessage, targetLanguage = 'English', 
       throw new Error(data.error || data.message || `Proxy failed with status ${response.status}`);
     }
 
-    // Safely parse the response returned by your Cloud Run backend through Supabase proxy
     const aiText = data.response || data.text || data.output || data.result || JSON.stringify(data);
     return aiText || 'No response generated.';
 
