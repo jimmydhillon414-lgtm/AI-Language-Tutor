@@ -11,6 +11,7 @@ import {
   Modal,
 } from 'react-native';
 import { supabase } from '../api/supabase';
+import { getTutorResponse } from '../api/gemini';
 import AppBackground from '../components/AppBackground';
 import ImmersiveBackground from '../components/ImmersiveBackground';
 import RoleplaySelector from '../components/RoleplaySelector';
@@ -358,13 +359,10 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   }
 
   async function getAiResponse(promptText) {
-    const { data, error } = await supabase.functions.invoke('ai-proxy', {
-      body: { prompt: promptText },
-    });
-
-    if (error) throw new Error(error.message || 'Failed to communicate with AI proxy.');
-    if (data && data.error) throw new Error(data.error || 'AI service returned an error.');
-    return data.choices[0].message.content;
+    // Bypassing Supabase functions invoke and directly using our local gemini API service
+    const targetLang = userProfile?.target_language || 'English';
+    const proficiency = userProfile?.proficiency_level || 'Beginner';
+    return await getTutorResponse(promptText, targetLang, proficiency);
   }
 
   const parseAiResponse = (responseText) => {
@@ -388,7 +386,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
 
-    // Optional usage of sentiment analyzer to understand user tone
     const userSentiment = sentimentAnalyzer ? sentimentAnalyzer.analyze(messageValue) : null;
 
     stopVoiceInput();
@@ -648,7 +645,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         </Text>
       </View>
 
-      {/* Roleplay Selector Component Integration */}
       <RoleplaySelector 
         onSelectScenario={(selectedScenario) => {
           setUserProfile(prev => ({ ...prev, current_scenario: selectedScenario }));
@@ -1006,29 +1002,19 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginHorizontal: 4,
   },
-  miniAvatarContainerUser: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#0A1411',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   miniEmoji: {
     fontSize: 11,
   },
   chatProfileHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 4,
   },
   chatSenderName: {
     color: '#FFCB9A',
     fontSize: 11,
     fontWeight: 'bold',
-    flex: 1,
-    marginRight: 6,
   },
   chatMiniAvatar: {
     width: 18,
@@ -1037,16 +1023,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   miniAvatarContainerAi: {
-    width: 18,
-    height: 18,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    padding: 10,
     backgroundColor: 'rgba(11, 25, 23, 0.95)',
     borderTopWidth: 1.5,
     borderTopColor: '#116466',
@@ -1060,13 +1047,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 14,
     maxHeight: 100,
   },
   micButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#1C312B',
     borderWidth: 1,
     borderColor: '#116466',
@@ -1075,9 +1062,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   sendPlaneButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#FFCB9A',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1092,40 +1079,37 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: '100%',
-    maxWidth: 340,
-    backgroundColor: '#0F221F',
+    maxWidth: 400,
+    backgroundColor: '#121E1A',
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#116466',
     padding: 20,
   },
   modalTitle: {
-    color: '#FFCB9A',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
-    textAlign: 'center',
+    marginBottom: 6,
   },
   modalSubtitle: {
-    color: '#94A3B8',
+    color: '#A3B8B0',
     fontSize: 12,
-    marginBottom: 12,
-    textAlign: 'center',
+    marginBottom: 14,
   },
   voiceOptionItem: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 8,
     marginBottom: 6,
-    backgroundColor: '#142C28',
-    borderWidth: 1,
-    borderColor: '#116466',
+    backgroundColor: '#1C312B',
   },
   voiceOptionSelected: {
-    backgroundColor: '#1C312B',
+    backgroundColor: '#116466',
+    borderWidth: 1,
     borderColor: '#FFCB9A',
   },
   voiceOptionText: {
@@ -1134,13 +1118,15 @@ const styles = StyleSheet.create({
   },
   modalCloseButton: {
     marginTop: 10,
-    backgroundColor: '#FFCB9A',
-    borderRadius: 8,
+    backgroundColor: '#116466',
     paddingVertical: 10,
+    borderRadius: 8,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFCB9A',
   },
   modalCloseText: {
-    color: '#1B2A26',
+    color: '#FFCB9A',
     fontSize: 14,
     fontWeight: 'bold',
   },
