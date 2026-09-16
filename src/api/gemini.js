@@ -1,39 +1,29 @@
+import { supabase } from './supabase'; // Apne project ka supabase client import karo
+
 export const getTutorResponse = async (userMessage, targetLanguage = 'English', level = 'Beginner') => {
   try {
-    const systemPrompt = `You are a friendly, encouraging AI Language Tutor teaching ${targetLanguage} to a ${level} level student. 
-    Rules:
-    1. Keep responses concise, clear, and conversational.
-    2. If the student makes a grammar or vocabulary mistake, politely correct it first in brackets like [Correction: ...].
-    3. Always end with a short question to keep the practice going.`;
+    const messageText = typeof userMessage === 'string' 
+      ? userMessage 
+      : (userMessage?.content || JSON.stringify(userMessage));
 
-    // Direct Supabase Edge Function AI Proxy Endpoint
-    const PROXY_URL = 'https://ytdfynurvqvfmuxuyuxm.supabase.co/functions/v1/ai-proxy';
-                      
-    
-    
-    const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+    console.log("Calling Supabase Edge Function via SDK...");
 
-    console.log("Calling Supabase AI Proxy from gemini.js...");
-
-    const response = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(supabaseAnonKey ? { 'Authorization': `Bearer ${supabaseAnonKey}` } : {})
-      },
-      body: JSON.stringify({
-        prompt:typeof userMessage === 'string' ? `${systemPrompt}\n\n${userMessage}` : `${systemPrompt}\n\nStudent: "${JSON.stringify(userMessage)}"`
-      })
+    // Using Supabase functions.invoke instead of raw fetch URL
+    const { data, error } = await supabase.functions.invoke('ai-proxy', {
+      body: { 
+        prompt: messageText 
+      }
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || data.message || `Proxy failed with status ${response.status}`);
+    if (error) {
+      throw new Error(error.message || 'Edge function invocation failed');
     }
 
-    const aiText = data.response || data.text || data.output || data.result || JSON.stringify(data);
-    return aiText || 'No response generated.';
+    if (!data || data.success === false) {
+      throw new Error(data?.error || 'Unknown error from proxy');
+    }
+
+    return data.response || data?.choices?.[0]?.message?.content || 'No response generated.';
 
   } catch (error) {
     console.error('AI Proxy Error:', error);
