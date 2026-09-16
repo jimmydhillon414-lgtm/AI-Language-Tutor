@@ -8,6 +8,8 @@ export const getTutorResponse = async (userMessage, targetLanguage = 'English', 
 
     // Direct Supabase Edge Function AI Proxy Endpoint
     const PROXY_URL = 'https://ytdfynurvqvfmuxuyuxm.supabase.co/functions/v1/ai-proxy';
+                      
+    
     
     const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
