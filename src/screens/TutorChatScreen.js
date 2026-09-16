@@ -637,13 +637,13 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
-      <View style={styles.activeObjectiveBanner}>
+{/* <View style={styles.activeObjectiveBanner}>
         <Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
         <Text style={styles.bannerText} numberOfLines={1}>
           {userProfile?.scenario_objective || 'Immersive Roleplay Simulation in progress...'}
         </Text>
       </View>
-
+*/}
       <RoleplaySelector 
         onSelectScenario={(selectedScenario) => {
           setUserProfile(prev => ({ ...prev, current_scenario: selectedScenario }));
