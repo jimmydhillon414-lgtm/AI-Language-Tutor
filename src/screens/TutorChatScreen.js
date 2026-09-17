@@ -38,6 +38,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
+  // LIVE WAVE FORM ANIMATION STATES
+  const [audioPitchLevel, setAudioPitchLevel] = useState(12);
+  
   const [speechLang, setSpeechLang] = useState('en-US');
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -68,6 +71,21 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       stopAllSpeech();
     };
   }, [currentDayNum]);
+
+  // Audio pitch wave simulation effect when listening is active
+  useEffect(() => {
+    let interval;
+    if (listening) {
+      interval = setInterval(() => {
+        setAudioPitchLevel(Math.floor(Math.random() * 18) + 8);
+      }, 150);
+    } else {
+      if (interval) clearInterval(interval);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [listening]);
 
   useEffect(() => {
     if (userProfile?.target_language) {
@@ -422,7 +440,7 @@ CRITICAL INSTRUCTIONS FOR INTENT & GOAL SWITCHING:
 3. **Scenario Progression**: Provide an updated "roleplayContext", a fresh "scenarioObjective", and appropriate "scenarioStage".
 4. **Grammar & Fluency Analysis**: Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
 5. **Pronunciation & Fluency Score (MANDATORY)**: Score from 50 to 100 as "pronunciationScore" with a short constructive "pronunciationTip".
-6. **Conversational Feedback First in Reply**: In your "reply" field, start by directly addressing the user's sentence. If there is a grammar error, gently point it out, explain why it was wrong and how to fix it, and THEN continue with the conversation or next question. Do not just output the correction in the UI box; talk about it naturally in your reply text as well!
+6. **Conversational Feedback First in Reply**: In your "reply" field, start by directly addressing the user's sentence. If there is a grammar error, gently point it out, explain why it was wrong and how to fix it, and THEN continue with the conversation or next question.
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
@@ -673,12 +691,29 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             returnKeyType="send"
           />
 
-          <TouchableOpacity 
-            style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
-            onPress={toggleVoiceInput}
-          >
-            <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
-          </TouchableOpacity>
+          {/* MIC BUTTON OR LIVE WAVEFORM ANIMATION TOGGLE */}
+          {listening ? (
+            <View style={styles.waveformActiveContainer}>
+              <View style={[styles.waveBar, { height: audioPitchLevel * 0.7 }]} />
+              <View style={[styles.waveBar, { height: audioPitchLevel * 1.4 }]} />
+              <View style={[styles.waveBar, { height: audioPitchLevel * 1.0 }]} />
+              <View style={[styles.waveBar, { height: audioPitchLevel * 0.5 }]} />
+              
+              <TouchableOpacity 
+                onPress={stopVoiceInput}
+                style={styles.stopWaveBtn}
+              >
+                <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: 'bold' }}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={styles.micButton} 
+              onPress={toggleVoiceInput}
+            >
+              <Text style={{ fontSize: 18 }}>🎙️</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
             <Text style={{ fontSize: 16, color: '#1B2A26', fontWeight: 'bold' }}>➤</Text>
@@ -985,26 +1020,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
   },
-  chatMiniAvatar: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: 'rgba(255, 203, 154, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  miniEmoji: {
-    fontSize: 10,
-  },
-  miniAvatarContainerAi: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 203, 154, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 6,
-  },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1023,18 +1038,33 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: '#FFFFFF',
     fontSize: 14,
-    maxHeight: 100,
   },
   micButton: {
-    marginLeft: 8,
-    backgroundColor: '#1C312B',
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
+    padding: 8,
+    marginLeft: 6,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  waveformActiveContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#162B26',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#FFCB9A',
+    borderColor: '#34D399',
+    marginLeft: 6,
+    gap: 4,
+  },
+  waveBar: {
+    width: 3,
+    backgroundColor: '#34D399',
+    borderRadius: 2,
+  },
+  stopWaveBtn: {
+    marginLeft: 6,
+    padding: 2,
   },
   sendPlaneButton: {
     marginLeft: 8,
@@ -1063,7 +1093,7 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   modalSubtitle: {
     color: '#A3B8B0',
@@ -1081,7 +1111,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#172E29',
   },
   voiceOptionSelected: {
-    backgroundColor: '#1F3C36',
+    backgroundColor: '#1F3F38',
     borderWidth: 1,
     borderColor: '#FFCB9A',
   },
@@ -1100,5 +1130,5 @@ const styles = StyleSheet.create({
     color: '#1B2A26',
     fontWeight: 'bold',
     fontSize: 14,
-  }
+  },
 });
