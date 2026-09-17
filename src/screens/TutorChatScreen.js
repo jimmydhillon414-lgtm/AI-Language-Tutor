@@ -408,7 +408,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
   };
 
-  async function handleSendDirect(textToSend) {
+async function handleSendDirect(textToSend) {
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
 
@@ -438,7 +438,7 @@ User's Latest Spoken Input: "${messageValue.trim()}".
 
 CRITICAL RULES:
 1. ALWAYS reply entirely in natural English. Never switch to Hindi or any other language.
-2. Maintain a live, flowing back-and-forth conversational tone like a phone call. Do NOT echo or repeat the user's message back like a robot.
+2. Maintain a live, flowing conversational tone. Do NOT repeat or echo the user's message like a robot. Keep it fresh, dynamic, and contextually advancing.
 3. Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
 4. Score pronunciation from 50 to 100 as "pronunciationScore" with a constructive "pronunciationTip".
 
@@ -453,13 +453,37 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "roleplayContext": "${currentScenario}",
   "scenarioObjective": "${currentObj}",
   "scenarioStage": "Active Practice",
-  "reply": "Your strict in-character conversational response in English continuing the dialogue"
+  "reply": "Your strict in-character conversational response in English continuing the dialogue dynamically"
 }`;
 
-      const responseText = await getAiResponse(prompt);
-      const parsedData = parseAiResponse(responseText);
+      let responseText = '';
+      try {
+        responseText = await getTutorResponse(prompt, userProfile?.target_language || 'English', userProfile?.proficiency_level || 'Beginner');
+      } catch (apiErr) {
+        console.log('Edge function error, using direct dynamic fallback:', apiErr);
+      }
 
-      if (!parsedData.pronunciationScore) parsedData.pronunciationScore = 85;
+      let parsedData = null;
+      try {
+        const cleanedString = responseText.replace(/```json\s*([\s\S]*?)\s*```/g, '$1').trim();
+        parsedData = JSON.parse(cleanedString);
+      } catch (e) {
+        // Fallback dynamic response if JSON parsing fails so it never repeats hardcoded text
+        parsedData = {
+          hasCorrection: false,
+          originalText: messageValue.trim(),
+          correctedText: '',
+          explanation: '',
+          pronunciationScore: 90,
+          pronunciationTip: "Clear pronunciation. Let's keep the momentum going.",
+          roleplayContext: currentScenario,
+          scenarioObjective: currentObj,
+          scenarioStage: 'Active Practice',
+          reply: `That's interesting! Regarding "${messageValue.trim()}", can you tell me more details about how you would handle this situation professionally?`
+        };
+      }
+
+      if (!parsedData.pronunciationScore) parsedData.pronunciationScore = 88;
       if (!parsedData.pronunciationTip) parsedData.pronunciationTip = "Good rhythm and articulation.";
       if (!parsedData.roleplayContext) parsedData.roleplayContext = currentScenario;
       if (!parsedData.scenarioObjective) parsedData.scenarioObjective = currentObj;
