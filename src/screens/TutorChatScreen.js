@@ -408,7 +408,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
       const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
 
-      const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
+const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
 Current Training Roadmap Day: Day ${currentDayNum}.
 Previously Saved User Interest/Topic: "${currentInterest}".
 Active Simulation Scenario: "${currentScenario}".
@@ -422,6 +422,7 @@ CRITICAL INSTRUCTIONS FOR INTENT & GOAL SWITCHING:
 3. **Scenario Progression**: Provide an updated "roleplayContext", a fresh "scenarioObjective", and appropriate "scenarioStage".
 4. **Grammar & Fluency Analysis**: Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
 5. **Pronunciation & Fluency Score (MANDATORY)**: Score from 50 to 100 as "pronunciationScore" with a short constructive "pronunciationTip".
+6. **Conversational Feedback First in Reply**: In your "reply" field, start by directly addressing the user's sentence. If there is a grammar error, gently point it out, explain why it was wrong and how to fix it, and THEN continue with the conversation or next question. Do not just output the correction in the UI box; talk about it naturally in your reply text as well!
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
