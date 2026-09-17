@@ -13,9 +13,7 @@ import {
 import { supabase } from '../api/supabase';
 import { getTutorResponse } from '../api/gemini';
 import AppBackground from '../components/AppBackground';
-import ImmersiveBackground from '../components/ImmersiveBackground';
 import RoleplaySelector from '../components/RoleplaySelector';
-import speechService from '../utils/speechService';
 import sentimentAnalyzer from '../utils/sentimentAnalyzer';
 
 export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
@@ -50,6 +48,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   
   const speechQueueRef = useRef([]);
   const activeUtteranceRef = useRef(null);
+  const shouldKeepListeningRef = useRef(false);
 
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
@@ -65,6 +64,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
 
     return () => {
+      shouldKeepListeningRef.current = false;
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (e) {}
       }
@@ -77,8 +77,8 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     let interval;
     if (listening) {
       interval = setInterval(() => {
-        setAudioPitchLevel(Math.floor(Math.random() * 18) + 8);
-      }, 150);
+        setAudioPitchLevel(Math.floor(Math.random() * 22) + 6);
+      }, 100);
     } else {
       if (interval) clearInterval(interval);
     }
@@ -185,12 +185,19 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
   };
 
+  // TRUE CONTINUOUS VOICE LISTENING TOGGLE
   const toggleVoiceInput = () => {
     if (listening) {
+      shouldKeepListeningRef.current = false;
       stopVoiceInput();
       return;
     }
 
+    shouldKeepListeningRef.current = true;
+    startContinuousRecognition();
+  };
+
+  const startContinuousRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
@@ -200,44 +207,56 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = speechLang;
 
       recognitionRef.current = recognition;
       setListening(true);
 
+      let finalBuffer = '';
+
       recognition.onresult = (event) => {
         let interimTranscript = '';
-        let finalTranscript = '';
+        let currentFinal = '';
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           const transcriptPiece = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += transcriptPiece;
+            currentFinal += transcriptPiece;
           } else {
             interimTranscript += transcriptPiece;
           }
         }
 
-        const currentText = finalTranscript || interimTranscript;
-        if (currentText.trim()) {
-          setInput(currentText.trim());
+        if (currentFinal) {
+          finalBuffer += ' ' + currentFinal;
         }
 
-        if (finalTranscript.trim()) {
-          stopVoiceInput();
-          handleSendDirect(finalTranscript.trim());
+        const displayedText = (finalBuffer + ' ' + interimTranscript).trim();
+        if (displayedText) {
+          setInput(displayedText);
         }
       };
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
-        setListening(false);
       };
 
       recognition.onend = () => {
-        setListening(false);
+        // Automatically restart if user hasn't explicitly clicked stop (True Continuous Session)
+        if (shouldKeepListeningRef.current) {
+          try {
+            recognition.start();
+          } catch (e) {
+            setListening(false);
+          }
+        } else {
+          setListening(false);
+          if (finalBuffer.trim()) {
+            handleSendDirect(finalBuffer.trim());
+          }
+        }
       };
 
       recognition.start();
@@ -272,7 +291,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           mediaRecorderRef.current.stop();
         }
-      }, 6000);
+      }, 8000);
     } catch (err) {
       alert('Please allow microphone permissions in your mobile browser settings.');
       setListening(false);
@@ -280,6 +299,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   };
 
   const stopVoiceInput = () => {
+    shouldKeepListeningRef.current = false;
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
@@ -426,11 +446,17 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
       const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
 
+      // Truncate message history sent to prevent 502 Bad Gateway / payload limit crashes
+      const recentHistoryContext = messages.slice(-4).map(m => `${m.role}: ${m.message}`).join('\n');
+
       const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
 Current Training Roadmap Day: Day ${currentDayNum}.
 Previously Saved User Interest/Topic: "${currentInterest}".
 Active Simulation Scenario: "${currentScenario}".
 Current Scenario Objective: "${currentObj}".
+Recent Conversation Context:
+${recentHistoryContext}
+
 User's Latest Spoken Input: "${messageValue.trim()}".
 User Tone/Sentiment Analysis: "${userSentiment?.sentiment || 'neutral'}".
 
@@ -610,9 +636,9 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           <Text style={styles.aiText}>{parsedData.reply}</Text>
           
           <View style={styles.timeAndAvatarRowAi}>
-            <View style={styles.miniAvatarContainerAi}>
+            <div className="mini-avatar-container-ai">
               <Text style={{ fontSize: 10 }}>🤖</Text>
-            </View>
+            </div>
             <Text style={styles.timestampText}>{item.timestamp}</Text>
           </View>
         </View>
@@ -691,13 +717,14 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             returnKeyType="send"
           />
 
-          {/* MIC BUTTON OR LIVE WAVEFORM ANIMATION TOGGLE */}
+          {/* PROFESSIONAL LIVE WAVEFORM VISUALIZER */}
           {listening ? (
             <View style={styles.waveformActiveContainer}>
-              <View style={[styles.waveBar, { height: audioPitchLevel * 0.7 }]} />
-              <View style={[styles.waveBar, { height: audioPitchLevel * 1.4 }]} />
-              <View style={[styles.waveBar, { height: audioPitchLevel * 1.0 }]} />
               <View style={[styles.waveBar, { height: audioPitchLevel * 0.5 }]} />
+              <View style={[styles.waveBar, { height: audioPitchLevel * 1.2 }]} />
+              <View style={[styles.waveBar, { height: audioPitchLevel * 1.8 }]} />
+              <View style={[styles.waveBar, { height: audioPitchLevel * 0.9 }]} />
+              <View style={[styles.waveBar, { height: audioPitchLevel * 1.4 }]} />
               
               <TouchableOpacity 
                 onPress={stopVoiceInput}
@@ -1049,22 +1076,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#162B26',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#34D399',
     marginLeft: 6,
-    gap: 4,
+    gap: 5,
   },
   waveBar: {
-    width: 3,
+    width: 3.5,
     backgroundColor: '#34D399',
-    borderRadius: 2,
+    borderRadius: 3,
   },
   stopWaveBtn: {
-    marginLeft: 6,
-    padding: 2,
+    marginLeft: 8,
+    padding: 4,
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    borderRadius: 10,
   },
   sendPlaneButton: {
     marginLeft: 8,
