@@ -408,7 +408,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
       const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
 
-const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
+      const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
 Current Training Roadmap Day: Day ${currentDayNum}.
 Previously Saved User Interest/Topic: "${currentInterest}".
 Active Simulation Scenario: "${currentScenario}".
@@ -619,9 +619,9 @@ You MUST reply ONLY with a valid JSON object in this exact format:
 
         <View style={styles.langSelectorContainer}>
           {[
-            { code: 'en-US', label: '' },
-            { code: 'hi-IN', label: '' },
-            { code: 'pa-IN', label: '' }
+            { code: 'en-US', label: 'EN' },
+            { code: 'hi-IN', label: 'HI' },
+            { code: 'pa-IN', label: 'PA' }
           ].map((item) => (
             <TouchableOpacity
               key={item.code}
@@ -638,13 +638,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
-{/* <View style={styles.activeObjectiveBanner}>
-        <Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
-        <Text style={styles.bannerText} numberOfLines={1}>
-          {userProfile?.scenario_objective || 'Immersive Roleplay Simulation in progress...'}
-        </Text>
-      </View>
-*/}
       <RoleplaySelector 
         onSelectScenario={(selectedScenario) => {
           setUserProfile(prev => ({ ...prev, current_scenario: selectedScenario }));
@@ -799,26 +792,6 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontSize: 10,
     fontWeight: 'bold',
-  },
-  activeObjectiveBanner: {
-    backgroundColor: '#142C28',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#116466',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bannerLabel: {
-    color: '#FFCB9A',
-    fontSize: 11,
-    fontWeight: 'bold',
-    marginRight: 6,
-  },
-  bannerText: {
-    color: '#E2E8F0',
-    fontSize: 12,
-    flex: 1,
   },
   container: {
     flex: 1,
@@ -998,12 +971,8 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   timestampText: {
-    color: '#94A3B8',
+    color: '#A3B8B0',
     fontSize: 10,
-    marginHorizontal: 4,
-  },
-  miniEmoji: {
-    fontSize: 11,
   },
   chatProfileHeader: {
     flexDirection: 'row',
@@ -1019,20 +988,34 @@ const styles = StyleSheet.create({
   chatMiniAvatar: {
     width: 18,
     height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255, 203, 154, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  miniEmoji: {
+    fontSize: 10,
+  },
+  miniAvatarContainerAi: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 203, 154, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
     backgroundColor: 'rgba(11, 25, 23, 0.95)',
-    borderTopWidth: 1,
+    borderTopWidth: 1.5,
     borderTopColor: '#116466',
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#121E1A',
+    backgroundColor: '#162B26',
     borderWidth: 1,
     borderColor: '#116466',
     borderRadius: 20,
@@ -1040,15 +1023,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: '#FFFFFF',
     fontSize: 14,
+    maxHeight: 100,
   },
   micButton: {
     marginLeft: 8,
-    backgroundColor: '#116466',
+    backgroundColor: '#1C312B',
     width: 38,
     height: 38,
     borderRadius: 19,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#FFCB9A',
   },
@@ -1058,18 +1042,18 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
     width: '85%',
-    backgroundColor: '#112220',
+    backgroundColor: '#112521',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1.5,
@@ -1079,42 +1063,42 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   modalSubtitle: {
     color: '#A3B8B0',
     fontSize: 12,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   voiceOptionItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#19332D',
-    marginBottom: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginVertical: 4,
+    backgroundColor: '#172E29',
   },
   voiceOptionSelected: {
-    backgroundColor: '#1F4038',
-    borderColor: '#FFCB9A',
+    backgroundColor: '#1F3C36',
     borderWidth: 1,
+    borderColor: '#FFCB9A',
   },
   voiceOptionText: {
-    color: '#E2E8F0',
+    color: '#FFFFFF',
     fontSize: 13,
   },
   modalCloseButton: {
+    marginTop: 12,
     backgroundColor: '#FFCB9A',
-    borderRadius: 10,
+    borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
-    marginTop: 10,
   },
   modalCloseText: {
     color: '#1B2A26',
     fontWeight: 'bold',
     fontSize: 14,
-  },
+  }
 });
