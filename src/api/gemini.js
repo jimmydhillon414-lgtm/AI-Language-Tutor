@@ -1,17 +1,15 @@
 export const getTutorResponse = async (userMessage, targetLanguage = 'English', level = 'Beginner') => {
   try {
-    const messageText = typeof userMessage === 'string' ? userMessage : (userMessage?.content || JSON.stringify(userMessage));
+    const messageText = typeof userMessage === 'string' 
+      ? userMessage 
+      : (userMessage?.content || JSON.stringify(userMessage));
 
-    const API_URL = "https://aiix-dev-pa7udv7pc7uwarzilieus-669284669157.asia-southeast1.run.app/api/speak-to-speak"; 
-    const API_KEY = "sts_live_human_speech_v1_free"; 
+    console.log("Calling Internal Vercel Proxy API...");
 
-    const response = await fetch(API_URL, {
+    const response = await fetch('/api/tutor', {
       method: 'POST',
-      mode: 'cors', // Explicitly setting cors mode
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
-        'Accept': 'application/json'
       },
       body: JSON.stringify({
         prompt: messageText,
@@ -22,9 +20,9 @@ export const getTutorResponse = async (userMessage, targetLanguage = 'English', 
 
     const data = await response.json();
     return data.response || data.reply || JSON.stringify(data);
+
   } catch (error) {
-    console.error('API Error:', error);
-    // Yeh fallback ensure karega ki app crash na ho aur AI teacher ki tarah behave kare
+    console.error('Frontend Fetch Error:', error);
     return JSON.stringify({
       hasCorrection: false,
       originalText: "",
