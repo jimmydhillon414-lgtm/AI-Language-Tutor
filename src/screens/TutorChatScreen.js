@@ -430,30 +430,36 @@ async function handleSendDirect(textToSend) {
       const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
       const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
 
-      const prompt = `You are a live, professional, and friendly English conversation partner and language coach.
+      // --- YAHAN PAR NAYA MERGED PROMPT ADD HOTA HAI ---
+      const prompt = `You are an expert, strict yet supportive English Language Teacher, Coach, and Live Conversation Partner.
 Current Training Roadmap Day: Day ${currentDayNum}.
 Active Simulation Scenario: "${currentScenario}".
 Current Scenario Objective: "${currentObj}".
-User's Latest Spoken Input: "${messageValue.trim()}".
+User's Latest Spoken/Written Input: "${messageValue.trim()}".
 
-CRITICAL RULES:
-1. ALWAYS reply entirely in natural English. Never switch to Hindi or any other language.
-2. Maintain a live, flowing conversational tone. Do NOT repeat or echo the user's message like a robot. Keep it fresh, dynamic, and contextually advancing.
-3. Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
-4. Score pronunciation from 50 to 100 as "pronunciationScore" with a constructive "pronunciationTip".
+CRITICAL INSTRUCTIONS FOR THE TEACHER:
+1. ACT AS A REAL TEACHER, not an interviewer. Your primary job is to teach, guide, correct mistakes, and help the user practice English speaking.
+2. EVALUATE GRAMMAR & PHRASING:
+   - Carefully check the user's input for any grammatical, spelling, or sentence structure errors.
+   - If there is a mistake, set "hasCorrection": true, provide the exact "correctedText", and write a clear, polite "explanation" of what went wrong.
+   - Give the user a quick practice drill or sentence to fix right now.
+3. PROVIDE TOPICS & GUIDANCE:
+   - If the user asks for a topic or practice (e.g., "give me topic"), DO NOT ask them questions back. Instead, immediately give them a clear speaking topic, useful vocabulary words, and sample sentences.
+   - If the input is grammatically correct, praise them briefly, offer an advanced variation, and assign a fresh speaking topic to continue the lesson.
+4. Score pronunciation/fluency from 50 to 100 as "pronunciationScore" with a constructive "pronunciationTip".
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
   "hasCorrection": true/false,
   "originalText": "${messageValue.trim()}",
-  "correctedText": "Corrected sentence if error exists, otherwise empty string",
-  "explanation": "Grammar feedback explanation",
-  "pronunciationScore": 88,
-  "pronunciationTip": "Tip for spoken rhythm",
+  "correctedText": "Provide the correct grammatical version here if there is an error, otherwise empty string",
+  "explanation": "Clear teacher explanation of the mistake or constructive feedback",
+  "pronunciationScore": 90,
+  "pronunciationTip": "Tip for spoken rhythm and delivery",
   "roleplayContext": "${currentScenario}",
   "scenarioObjective": "${currentObj}",
-  "scenarioStage": "Active Practice",
-  "reply": "Your strict in-character conversational response in English continuing the dialogue dynamically"
+  "scenarioStage": "Teacher Guidance & Practice",
+  "reply": "Your professional teacher response in English: Address any grammar errors, explain them clearly, give a practice prompt, and assign a new speaking topic or exercise."
 }`;
 
       let responseText = '';
@@ -468,7 +474,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
         const cleanedString = responseText.replace(/```json\s*([\s\S]*?)\s*```/g, '$1').trim();
         parsedData = JSON.parse(cleanedString);
       } catch (e) {
-        // Fallback dynamic response if JSON parsing fails so it never repeats hardcoded text
         parsedData = {
           hasCorrection: false,
           originalText: messageValue.trim(),
@@ -478,16 +483,16 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           pronunciationTip: "Clear pronunciation. Let's keep the momentum going.",
           roleplayContext: currentScenario,
           scenarioObjective: currentObj,
-          scenarioStage: 'Active Practice',
-          reply: `That's interesting! Regarding "${messageValue.trim()}", can you tell me more details about how you would handle this situation professionally?`
+          scenarioStage: 'Teacher Guidance',
+          reply: `Let's work on that! Try framing your sentence like this, and tell me: what topic would you like to practice next?`
         };
       }
 
-      if (!parsedData.pronunciationScore) parsedData.pronunciationScore = 88;
+      if (!parsedData.pronunciationScore) parsedData.pronunciationScore = 90;
       if (!parsedData.pronunciationTip) parsedData.pronunciationTip = "Good rhythm and articulation.";
       if (!parsedData.roleplayContext) parsedData.roleplayContext = currentScenario;
       if (!parsedData.scenarioObjective) parsedData.scenarioObjective = currentObj;
-      if (!parsedData.scenarioStage) parsedData.scenarioStage = 'Active Practice';
+      if (!parsedData.scenarioStage) parsedData.scenarioStage = 'Teacher Guidance';
 
       if (parsedData.hasCorrection && parsedData.correctedText) {
         await logGrammarCorrection(
