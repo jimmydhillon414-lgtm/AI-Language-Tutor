@@ -2,8 +2,7 @@ export const getTutorResponse = async (userMessage, targetLanguage = 'English', 
   try {
     const messageText = typeof userMessage === 'string' ? userMessage : (userMessage?.content || JSON.stringify(userMessage));
 
-    // Dashboard wala poora sahi URL yahan paste kar
-    const API_URL = "sts_live_human_speech_v1_free"; 
+    const API_URL = "https://aiix-dev-pa7udv7pc7uwarzilieus-669284669157.asia-southeast1.run.app/api/speak-to-speak"; 
     const API_KEY = "sts_live_human_speech_v1_free"; // Apni sts_live wali key
 
     const response = await fetch(API_URL, {
@@ -23,7 +22,6 @@ export const getTutorResponse = async (userMessage, targetLanguage = 'English', 
     return data.response || data.reply || JSON.stringify(data);
   } catch (error) {
     console.error('API Error:', error);
-    // Fallback taaki app crash na ho
     return JSON.stringify({
       hasCorrection: false,
       originalText: "",
