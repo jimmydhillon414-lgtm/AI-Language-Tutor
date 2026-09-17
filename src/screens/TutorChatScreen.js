@@ -9,13 +9,14 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Modal,
+  Animated,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
 import { supabase } from '../api/supabase';
 import { getTutorResponse } from '../api/gemini';
 import AppBackground from '../components/AppBackground';
-import ImmersiveBackground from '../components/ImmersiveBackground';
 import RoleplaySelector from '../components/RoleplaySelector';
-import speechService from '../utils/speechService';
 import sentimentAnalyzer from '../utils/sentimentAnalyzer';
 
 export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
@@ -37,6 +38,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  const [isSessionActive, setIsSessionActive] = useState(false);
   
   const [speechLang, setSpeechLang] = useState('en-US');
   const [speakingId, setSpeakingId] = useState(null);
@@ -50,8 +52,13 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
   const userIdRef = useRef(null);
+
+  // Wave Animation values for live speech visualization
+  const waveAnim1 = useRef(new Animated.Value(10)).current;
+  const waveAnim2 = useRef(new Animated.Value(20)).current;
+  const waveAnim3 = useRef(new Animated.Value(15)).current;
+  const waveAnim4 = useRef(new Animated.Value(25)).current;
 
   useEffect(() => {
     fetchUserAndProfile();
@@ -62,18 +69,47 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
 
     return () => {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (e) {}
-      }
-      stopAllSpeech();
+      stopLiveSession();
     };
   }, [currentDayNum]);
 
   useEffect(() => {
-    if (userProfile?.target_language) {
-      setSpeechLang(getLanguageCode(userProfile.target_language));
+    if (listening) {
+      startWaveAnimation();
+    } else {
+      stopWaveAnimation();
     }
-  }, [userProfile?.target_language]);
+  }, [listening]);
+
+  const startWaveAnimation = () => {
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(waveAnim1, { toValue: 35, duration: 300, useNativeDriver: false }),
+          Animated.timing(waveAnim1, { toValue: 10, duration: 300, useNativeDriver: false }),
+        ]),
+        Animated.sequence([
+          Animated.timing(waveAnim2, { toValue: 40, duration: 250, useNativeDriver: false }),
+          Animated.timing(waveAnim2, { toValue: 15, duration: 250, useNativeDriver: false }),
+        ]),
+        Animated.sequence([
+          Animated.timing(waveAnim3, { toValue: 45, duration: 350, useNativeDriver: false }),
+          Animated.timing(waveAnim3, { toValue: 12, duration: 350, useNativeDriver: false }),
+        ]),
+        Animated.sequence([
+          Animated.timing(waveAnim4, { toValue: 30, duration: 280, useNativeDriver: false }),
+          Animated.timing(waveAnim4, { toValue: 8, duration: 280, useNativeDriver: false }),
+        ]),
+      ])
+    ).start();
+  };
+
+  const stopWaveAnimation = () => {
+    waveAnim1.setValue(10);
+    waveAnim2.setValue(15);
+    waveAnim3.setValue(12);
+    waveAnim4.setValue(8);
+  };
 
   const loadDeviceVoices = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.speechSynthesis) {
@@ -131,11 +167,12 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         roleplayContext: scenario,
         scenarioObjective: objective,
         scenarioStage: 'Introduction',
-        reply: `Welcome to Day ${dayNum} simulation! I am your adaptive AI language coach. Tell me your name, what you want to achieve, or any topic you wish to practice. Let's begin!`,
+        reply: `Welcome to Day ${dayNum} simulation! I am your adaptive AI language coach. Let's start practicing right away—tell me about your day or what topic you would like to explore today!`,
         isVoiceNote: false,
       }),
     };
     setMessages([welcomeMsg]);
+    queueOrPlayAudio(JSON.parse(welcomeMsg.message).reply, welcomeMsg.id);
   };
 
   const getLanguageCode = (lang) => {
@@ -167,22 +204,41 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
   };
 
-  const toggleVoiceInput = () => {
-    if (listening) {
-      stopVoiceInput();
-      return;
+  // Continuous Live Call Toggle & Auto-Loop Recognition
+  const toggleLiveSession = () => {
+    if (isSessionActive) {
+      stopLiveSession();
+    } else {
+      startLiveSession();
     }
+  };
 
+  const startLiveSession = () => {
+    setIsSessionActive(true);
+    startContinuousListening();
+  };
+
+  const stopLiveSession = () => {
+    setIsSessionActive(false);
+    setListening(false);
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (e) {}
+    }
+    stopAllSpeech();
+  };
+
+  const startContinuousListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
-      startMobileAudioFallback();
+      alert('Speech recognition is not supported in this browser. Please use Chrome or Safari.');
+      setIsSessionActive(false);
       return;
     }
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = speechLang;
 
@@ -208,67 +264,38 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         }
 
         if (finalTranscript.trim()) {
-          stopVoiceInput();
-          handleSendDirect(finalTranscript.trim());
+          const spokenText = finalTranscript.trim();
+          handleSendDirect(spokenText);
         }
       };
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
-        setListening(false);
+        if (isSessionActive && event.error !== 'aborted') {
+          setTimeout(() => {
+            try { recognition.start(); } catch (e) {}
+          }, 1000);
+        }
       };
 
       recognition.onend = () => {
-        setListening(false);
+        if (isSessionActive) {
+          try {
+            recognition.start();
+          } catch (e) {
+            setListening(false);
+          }
+        } else {
+          setListening(false);
+        }
       };
 
       recognition.start();
     } catch (err) {
-      startMobileAudioFallback();
-    }
-  };
-
-  const startMobileAudioFallback = async () => {
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('Microphone access is not supported on this mobile browser.');
-        setListening(false);
-        return;
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-
-      setListening(true);
-
-      mediaRecorder.onstop = async () => {
-        setListening(false);
-        stream.getTracks().forEach(track => track.stop());
-        setInput("Voice note recorded successfully. Tap send or type.");
-      };
-
-      mediaRecorder.start();
-
-      setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          mediaRecorderRef.current.stop();
-        }
-      }, 6000);
-    } catch (err) {
-      alert('Please allow microphone permissions in your mobile browser settings.');
+      console.log('Recognition start error:', err);
       setListening(false);
+      setIsSessionActive(false);
     }
-  };
-
-  const stopVoiceInput = () => {
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (e) {}
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      try { mediaRecorderRef.current.stop(); } catch (e) {}
-    }
-    setListening(false);
   };
 
   const handlePlayPauseAudio = (text, messageId) => {
@@ -351,7 +378,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         user_id: userIdRef.current,
         original_text: original,
         corrected_text: corrected,
-        explanation: explanation || 'Grammar correction during roleplay session.'
+        explanation: explanation || 'Grammar correction during live session.'
       });
     } catch (err) {
       console.log('Error saving grammar history:', err);
@@ -376,7 +403,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         roleplayContext: "Interactive Simulation",
         scenarioObjective: "Continue practicing key vocabulary.",
         scenarioStage: "Active Practice",
-        reply: responseText || 'Let us continue the roleplay simulation!',
+        reply: responseText || 'Let us continue our conversation in English!',
       };
     }
   };
@@ -385,9 +412,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
 
-    const userSentiment = sentimentAnalyzer ? sentimentAnalyzer.analyze(messageValue) : null;
-
-    stopVoiceInput();
     setInput('');
     stopAllSpeech();
 
@@ -403,26 +427,20 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     setLoading(true);
 
     try {
-      const targetLang = userProfile?.target_language || 'English';
-      const currentInterest = userProfile?.field_of_interest || 'General Communication';
       const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
       const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
 
-const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
+      const prompt = `You are a live, professional, and friendly English conversation partner and language coach.
 Current Training Roadmap Day: Day ${currentDayNum}.
-Previously Saved User Interest/Topic: "${currentInterest}".
 Active Simulation Scenario: "${currentScenario}".
 Current Scenario Objective: "${currentObj}".
 User's Latest Spoken Input: "${messageValue.trim()}".
-User Tone/Sentiment Analysis: "${userSentiment?.sentiment || 'neutral'}".
 
-CRITICAL INSTRUCTIONS FOR INTENT & GOAL SWITCHING:
-1. **Dynamic Intent Detection**: Analyze the user's latest input ("${messageValue.trim()}"). If the user specifies a brand new goal, introduction, or interest, you MUST dynamically switch the context.
-2. **In-Character Immersion**: Adopt a professional coaching persona matching the user's *newly stated* goal or interest.
-3. **Scenario Progression**: Provide an updated "roleplayContext", a fresh "scenarioObjective", and appropriate "scenarioStage".
-4. **Grammar & Fluency Analysis**: Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
-5. **Pronunciation & Fluency Score (MANDATORY)**: Score from 50 to 100 as "pronunciationScore" with a short constructive "pronunciationTip".
-6. **Conversational Feedback First in Reply**: In your "reply" field, start by directly addressing the user's sentence. If there is a grammar error, gently point it out, explain why it was wrong and how to fix it, and THEN continue with the conversation or next question. Do not just output the correction in the UI box; talk about it naturally in your reply text as well!
+CRITICAL RULES:
+1. ALWAYS reply entirely in natural English. Never switch to Hindi or any other language.
+2. Maintain a live, flowing back-and-forth conversational tone like a phone call. Do NOT echo or repeat the user's message back like a robot.
+3. Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
+4. Score pronunciation from 50 to 100 as "pronunciationScore" with a constructive "pronunciationTip".
 
 You MUST reply ONLY with a valid JSON object in this exact format:
 {
@@ -432,12 +450,10 @@ You MUST reply ONLY with a valid JSON object in this exact format:
   "explanation": "Grammar feedback explanation",
   "pronunciationScore": 88,
   "pronunciationTip": "Tip for spoken rhythm",
-  "roleplayContext": "Updated roleplay context matching user's new goal/interest",
-  "scenarioObjective": "Next clear mission objective based on user's input",
-  "scenarioStage": "Current phase (e.g. Core Drill)",
-  "new_field_of_interest": "Extracted new field of interest or goal from user message",
-  "learning_goal": "Updated learning goal if changed",
-  "reply": "Your strict in-character conversational response acknowledging their goal and continuing the session"
+  "roleplayContext": "${currentScenario}",
+  "scenarioObjective": "${currentObj}",
+  "scenarioStage": "Active Practice",
+  "reply": "Your strict in-character conversational response in English continuing the dialogue"
 }`;
 
       const responseText = await getAiResponse(prompt);
@@ -455,25 +471,6 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           parsedData.correctedText,
           parsedData.explanation
         );
-      }
-
-      const updatedFields = {
-        field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || currentInterest,
-        learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'Simulation practice',
-        current_scenario: parsedData.roleplayContext,
-        scenario_objective: parsedData.scenarioObjective,
-        updated_at: new Date().toISOString()
-      };
-
-      if (userIdRef.current) {
-        const { error: updateErr } = await supabase
-          .from('user_profiles')
-          .update(updatedFields)
-          .eq('id', userIdRef.current);
-
-        if (!updateErr) {
-          setUserProfile(prev => ({ ...prev, ...updatedFields }));
-        }
       }
 
       const aiMsgObj = { 
@@ -607,7 +604,7 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       <View style={styles.headerBar}>
         <View style={styles.headerLeftGroup}>
           {onBack && (
-            <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => { stopLiveSession(); onBack(); }} style={styles.backButton} activeOpacity={0.8}>
               <Text style={styles.backButtonText}>← Back</Text>
             </TouchableOpacity>
           )}
@@ -617,34 +614,35 @@ You MUST reply ONLY with a valid JSON object in this exact format:
           </TouchableOpacity>
         </View>
 
-        <View style={styles.langSelectorContainer}>
-          {[
-            { code: 'en-US', label: '' },
-            { code: 'hi-IN', label: '' },
-            { code: 'pa-IN', label: '' }
-          ].map((item) => (
-            <TouchableOpacity
-              key={item.code}
-              style={[styles.langToggleBtn, speechLang === item.code && styles.activeLangToggle]}
-              onPress={() => setSpeechLang(item.code)}
-            >
-              <Text style={[styles.langToggleText, speechLang === item.code && { color: '#1B2A26' }]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* Live Call Session Start / End Button */}
+        <TouchableOpacity 
+          style={[styles.voiceConfigBtn, { backgroundColor: isSessionActive ? '#FF4444' : '#116466' }]} 
+          onPress={toggleLiveSession}
+        >
+          <Text style={[styles.voiceConfigBtnText, { color: '#FFFFFF' }]}>
+            {isSessionActive ? '🛑 End Live Session' : '🟢 Start Live Call'}
+          </Text>
+        </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
-{/* <View style={styles.activeObjectiveBanner}>
-        <Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
-        <Text style={styles.bannerText} numberOfLines={1}>
-          {userProfile?.scenario_objective || 'Immersive Roleplay Simulation in progress...'}
-        </Text>
-      </View>
-*/}
+      {/* Live Wave Visualizer Banner when session is active */}
+      {isSessionActive && (
+        <View style={{ backgroundColor: '#142C28', paddingVertical: 10, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: '#116466' }}>
+          <Text style={{ color: '#FFCB9A', fontSize: 11, fontWeight: 'bold', marginBottom: 6 }}>
+            {listening ? '🎙️ Listening... Speak naturally (Continuous Mode)' : '🤖 AI is responding...'}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 45 }}>
+            <Animated.View style={{ width: 4, height: waveAnim1, backgroundColor: '#6EE7B7', borderRadius: 2 }} />
+            <Animated.View style={{ width: 4, height: waveAnim2, backgroundColor: '#FFCB9A', borderRadius: 2 }} />
+            <Animated.View style={{ width: 4, height: waveAnim3, backgroundColor: '#6EE7B7', borderRadius: 2 }} />
+            <Animated.View style={{ width: 4, height: waveAnim4, backgroundColor: '#FFCB9A', borderRadius: 2 }} />
+            <Animated.View style={{ width: 4, height: waveAnim2, backgroundColor: '#6EE7B7', borderRadius: 2 }} />
+          </View>
+        </View>
+      )}
+
       <RoleplaySelector 
         onSelectScenario={(selectedScenario) => {
           setUserProfile(prev => ({ ...prev, current_scenario: selectedScenario }));
@@ -674,17 +672,17 @@ You MUST reply ONLY with a valid JSON object in this exact format:
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder={`Reply in simulation (Day ${currentDayNum})...`}
+            placeholder={`Type or use Live Call mode (Day ${currentDayNum})...`}
             placeholderTextColor="#A3B8B0"
             onSubmitEditing={() => handleSendDirect(input)}
             returnKeyType="send"
           />
 
           <TouchableOpacity 
-            style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
-            onPress={toggleVoiceInput}
+            style={[styles.micButton, isSessionActive && { backgroundColor: '#FF4444' }]} 
+            onPress={toggleLiveSession}
           >
-            <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
+            <Text style={{ fontSize: 18 }}>{isSessionActive ? '⏹' : '🎙️'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
