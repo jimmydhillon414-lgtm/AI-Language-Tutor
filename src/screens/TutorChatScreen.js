@@ -13,7 +13,9 @@ import {
 import { supabase } from '../api/supabase';
 import { getTutorResponse } from '../api/gemini';
 import AppBackground from '../components/AppBackground';
+import ImmersiveBackground from '../components/ImmersiveBackground';
 import RoleplaySelector from '../components/RoleplaySelector';
+import speechService from '../utils/speechService';
 import sentimentAnalyzer from '../utils/sentimentAnalyzer';
 
 export default function TutorChatScreen({ navigation, selectedDay = 1, onBack }) {
@@ -36,7 +38,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   
-  const [audioPitchLevel, setAudioPitchLevel] = useState(12);
   const [speechLang, setSpeechLang] = useState('en-US');
   const [speakingId, setSpeakingId] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -46,8 +47,10 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   
   const speechQueueRef = useRef([]);
   const activeUtteranceRef = useRef(null);
+
   const flatListRef = useRef();
   const recognitionRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
   const userIdRef = useRef(null);
 
   useEffect(() => {
@@ -59,24 +62,12 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
 
     return () => {
-      stopVoiceInput();
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+      }
       stopAllSpeech();
     };
   }, [currentDayNum]);
-
-  useEffect(() => {
-    let interval;
-    if (listening) {
-      interval = setInterval(() => {
-        setAudioPitchLevel(Math.floor(Math.random() * 16) + 8);
-      }, 120);
-    } else {
-      if (interval) clearInterval(interval);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [listening]);
 
   useEffect(() => {
     if (userProfile?.target_language) {
@@ -176,7 +167,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
   };
 
-  // STABLE SPEECH RECOGNITION IMPLEMENTATION
   const toggleVoiceInput = () => {
     if (listening) {
       stopVoiceInput();
@@ -184,14 +174,15 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
     if (!SpeechRecognition) {
-      alert('Speech Recognition is not supported in this browser. Please use Chrome.');
+      startMobileAudioFallback();
       return;
     }
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false; // Prevents abrupt webkit aborted errors
+      recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = speechLang;
 
@@ -199,17 +190,32 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       setListening(true);
 
       recognition.onresult = (event) => {
-        let transcript = '';
+        let interimTranscript = '';
+        let finalTranscript = '';
+
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          transcript += event.results[i][0].transcript;
+          const transcriptPiece = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcriptPiece;
+          } else {
+            interimTranscript += transcriptPiece;
+          }
         }
-        if (transcript.trim()) {
-          setInput(transcript.trim());
+
+        const currentText = finalTranscript || interimTranscript;
+        if (currentText.trim()) {
+          setInput(currentText.trim());
+        }
+
+        if (finalTranscript.trim()) {
+          stopVoiceInput();
+          handleSendDirect(finalTranscript.trim());
         }
       };
 
       recognition.onerror = (event) => {
-        console.log('Speech recognition warning/error:', event.error);
+        console.error('Speech recognition error:', event.error);
+        setListening(false);
       };
 
       recognition.onend = () => {
@@ -218,7 +224,39 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
       recognition.start();
     } catch (err) {
-      console.log('Mic initialization error:', err);
+      startMobileAudioFallback();
+    }
+  };
+
+  const startMobileAudioFallback = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Microphone access is not supported on this mobile browser.');
+        setListening(false);
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      setListening(true);
+
+      mediaRecorder.onstop = async () => {
+        setListening(false);
+        stream.getTracks().forEach(track => track.stop());
+        setInput("Voice note recorded successfully. Tap send or type.");
+      };
+
+      mediaRecorder.start();
+
+      setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+      }, 6000);
+    } catch (err) {
+      alert('Please allow microphone permissions in your mobile browser settings.');
       setListening(false);
     }
   };
@@ -226,7 +264,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const stopVoiceInput = () => {
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
-      recognitionRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      try { mediaRecorderRef.current.stop(); } catch (e) {}
     }
     setListening(false);
   };
@@ -318,6 +358,12 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
   }
 
+  async function getAiResponse(promptText) {
+    const targetLang = userProfile?.target_language || 'English';
+    const proficiency = userProfile?.proficiency_level || 'Beginner';
+    return await getTutorResponse(promptText, targetLang, proficiency);
+  }
+
   const parseAiResponse = (responseText) => {
     try {
       const cleanedString = responseText.replace(/```json\s*([\s\S]*?)\s*```/g, '$1').trim();
@@ -362,26 +408,46 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       const currentScenario = userProfile?.current_scenario || 'Professional Simulation';
       const currentObj = userProfile?.scenario_objective || 'Engage in dialogue';
 
-      // Optimized compact prompt to eliminate latency and 502 Gateway errors
-      const prompt = `Roleplay Engine (${targetLang}). Day ${currentDayNum}. Scenario: "${currentScenario}". Objective: "${currentObj}". User Input: "${messageValue.trim()}". Sentiment: "${userSentiment?.sentiment || 'neutral'}".
-Return ONLY valid JSON:
+const prompt = `You are an expert, highly adaptive **Dynamic Roleplay Scenario Engine and Language Coach** for ${targetLang}.
+Current Training Roadmap Day: Day ${currentDayNum}.
+Previously Saved User Interest/Topic: "${currentInterest}".
+Active Simulation Scenario: "${currentScenario}".
+Current Scenario Objective: "${currentObj}".
+User's Latest Spoken Input: "${messageValue.trim()}".
+User Tone/Sentiment Analysis: "${userSentiment?.sentiment || 'neutral'}".
+
+CRITICAL INSTRUCTIONS FOR INTENT & GOAL SWITCHING:
+1. **Dynamic Intent Detection**: Analyze the user's latest input ("${messageValue.trim()}"). If the user specifies a brand new goal, introduction, or interest, you MUST dynamically switch the context.
+2. **In-Character Immersion**: Adopt a professional coaching persona matching the user's *newly stated* goal or interest.
+3. **Scenario Progression**: Provide an updated "roleplayContext", a fresh "scenarioObjective", and appropriate "scenarioStage".
+4. **Grammar & Fluency Analysis**: Check grammar. If there is an error, set "hasCorrection": true, provide "originalText", "correctedText", and a professional "explanation".
+5. **Pronunciation & Fluency Score (MANDATORY)**: Score from 50 to 100 as "pronunciationScore" with a short constructive "pronunciationTip".
+6. **Conversational Feedback First in Reply**: In your "reply" field, start by directly addressing the user's sentence. If there is a grammar error, gently point it out, explain why it was wrong and how to fix it, and THEN continue with the conversation or next question. Do not just output the correction in the UI box; talk about it naturally in your reply text as well!
+
+You MUST reply ONLY with a valid JSON object in this exact format:
 {
   "hasCorrection": true/false,
   "originalText": "${messageValue.trim()}",
-  "correctedText": "Corrected sentence or empty string",
-  "explanation": "Brief explanation",
+  "correctedText": "Corrected sentence if error exists, otherwise empty string",
+  "explanation": "Grammar feedback explanation",
   "pronunciationScore": 88,
-  "pronunciationTip": "Short tip",
-  "roleplayContext": "${currentScenario}",
-  "scenarioObjective": "${currentObj}",
-  "scenarioStage": "Active Practice",
-  "new_field_of_interest": "${currentInterest}",
-  "learning_goal": "Simulation practice",
-  "reply": "In-character conversational reply"
+  "pronunciationTip": "Tip for spoken rhythm",
+  "roleplayContext": "Updated roleplay context matching user's new goal/interest",
+  "scenarioObjective": "Next clear mission objective based on user's input",
+  "scenarioStage": "Current phase (e.g. Core Drill)",
+  "new_field_of_interest": "Extracted new field of interest or goal from user message",
+  "learning_goal": "Updated learning goal if changed",
+  "reply": "Your strict in-character conversational response acknowledging their goal and continuing the session"
 }`;
 
-      const responseText = await getTutorResponse(prompt, targetLang, userProfile?.proficiency_level || 'Beginner');
+      const responseText = await getAiResponse(prompt);
       const parsedData = parseAiResponse(responseText);
+
+      if (!parsedData.pronunciationScore) parsedData.pronunciationScore = 85;
+      if (!parsedData.pronunciationTip) parsedData.pronunciationTip = "Good rhythm and articulation.";
+      if (!parsedData.roleplayContext) parsedData.roleplayContext = currentScenario;
+      if (!parsedData.scenarioObjective) parsedData.scenarioObjective = currentObj;
+      if (!parsedData.scenarioStage) parsedData.scenarioStage = 'Active Practice';
 
       if (parsedData.hasCorrection && parsedData.correctedText) {
         await logGrammarCorrection(
@@ -389,6 +455,25 @@ Return ONLY valid JSON:
           parsedData.correctedText,
           parsedData.explanation
         );
+      }
+
+      const updatedFields = {
+        field_of_interest: parsedData.new_field_of_interest || userProfile.field_of_interest || currentInterest,
+        learning_goal: parsedData.learning_goal || userProfile.learning_goal || 'Simulation practice',
+        current_scenario: parsedData.roleplayContext,
+        scenario_objective: parsedData.scenarioObjective,
+        updated_at: new Date().toISOString()
+      };
+
+      if (userIdRef.current) {
+        const { error: updateErr } = await supabase
+          .from('user_profiles')
+          .update(updatedFields)
+          .eq('id', userIdRef.current);
+
+        if (!updateErr) {
+          setUserProfile(prev => ({ ...prev, ...updatedFields }));
+        }
       }
 
       const aiMsgObj = { 
@@ -404,21 +489,6 @@ Return ONLY valid JSON:
       }
     } catch (err) {
       console.log('AI Simulation Error:', err);
-      const errorMsgObj = {
-        id: `${Date.now()}`,
-        role: 'model',
-        timestamp: getCurrentTimeString(),
-        message: JSON.stringify({
-          hasCorrection: false,
-          pronunciationScore: 85,
-          pronunciationTip: "Let's try that again.",
-          roleplayContext: userProfile.current_scenario || 'Simulation',
-          scenarioObjective: userProfile.scenario_objective || 'Continue conversation',
-          scenarioStage: 'Active Practice',
-          reply: "I received your message, but the connection timed out briefly. Let's continue—what would you like to say next?"
-        })
-      };
-      setMessages((prev) => [...prev, errorMsgObj]);
     } finally {
       setLoading(false);
     }
@@ -549,9 +619,9 @@ Return ONLY valid JSON:
 
         <View style={styles.langSelectorContainer}>
           {[
-            { code: 'en-US', label: 'EN' },
-            { code: 'hi-IN', label: 'HI' },
-            { code: 'pa-IN', label: 'PA' }
+            { code: 'en-US', label: '' },
+            { code: 'hi-IN', label: '' },
+            { code: 'pa-IN', label: '' }
           ].map((item) => (
             <TouchableOpacity
               key={item.code}
@@ -568,6 +638,13 @@ Return ONLY valid JSON:
         <Text style={styles.headerTitle}>Day {currentDayNum}</Text>
       </View>
 
+{/* <View style={styles.activeObjectiveBanner}>
+        <Text style={styles.bannerLabel}>🎯 Active Mission:</Text>
+        <Text style={styles.bannerText} numberOfLines={1}>
+          {userProfile?.scenario_objective || 'Immersive Roleplay Simulation in progress...'}
+        </Text>
+      </View>
+*/}
       <RoleplaySelector 
         onSelectScenario={(selectedScenario) => {
           setUserProfile(prev => ({ ...prev, current_scenario: selectedScenario }));
@@ -597,28 +674,18 @@ Return ONLY valid JSON:
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder={listening ? "Listening to your voice..." : `Reply in simulation (Day ${currentDayNum})...`}
+            placeholder={`Reply in simulation (Day ${currentDayNum})...`}
             placeholderTextColor="#A3B8B0"
             onSubmitEditing={() => handleSendDirect(input)}
             returnKeyType="send"
           />
 
-          {listening ? (
-            <View style={styles.waveformActiveContainer}>
-              <View style={[styles.waveBar, { height: audioPitchLevel * 0.6 }]} />
-              <View style={[styles.waveBar, { height: audioPitchLevel * 1.3 }]} />
-              <View style={[styles.waveBar, { height: audioPitchLevel * 1.7 }]} />
-              <View style={[styles.waveBar, { height: audioPitchLevel * 0.9 }]} />
-              
-              <TouchableOpacity onPress={stopVoiceInput} style={styles.stopWaveBtn}>
-                <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: 'bold' }}>✕</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.micButton} onPress={toggleVoiceInput}>
-              <Text style={{ fontSize: 18 }}>🎙️</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity 
+            style={[styles.micButton, listening && { backgroundColor: '#FF4444' }]} 
+            onPress={toggleVoiceInput}
+          >
+            <Text style={{ fontSize: 18 }}>{listening ? '⏹' : '🎙️'}</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity style={styles.sendPlaneButton} onPress={() => handleSendDirect(input)}>
             <Text style={{ fontSize: 16, color: '#1B2A26', fontWeight: 'bold' }}>➤</Text>
@@ -732,6 +799,26 @@ const styles = StyleSheet.create({
     color: '#FFCB9A',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  activeObjectiveBanner: {
+    backgroundColor: '#142C28',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#116466',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bannerLabel: {
+    color: '#FFCB9A',
+    fontSize: 11,
+    fontWeight: 'bold',
+    marginRight: 6,
+  },
+  bannerText: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    flex: 1,
   },
   container: {
     flex: 1,
@@ -911,8 +998,12 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   timestampText: {
-    color: '#A3B8B0',
+    color: '#94A3B8',
     fontSize: 10,
+    marginHorizontal: 4,
+  },
+  miniEmoji: {
+    fontSize: 11,
   },
   chatProfileHeader: {
     flexDirection: 'row',
@@ -925,17 +1016,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
   },
+  chatMiniAvatar: {
+    width: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
     backgroundColor: 'rgba(11, 25, 23, 0.95)',
-    borderTopWidth: 1.5,
+    borderTopWidth: 1,
     borderTopColor: '#116466',
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#162B26',
+    backgroundColor: '#121E1A',
     borderWidth: 1,
     borderColor: '#116466',
     borderRadius: 20,
@@ -945,31 +1042,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   micButton: {
-    padding: 8,
-    marginLeft: 6,
+    marginLeft: 8,
+    backgroundColor: '#116466',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  waveformActiveContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#162B26',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#34D399',
-    marginLeft: 6,
-    gap: 4,
-  },
-  waveBar: {
-    width: 3.5,
-    backgroundColor: '#34D399',
-    borderRadius: 3,
-  },
-  stopWaveBtn: {
-    marginLeft: 6,
-    padding: 4,
+    borderColor: '#FFCB9A',
   },
   sendPlaneButton: {
     marginLeft: 8,
@@ -977,18 +1058,18 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
     width: '85%',
-    backgroundColor: '#112521',
+    backgroundColor: '#112220',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1.5,
@@ -1003,33 +1084,33 @@ const styles = StyleSheet.create({
   modalSubtitle: {
     color: '#A3B8B0',
     fontSize: 12,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   voiceOptionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 8,
-    marginVertical: 4,
-    backgroundColor: '#172E29',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#19332D',
+    marginBottom: 6,
   },
   voiceOptionSelected: {
-    backgroundColor: '#1F3F38',
-    borderWidth: 1,
+    backgroundColor: '#1F4038',
     borderColor: '#FFCB9A',
+    borderWidth: 1,
   },
   voiceOptionText: {
-    color: '#FFFFFF',
+    color: '#E2E8F0',
     fontSize: 13,
   },
   modalCloseButton: {
-    marginTop: 12,
     backgroundColor: '#FFCB9A',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
+    marginTop: 10,
   },
   modalCloseText: {
     color: '#1B2A26',
