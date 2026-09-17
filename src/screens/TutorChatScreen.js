@@ -465,7 +465,9 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       let responseText = '';
       try {
         responseText = await getTutorResponse(prompt, userProfile?.target_language || 'English', userProfile?.proficiency_level || 'Beginner');
+        console.log("AI Raw Response received:", responseText);
       } catch (apiErr) {
+        console.log('API Error details:', apiErr);
         console.log('Edge function error, using direct dynamic fallback:', apiErr);
       }
 
