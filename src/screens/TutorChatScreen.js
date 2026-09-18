@@ -54,6 +54,12 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   const recognitionRef = useRef(null);
   const userIdRef = useRef(null);
 
+  // NEW: refs that always hold the *current* session state, so speech
+  // recognition callbacks (onresult/onend/onerror) never read stale
+  // closures over React state.
+  const isSessionActiveRef = useRef(false);
+  const isMicPausedRef = useRef(false); // true while AI is thinking or speaking
+
   // Wave Animation values for live speech visualization
   const waveAnim1 = useRef(new Animated.Value(10)).current;
   const waveAnim2 = useRef(new Animated.Value(20)).current;
@@ -215,16 +221,40 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
   const startLiveSession = () => {
     setIsSessionActive(true);
+    isSessionActiveRef.current = true; // keep ref in sync immediately (no async delay)
+    isMicPausedRef.current = false;
     startContinuousListening();
   };
 
   const stopLiveSession = () => {
     setIsSessionActive(false);
+    isSessionActiveRef.current = false; // keep ref in sync immediately
+    isMicPausedRef.current = false;
     setListening(false);
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
     stopAllSpeech();
+  };
+
+  // NEW: pause the mic (used while AI is thinking / speaking) without
+  // ending the overall live session.
+  const pauseListening = () => {
+    isMicPausedRef.current = true;
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (e) {}
+    }
+  };
+
+  // NEW: resume the mic after the AI has finished responding/speaking,
+  // but only if the live session is still active.
+  const resumeListening = () => {
+    isMicPausedRef.current = false;
+    if (isSessionActiveRef.current && recognitionRef.current) {
+      try { recognitionRef.current.start(); } catch (e) {
+        // start() throws if already started; safe to ignore
+      }
+    }
   };
 
   const startContinuousListening = () => {
@@ -233,6 +263,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     if (!SpeechRecognition) {
       alert('Speech recognition is not supported in this browser. Please use Chrome or Safari.');
       setIsSessionActive(false);
+      isSessionActiveRef.current = false;
       return;
     }
 
@@ -271,7 +302,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
-        if (isSessionActive && event.error !== 'aborted') {
+        // CHANGED: use ref instead of closed-over state so this always
+        // reflects the true current session status.
+        if (isSessionActiveRef.current && !isMicPausedRef.current && event.error !== 'aborted') {
           setTimeout(() => {
             try { recognition.start(); } catch (e) {}
           }, 1000);
@@ -279,7 +312,9 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       };
 
       recognition.onend = () => {
-        if (isSessionActive) {
+        // CHANGED: use ref instead of closed-over state — this is the
+        // core fix for "stops listening after one message".
+        if (isSessionActiveRef.current && !isMicPausedRef.current) {
           try {
             recognition.start();
           } catch (e) {
@@ -295,6 +330,7 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       console.log('Recognition start error:', err);
       setListening(false);
       setIsSessionActive(false);
+      isSessionActiveRef.current = false;
     }
   };
 
@@ -331,19 +367,33 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       utterance.onstart = () => {
         setSpeakingId(messageId);
         setIsPlaying(true);
+        // Make sure the mic doesn't hear the AI talking to itself.
+        if (isSessionActiveRef.current) {
+          pauseListening();
+        }
       };
 
       utterance.onend = () => {
         setSpeakingId(null);
         setIsPlaying(false);
         activeUtteranceRef.current = null;
-        processNextInQueue();
+
+        if (speechQueueRef.current.length > 0) {
+          processNextInQueue();
+        } else if (isSessionActiveRef.current) {
+          // Only resume the mic once the whole reply (and any queued
+          // follow-up utterances) has finished playing.
+          resumeListening();
+        }
       };
 
       utterance.onerror = () => {
         setSpeakingId(null);
         setIsPlaying(false);
         activeUtteranceRef.current = null;
+        if (isSessionActiveRef.current && speechQueueRef.current.length === 0) {
+          resumeListening();
+        }
       };
 
       activeUtteranceRef.current = utterance;
@@ -408,12 +458,18 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
     }
   };
 
-async function handleSendDirect(textToSend) {
+  async function handleSendDirect(textToSend) {
     const messageValue = typeof textToSend === 'string' ? textToSend : input;
     if (!messageValue || !messageValue.trim() || loading) return;
 
     setInput('');
     stopAllSpeech();
+
+    // Pause the mic while we wait for / play back the AI's reply, so it
+    // doesn't pick up the AI's own voice or double-send while thinking.
+    if (isSessionActiveRef.current) {
+      pauseListening();
+    }
 
     const timeStr = getCurrentTimeString();
     const tempUserMsg = {
@@ -514,9 +570,16 @@ You MUST reply ONLY with a valid JSON object in this exact format:
       setMessages((prev) => [...prev, aiMsgObj]);
       if (parsedData.reply) {
         queueOrPlayAudio(parsedData.reply, aiMsgObj.id);
+      } else if (isSessionActiveRef.current) {
+        // No reply text to speak — resume listening immediately instead
+        // of waiting for a TTS onend that will never fire.
+        resumeListening();
       }
     } catch (err) {
       console.log('AI Simulation Error:', err);
+      if (isSessionActiveRef.current) {
+        resumeListening();
+      }
     } finally {
       setLoading(false);
     }
