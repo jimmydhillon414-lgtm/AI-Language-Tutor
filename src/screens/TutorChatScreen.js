@@ -238,28 +238,37 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
   };
 
   // NEW: pause the mic (used while AI is thinking / speaking) without
-  // ending the overall live session.
+  // ending the overall live session. We just stop the current instance;
+  // onend will see isMicPausedRef=true and will NOT auto-restart.
   const pauseListening = () => {
     isMicPausedRef.current = true;
     if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (e) {}
-    }
-  };
-
-  // NEW: resume the mic after the AI has finished responding/speaking,
-  // but only if the live session is still active.
-  const resumeListening = () => {
-    isMicPausedRef.current = false;
-    if (isSessionActiveRef.current && recognitionRef.current) {
-      try { recognitionRef.current.start(); } catch (e) {
-        // start() throws if already started; safe to ignore
+      try { recognitionRef.current.stop(); } catch (e) {
+        console.log('pauseListening: stop() error (safe to ignore):', e);
       }
     }
   };
 
-  const startContinuousListening = () => {
+  // NEW: resume the mic after the AI has finished responding/speaking,
+  // but only if the live session is still active. IMPORTANT: this spins
+  // up a brand-new recognition instance rather than restarting the old
+  // one — reusing the same SpeechRecognition object across multiple
+  // stop/start cycles fails silently in Chrome after the first restart,
+  // which was the actual cause of "only works for one message".
+  const resumeListening = () => {
+    isMicPausedRef.current = false;
+    if (isSessionActiveRef.current) {
+      startRecognitionInstance();
+    }
+  };
+
+  // Builds one fresh SpeechRecognition instance with all handlers wired
+  // up, and starts it. Every restart (whether from onend, onerror, or
+  // resumeListening) goes through this same function so we never try to
+  // reuse a recognizer that has already been stopped once.
+  const startRecognitionInstance = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
+
     if (!SpeechRecognition) {
       alert('Speech recognition is not supported in this browser. Please use Chrome or Safari.');
       setIsSessionActive(false);
@@ -272,9 +281,6 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = speechLang;
-
-      recognitionRef.current = recognition;
-      setListening(true);
 
       recognition.onresult = (event) => {
         let interimTranscript = '';
@@ -301,37 +307,46 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
       };
 
       recognition.onerror = (event) => {
+        // Just log here — restart decisions all happen in onend below,
+        // which fires right after onerror anyway. Handling restart in
+        // both places risks starting two overlapping recognizers.
         console.error('Speech recognition error:', event.error);
-        // CHANGED: use ref instead of closed-over state so this always
-        // reflects the true current session status.
-        if (isSessionActiveRef.current && !isMicPausedRef.current && event.error !== 'aborted') {
-          setTimeout(() => {
-            try { recognition.start(); } catch (e) {}
-          }, 1000);
-        }
       };
 
       recognition.onend = () => {
-        // CHANGED: use ref instead of closed-over state — this is the
-        // core fix for "stops listening after one message".
+        setListening(false);
+        // This is the core fix: always read the ref (never stale) and
+        // always spin up a FRESH instance rather than restarting `recognition`.
         if (isSessionActiveRef.current && !isMicPausedRef.current) {
-          try {
-            recognition.start();
-          } catch (e) {
-            setListening(false);
-          }
-        } else {
-          setListening(false);
+          setTimeout(() => {
+            if (isSessionActiveRef.current && !isMicPausedRef.current) {
+              startRecognitionInstance();
+            }
+          }, 300); // small delay so the browser fully releases the mic first
         }
       };
 
+      recognitionRef.current = recognition;
       recognition.start();
+      setListening(true);
     } catch (err) {
       console.log('Recognition start error:', err);
       setListening(false);
-      setIsSessionActive(false);
-      isSessionActiveRef.current = false;
+      // Retry once after a short delay in case this was a transient
+      // "recognition already started" race.
+      if (isSessionActiveRef.current && !isMicPausedRef.current) {
+        setTimeout(() => {
+          if (isSessionActiveRef.current && !isMicPausedRef.current) {
+            startRecognitionInstance();
+          }
+        }, 500);
+      }
     }
+  };
+
+  // Kept for compatibility with the initial call from startLiveSession.
+  const startContinuousListening = () => {
+    startRecognitionInstance();
   };
 
   const handlePlayPauseAudio = (text, messageId) => {
