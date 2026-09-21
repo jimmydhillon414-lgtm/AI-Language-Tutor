@@ -306,12 +306,14 @@ export default function TutorChatScreen({ navigation, selectedDay = 1, onBack })
         }
       };
 
-      recognition.onerror = (event) => {
-        // Just log here — restart decisions all happen in onend below,
-        // which fires right after onerror anyway. Handling restart in
-        // both places risks starting two overlapping recognizers.
-        console.error('Speech recognition error:', event.error);
-      };
+     recognition.onerror = (event) => {
+  // 'aborted' error ko ignore kar do taaki app crash ya stop na ho
+  if (event.error === 'aborted') {
+    console.log("Speech recognition aborted safely.");
+    return;
+  }
+  console.log('Speech recognition error:', event.error);
+};
 
       recognition.onend = () => {
         setListening(false);
